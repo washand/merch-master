@@ -136,8 +136,48 @@ merch-master/
 ```
 
 ## How to Use This Project in Claude Code
+
+### Workflow
 1. Copy `.env.example` to `.env` and fill in your local database credentials
 2. `git pull` latest changes
 3. Work on files as needed
-4. Commit & push changes
+4. **Commit & push changes regularly** (see Git Workflow below)
 5. Build & deploy zips with updated credentials
+
+### Git Workflow — IMPORTANT
+**Always commit and push regularly to prevent data loss.** Follow these practices:
+
+#### Commit Messages
+Use clear, imperative commit messages following this format:
+- **Feature:** `feat: Add color display to product wizard`
+- **Bug fix:** `fix: Debug color SKU matching in catalogus API`
+- **Docs:** `docs: Update project status in CLAUDE.md`
+- **Refactor:** `refactor: Simplify price calculation logic`
+- **Security:** `security: Move credentials to .env file`
+
+Example:
+```bash
+git add .
+git commit -m "feat: Implement Ralawise API sync via cron job"
+git push origin main
+```
+
+#### Commit Frequency
+- Commit after **each completed feature or bug fix**
+- Never leave work uncommitted at end of day
+- Push to GitHub **at least once per work session**
+- Use atomic commits (one logical change per commit)
+
+#### Status Check Before Pushing
+```bash
+git status              # Check what's staged
+git log --oneline -5   # See recent commits
+git push origin main   # Push to GitHub
+```
+
+### Why This Matters
+- **No data loss:** Every commit is backed up on GitHub
+- **Track progress:** Clear commit history shows what's been done
+- **Easy rollback:** Can revert to previous versions if needed
+- **Team collaboration:** Easy to see who changed what and when
+- **Deployment safety:** Clean history makes deployment zips more reliable
