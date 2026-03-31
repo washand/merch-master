@@ -121,12 +121,8 @@ $testSKU = $pdo->query("SELECT sku FROM catalogus WHERE actief = 1 LIMIT 1")->fe
 if ($testSKU) {
     $sku = $testSKU['sku'];
     echo "Test SKU match: '$sku'\n";
-    $match = $pdo->query(
-        "SELECT COUNT(*) as cnt FROM catalogus_kleuren WHERE product_sku = ?",
-        [$sku]
-    )->fetch();
 
-    // Better approach
+    // Better approach with prepared statement
     $stmt = $pdo->prepare("SELECT COUNT(*) as cnt FROM catalogus_kleuren WHERE product_sku = ?");
     $stmt->execute([$sku]);
     $match = $stmt->fetch();
