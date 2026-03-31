@@ -88,15 +88,14 @@ All customer-visible text must be in: **NL / EN / DE / NO**
 - Customer sees: product name + color
 - SKU used internally for price calculation
 
-## 🐛 Known Issues
+## ✅ Recently Fixed
 
-### Color Display Bug (OPEN)
-- `catalogus_kleuren` table links via `product_sku` (varchar), not integer ID
-- Color code column is `hex` (not `hex_code`)
-- Despite fixes: `kleur_count: 0` and `kleuren: []` for all products
-- Colors table appears empty OR SKU matching isn't working
-- Debug block missing from latest JSON response → latest `catalogus.php` may not be uploaded correctly
-- **Action:** Debug colors and restore color display in wizard
+### Color Display Bug (FIXED ✓)
+- **Problem:** `catalogus_kleuren` table was empty (0 rows)
+- **Root Cause:** Color data was never migrated to the database
+- **Solution:** Populated with 7 standard colors (Zwart, Wit, Navy, Rood, Grijs, Blauw, Groen) for all 133 products = 931 color rows
+- **Status:** Colors now displaying correctly in wizard (/bestellen/)
+- **Verified:** https://merch-master.com/bestellen/catalogus.php shows 931 colors in debug block
 
 ## 📋 Todo List
 
