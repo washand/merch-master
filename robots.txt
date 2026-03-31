@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+Disallow: /bestellen/admin/
+Disallow: /bestellen/includes/
+Disallow: /includes/
+Disallow: /bestellen/uploads/
+
+Sitemap: https://merch-master.com/sitemap.xml
+Disallow: /admin.php
+Disallow: /admin/

@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Merch Master — Beheer</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0c0b09;--surface:#151412;--card:#1c1a17;--border:#2a2724;
+  --accent:#e84c1e;--accent2:#f7a11a;--success:#1a7a45;--info:#1a5e8a;
+  --ink:#f0ede8;--ink2:#a09890;--ink3:#5a5450;
+  --r:10px;--font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:100vh;display:flex;flex-direction:column;}
+
+/* ── Login ── */
+.login-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:2rem;}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2.5rem;width:100%;max-width:380px;}
+.login-logo{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;margin-bottom:1.75rem;}
+.login-logo span{color:var(--accent);}
+.field{margin-bottom:1rem;}
+.field label{display:block;font-size:.75rem;font-weight:600;color:var(--ink2);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.07em;}
+.field input{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:.7rem 1rem;color:var(--ink);font-size:.9rem;font-family:var(--font);}
+.field input:focus{outline:none;border-color:var(--accent);}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.65rem 1.25rem;border-radius:8px;font-family:var(--font);font-size:.85rem;font-weight:700;cursor:pointer;border:none;transition:all .15s;}
+.btn-p{background:var(--accent);color:#fff;}
+.btn-p:hover{background:#d03a0c;}
+.btn-s{background:var(--border);color:var(--ink2);}
+.btn-s:hover{background:#3a3530;}
+.btn-full{width:100%;justify-content:center;}
+.err-msg{background:#2a1010;border:1px solid #5a2020;border-radius:6px;padding:.6rem .9rem;font-size:.8rem;color:#ff8080;margin-bottom:1rem;}
+
+/* ── App shell ── */
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh;}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;}
+.sidebar-logo{padding:1.5rem;border-bottom:1px solid var(--border);font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;}
+.sidebar-logo span{color:var(--accent);}
+.sidebar-sub{font-size:.65rem;color:var(--ink3);font-family:var(--font);font-weight:400;display:block;margin-top:1px;text-transform:uppercase;letter-spacing:.08em;}
+.nav{padding:.75rem 0;flex:1;}
+.nav-item{display:flex;align-items:center;gap:.65rem;padding:.7rem 1.25rem;font-size:.83rem;font-weight:500;cursor:pointer;color:var(--ink2);transition:all .15s;border-left:3px solid transparent;}
+.nav-item:hover{background:rgba(255,255,255,.04);color:var(--ink);}
+.nav-item.actief{background:rgba(232,76,30,.1);color:var(--accent);border-left-color:var(--accent);}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;}
+.nav-sep{height:1px;background:var(--border);margin:.5rem 1.25rem;}
+.sidebar-bottom{padding:1rem 1.25rem;border-top:1px solid var(--border);}
+.sidebar-bottom .btn{width:100%;justify-content:center;font-size:.78rem;}
+
+/* ── Main ── */
+.main{overflow-y:auto;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.75rem;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:10;}
+.topbar-ttl{font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;}
+.content{padding:1.75rem;}
+
+/* ── Cards ── */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.75rem;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;}
+.stat-val{font-family:'Syne',sans-serif;font-size:1.9rem;font-weight:800;line-height:1;}
+.stat-lbl{font-size:.72rem;color:var(--ink3);margin-top:.3rem;text-transform:uppercase;letter-spacing:.07em;}
+.stat-card.accent{border-color:rgba(232,76,30,.3);background:rgba(232,76,30,.06);}
+.stat-card.accent .stat-val{color:var(--accent);}
+.stat-card.success{border-color:rgba(26,122,69,.3);background:rgba(26,122,69,.06);}
+.stat-card.success .stat-val{color:#4ade80;}
+
+/* ── Tabel ── */
+.tbl-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:1.5rem;}
+.tbl-hdr{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid var(--border);}
+.tbl-ttl{font-size:.85rem;font-weight:700;}
+.tbl-filters{display:flex;gap:.5rem;}
+.tbl-filter{padding:.35rem .7rem;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--ink2);font-size:.75rem;font-family:var(--font);cursor:pointer;}
+.tbl-filter.actief{border-color:var(--accent);color:var(--accent);}
+table{width:100%;border-collapse:collapse;}
+th{padding:.7rem 1.25rem;text-align:left;font-size:.68rem;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border);}
+td{padding:.8rem 1.25rem;font-size:.83rem;border-bottom:1px solid rgba(42,39,36,.5);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,.02);}
+
+/* ── Status badges ── */
+.badge{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .65rem;border-radius:12px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
+.badge-betaald{background:rgba(26,122,69,.2);color:#4ade80;}
+.badge-in_behandeling{background:rgba(26,94,138,.2);color:#60b4e8;}
+.badge-geleverd{background:rgba(26,122,69,.15);color:#86efac;}
+.badge-concept{background:rgba(90,84,80,.2);color:var(--ink3);}
+.badge-geannuleerd{background:rgba(120,20,20,.2);color:#f87171;}
+
+/* ── Status dropdown ── */
+.status-sel{background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--ink);font-size:.75rem;padding:.3rem .5rem;cursor:pointer;}
+
+/* ── Detail panel ── */
+.detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:flex-start;justify-content:flex-end;}
+.detail-panel{background:var(--card);border-left:1px solid var(--border);width:480px;height:100vh;overflow-y:auto;padding:1.75rem;}
+.detail-close{float:right;background:none;border:none;color:var(--ink2);font-size:1.2rem;cursor:pointer;}
+.detail-ttl{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;margin-bottom:1.25rem;}
+.detail-row{display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.83rem;}
+.detail-row .k{color:var(--ink3);}
+.detail-sec{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);margin:1.2rem 0 .6rem;}
+.regel-item{background:var(--surface);border-radius:8px;padding:.85rem;margin-bottom:.6rem;font-size:.8rem;}
+.regel-item b{display:block;margin-bottom:4px;}
+
+/* ── Grafiek ── */
+.grafiek-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1.5rem;}
+.grafiek-ttl{font-size:.85rem;font-weight:700;margin-bottom:1rem;}
+.grafiek-bars{display:flex;align-items:flex-end;gap:4px;height:100px;}
+.grafiek-bar{flex:1;background:rgba(232,76,30,.3);border-radius:3px 3px 0 0;position:relative;transition:background .2s;cursor:default;min-width:8px;}
+.grafiek-bar:hover{background:var(--accent);}
+.grafiek-bar::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-size:.65rem;padding:3px 6px;border-radius:4px;white-space:nowrap;opacity:0;transition:opacity .15s;pointer-events:none;}
+.grafiek-bar:hover::after{opacity:1;}
+.grafiek-labels{display:flex;gap:4px;margin-top:.35rem;}
+.grafiek-label{flex:1;font-size:.55rem;color:var(--ink3);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* ── Prijzen editor ── */
+.prijs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;}
+.prijs-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;}
+.prijs-cat{font-size:.72rem;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem;}
+.prijs-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;}
+.prijs-seg{font-size:.8rem;}
+.prijs-inp{width:80px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--ink);font-size:.83rem;padding:.35rem .5rem;text-align:center;font-family:var(--mono);}
+.prijs-inp:focus{outline:none;border-color:var(--accent);}
+
+/* ── Product form ── */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem;}
+.form-field label{display:block;font-size:.72rem;font-weight:600;color:var(--ink3);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.06em;}
+.form-field input,.form-field select{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:.6rem .85rem;color:var(--ink);font-size:.83rem;font-family:var(--font);}
+.form-field input:focus,.form-field select:focus{outline:none;border-color:var(--accent);}
+
+/* ── Loading ── */
+.loading{text-align:center;padding:3rem;color:var(--ink3);font-size:.85rem;}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:.4rem;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--success);color:#fff;padding:.75rem 1.25rem;border-radius:8px;font-size:.85rem;font-weight:600;z-index:9999;transform:translateY(100px);opacity:0;transition:all .3s;}
+.toast.show{transform:translateY(0);opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- Login scherm -->
+<div id="login-scherm" class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">Merch<span>Master</span> <span style="font-size:.7rem;color:var(--ink3);font-family:var(--font);font-weight:400;">beheer</span></div>
+    <div id="login-err" class="err-msg" style="display:none;"></div>
+    <div class="field"><label>Wachtwoord</label><input type="password" id="admin-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')doAdminLogin()"></div>
+    <button class="btn btn-p btn-full" onclick="doAdminLogin()">Inloggen</button>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app" class="app" style="display:none;">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">Merch<span>Master</span><span class="sidebar-sub">Beheerpaneel</span></div>
+    <nav class="nav">
+      <div class="nav-item actief" onclick="toonPaneel('dashboard')" id="nav-dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item" onclick="toonPaneel('bestellingen')" id="nav-bestellingen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Bestellingen
+      </div>
+      <div class="nav-item" onclick="toonPaneel('klanten')" id="nav-klanten">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        Klanten
+      </div>
+      <div class="nav-sep"></div>
+      <div class="nav-item" onclick="toonPaneel('producten')" id="nav-producten">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        Producten
+      </div>
+      <div class="nav-item" onclick="toonPaneel('prijzen')" id="nav-prijzen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        Prijsmarges
+      </div>
+      <div class="nav-item" onclick="toonPaneel('levertijden')" id="nav-levertijden">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Levertijden
+      </div>
+      <div class="nav-item" onclick="toonPaneel('drukkosten')" id="nav-drukkosten">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        Drukkosten
+      </div>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn btn-s" onclick="uitloggen()">Uitloggen</button>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-ttl" id="topbar-ttl">Dashboard</div>
+      <div style="font-size:.75rem;color:var(--ink3);" id="topbar-sub"></div>
+    </div>
+    <div class="content">
+
+      <!-- Dashboard paneel -->
+      <div id="paneel-dashboard">
+        <div class="stat-grid" id="stat-grid"><div class="loading"><span class="spinner"></span>Laden...</div></div>
+        <div class="grafiek-wrap">
+          <div class="grafiek-ttl">Omzet laatste 12 maanden</div>
+          <div class="grafiek-bars" id="grafiek-bars"><div class="loading">Laden...</div></div>
+          <div class="grafiek-labels" id="grafiek-labels"></div>
+        </div>
+        <div class="tbl-wrap">
+          <div class="tbl-hdr"><div class="tbl-ttl">Recente bestellingen</div></div>
+          <div id="recente-bestellingen"><div class="loading"><span class="spinner"></span>Laden...</div></div>
+        </div>
+      </div>
+
+      <!-- Bestellingen paneel -->
+      <div id="paneel-bestellingen" style="display:none;">
+        <div class="tbl-wrap">
+          <div class="tbl-hdr">
+            <div class="tbl-ttl">Alle bestellingen</div>
+            <div class="tbl-filters">
+              <button class="tbl-filter actief" onclick="filterBestellingen('')">Alle</button>
+              <button class="tbl-filter" onclick="filterBestellingen('betaald')">Nieuw</button>
+              <button class="tbl-filter" onclick="filterBestellingen('in_behandeling')">In behandeling</button>
+              <button class="tbl-filter" onclick="filterBestellingen('geleverd')">Geleverd</button>
+            </div>
+          </div>
+          <div id="bestellingen-tbl"><div class="loading"><span class="spinner"></span>Laden...</div></div>
+        </div>
+      </div>
+
+      <!-- Klanten paneel -->
+      <div id="paneel-klanten" style="display:none;">
+        <div class="tbl-wrap">
+          <div class="tbl-hdr"><div class="tbl-ttl">Alle klanten</div></div>
+          <div id="klanten-tbl"><div class="loading"><span class="spinner"></span>Laden...</div></div>
+        </div>
+      </div>
+
+      <!-- Producten paneel -->
+      <div id="paneel-producten" style="display:none;">
+        <div style="display:flex;gap:.75rem;margin-bottom:1.25rem;">
+          <button class="btn btn-p" onclick="toonProductForm()">+ Product toevoegen</button>
+        </div>
+        <div id="product-form-wrap" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1.25rem;">
+          <div style="font-size:.9rem;font-weight:700;margin-bottom:1rem;">Nieuw product</div>
+          <div class="form-row">
+            <div class="form-field"><label>Naam</label><input type="text" id="pf-naam" placeholder="Build Your Brand Heavy Tee"></div>
+            <div class="form-field"><label>SKU</label><input type="text" id="pf-sku" placeholder="BY102"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-field"><label>Categorie</label>
+              <select id="pf-cat"><option value="shirt">T-shirt</option><option value="hoodie">Hoodie/Sweater</option><option value="jas">Jas</option><option value="polo">Polo</option><option value="cap">Cap/Beanie</option><option value="tas">Tas</option><option value="baby">Baby & Kids</option></select>
+            </div>
+            <div class="form-field"><label>Segment</label>
+              <select id="pf-segment"><option value="budget">Budget</option><option value="standaard">Standaard</option><option value="premium">Premium</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field"><label>Inkoopprijs (€)</label><input type="number" id="pf-inkoop" step="0.01" placeholder="8.50"></div>
+          </div>
+          <div style="display:flex;gap:.5rem;margin-top:.5rem;">
+            <button class="btn btn-p" onclick="slaProductOp()">Opslaan</button>
+            <button class="btn btn-s" onclick="document.getElementById('product-form-wrap').style.display='none'">Annuleren</button>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <div class="tbl-hdr"><div class="tbl-ttl">Eigen producten</div></div>
+          <div id="producten-tbl"><div class="loading"><span class="spinner"></span>Laden...</div></div>
+        </div>
+      </div>
+
+      <!-- Prijzen paneel -->
+      <div id="paneel-prijzen" style="display:none;">
+        <div style="font-size:.82rem;color:var(--ink3);margin-bottom:1.25rem;">Stel de winstmarge in per categorie en segment. Verkoopprijs = inkoopprijs × marge. Bijv. 1.65 = 65% marge.</div>
+        <div class="prijs-grid" id="prijs-grid"><div class="loading"><span class="spinner"></span>Laden...</div></div>
+        <button class="btn btn-p" style="margin-top:1rem;" onclick="slaMargesOp()">Marges opslaan</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Detail overlay -->
+<div id="detail-overlay" class="detail-overlay" style="display:none;" onclick="if(event.target===this)sluitDetail()">
+  <div class="detail-panel" id="detail-panel"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+      <!-- Drukkosten paneel -->
+      <div id="paneel-drukkosten" style="display:none;">
+        <div style="margin-bottom:1.5rem;">
+          <div style="font-size:1.1rem;font-weight:700;margin-bottom:.25rem;">Drukkosten beheren</div>
+          <div style="font-size:.8rem;color:var(--ink3);">Pas tarieven aan per oplage. Alle bedragen zijn ex BTW per stuk.</div>
+        </div>
+
+        <div id="druk-melding" style="display:none;background:rgba(26,122,69,.15);border:1px solid rgba(26,122,69,.3);border-radius:8px;padding:.85rem 1rem;font-size:.85rem;color:#86efac;margin-bottom:1.5rem;">Drukkosten opgeslagen!</div>
+        <div id="druk-fout" style="display:none;background:rgba(200,30,30,.15);border:1px solid rgba(200,30,30,.3);border-radius:8px;padding:.85rem 1rem;font-size:.85rem;color:#ff8080;margin-bottom:1.5rem;"></div>
+
+        <!-- Tab switcher -->
+        <div style="display:flex;gap:.5rem;margin-bottom:1.5rem;">
+          <button id="tab-dtf" onclick="switchDrukTab('dtf')"
+            style="padding:.5rem 1.25rem;border-radius:20px;border:1.5px solid var(--accent);background:var(--accent);color:#fff;font-size:.82rem;font-weight:700;cursor:pointer;">
+            DTF Transferdruk
+          </button>
+          <button id="tab-zeef" onclick="switchDrukTab('zeef')"
+            style="padding:.5rem 1.25rem;border-radius:20px;border:1.5px solid var(--border);background:transparent;color:var(--ink2);font-size:.82rem;font-weight:700;cursor:pointer;">
+            Zeefdruk
+          </button>
+        </div>
+
+        <!-- DTF simpel -->
+        <div id="druk-tab-dtf">
+          <div style="font-size:.8rem;color:var(--ink3);margin-bottom:1.25rem;">Prijs per stuk ex BTW</div>
+          <div style="display:flex;flex-direction:column;gap:.75rem;max-width:400px;">
+
+            <div class="card" style="padding:1.1rem;">
+              <div style="font-weight:700;font-size:.88rem;margin-bottom:.75rem;">Kleine oplage (1–9 stuks)</div>
+              <div style="display:flex;align-items:center;gap:.5rem;">
+                <span style="color:var(--ink3);font-size:.85rem;">€</span>
+                <input type="number" id="dtf-klein" step="0.01" min="0" value="9.00"
+                  style="width:100px;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:.55rem .75rem;color:var(--ink);font-size:.95rem;font-weight:700;">
+                <span style="color:var(--ink3);font-size:.8rem;">per stuk</span>
+              </div>
+            </div>
+
+            <div class="card" style="padding:1.1rem;">
+              <div style="font-weight:700;font-size:.88rem;margin-bottom:.75rem;">Grote oplage (10+ stuks)</div>
+              <div style="display:flex;align-items:center;gap:.5rem;">
+                <span style="color:var(--ink3);font-size:.85rem;">€</span>
+                <input type="number" id="dtf-groot" step="0.01" min="0" value="7.00"
+                  style="width:100px;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:.55rem .75rem;color:var(--ink);font-size:.95rem;font-weight:700;">
+                <span style="color:var(--ink3);font-size:.8rem;">per stuk</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Zeefdruk matrix -->
+        <div id="druk-tab-zeef" style="display:none;">
+          <div style="font-size:.8rem;color:var(--ink3);margin-bottom:1rem;">Prijs per stuk ex BTW — per oplagerange en aantal kleuren</div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:.83rem;" id="zeef-matrix">
+              <thead>
+                <tr style="border-bottom:2px solid var(--border);">
+                  <th style="text-align:left;padding:.6rem .75rem;color:var(--ink3);font-weight:600;">Van</th>
+                  <th style="text-align:left;padding:.6rem .75rem;color:var(--ink3);font-weight:600;">Tot</th>
+                  <th style="text-align:center;padding:.6rem .75rem;color:var(--ink3);font-weight:600;">1 kleur</th>
+                  <th style="text-align:center;padding:.6rem .75rem;color:var(--ink3);font-weight:600;">2 kleuren</th>
+                  <th style="text-align:center;padding:.6rem .75rem;color:var(--ink3);font-weight:600;">3 kleuren</th>
+                  <th style="text-align:center;padding:.6rem .75rem;color:var(--ink3);font-weight:600;">4 kleuren</th>
+                </tr>
+              </thead>
+              <tbody id="zeef-tbody">
+                <tr><td colspan="6" style="padding:1rem;color:var(--ink3);text-align:center;"><span class="spinner"></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="margin-top:1.5rem;display:flex;gap:.75rem;flex-wrap:wrap;">
+          <button class="btn btn-p" onclick="slaDrukkostenOp()" style="display:flex;align-items:center;gap:.5rem;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Opslaan
+          </button>
+        </div>
+
+        <div style="background:rgba(247,161,26,.08);border:1px solid rgba(247,161,26,.25);border-radius:8px;padding:.85rem 1rem;font-size:.78rem;color:var(--ink2);line-height:1.6;margin-top:1rem;">
+          <strong style="color:var(--accent2);">Let op:</strong> Wijzigingen worden direct gebruikt bij nieuwe berekeningen in de besteltool.
+        </div>
+      </div>
+
+      <!-- Levertijden paneel -->
+      <div id="paneel-levertijden" style="display:none;">
+        <div class="paneel-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;">
+          <div>
+            <div style="font-size:1.1rem;font-weight:700;margin-bottom:.25rem;">Levertijden beheren</div>
+            <div style="font-size:.8rem;color:var(--ink3);">Pas levertijden aan per drukmethode. Worden direct op de website getoond.</div>
+          </div>
+        </div>
+
+        <div id="lt-melding" style="display:none;background:rgba(26,122,69,.15);border:1px solid rgba(26,122,69,.3);border-radius:8px;padding:.85rem 1rem;font-size:.85rem;color:#86efac;margin-bottom:1.5rem;">
+          Levertijden opgeslagen!
+        </div>
+        <div id="lt-fout" style="display:none;background:rgba(200,30,30,.15);border:1px solid rgba(200,30,30,.3);border-radius:8px;padding:.85rem 1rem;font-size:.85rem;color:#ff8080;margin-bottom:1.5rem;"></div>
+
+        <div style="display:grid;gap:1rem;max-width:480px;">
+
+          <div class="card" style="padding:1.25rem;">
+            <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;">
+              <div style="width:36px;height:36px;border-radius:8px;background:rgba(232,76,30,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" width="18" height="18"><path d="M12 2L2 7l10 5 10-5-10-5M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+              </div>
+              <div>
+                <div style="font-weight:700;font-size:.9rem;">DTF Transferdruk</div>
+                <div style="font-size:.75rem;color:var(--ink3);">Werkdagen na akkoord op proef</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:.75rem;">
+              <input type="text" id="lt-dtf" placeholder="5-8"
+                style="flex:1;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:.65rem 1rem;color:var(--ink);font-size:.9rem;font-family:var(--font);">
+              <span style="font-size:.8rem;color:var(--ink3);white-space:nowrap;">werkdagen</span>
+            </div>
+            <div style="font-size:.7rem;color:var(--ink3);margin-top:.4rem;">Formaat: "5-8" (bereik) of "7" (vast getal)</div>
+          </div>
+
+          <div class="card" style="padding:1.25rem;">
+            <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;">
+              <div style="width:36px;height:36px;border-radius:8px;background:rgba(26,94,138,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#4a9eda" stroke-width="2" width="18" height="18"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+              </div>
+              <div>
+                <div style="font-weight:700;font-size:.9rem;">Zeefdruk</div>
+                <div style="font-size:.75rem;color:var(--ink3);">Werkdagen na akkoord op proef</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:.75rem;">
+              <input type="text" id="lt-zeefdruk" placeholder="6-10"
+                style="flex:1;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:.65rem 1rem;color:var(--ink);font-size:.9rem;font-family:var(--font);">
+              <span style="font-size:.8rem;color:var(--ink3);white-space:nowrap;">werkdagen</span>
+            </div>
+            <div style="font-size:.7rem;color:var(--ink3);margin-top:.4rem;">Formaat: "6-10" (bereik) of "8" (vast getal)</div>
+          </div>
+
+          <div class="card" style="padding:1.25rem;">
+            <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;">
+              <div style="width:36px;height:36px;border-radius:8px;background:rgba(26,122,69,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div>
+                <div style="font-weight:700;font-size:.9rem;">Borduren</div>
+                <div style="font-size:.75rem;color:var(--ink3);">Werkdagen na akkoord op proef</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:.75rem;">
+              <input type="text" id="lt-borduren" placeholder="7-12"
+                style="flex:1;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:.65rem 1rem;color:var(--ink);font-size:.9rem;font-family:var(--font);">
+              <span style="font-size:.8rem;color:var(--ink3);white-space:nowrap;">werkdagen</span>
+            </div>
+            <div style="font-size:.7rem;color:var(--ink3);margin-top:.4rem;">Formaat: "7-12" (bereik) of "10" (vast getal)</div>
+          </div>
+
+          <button class="btn btn-p" onclick="slaLevertijdenOp()" style="display:flex;align-items:center;gap:.5rem;justify-content:center;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Levertijden opslaan
+          </button>
+
+          <div style="background:rgba(247,161,26,.08);border:1px solid rgba(247,161,26,.25);border-radius:8px;padding:.85rem 1rem;font-size:.78rem;color:var(--ink2);line-height:1.6;">
+            <strong style="color:var(--accent2);">Let op:</strong> Na opslaan worden levertijden direct bijgewerkt op de website — in de FAQ, Over ons en levertijdenpagina.
+          </div>
+
+        </div>
+      </div>
+
+</div>
+
+<script>
+const HANDLER = '../handler.php';
+let adminToken = '';
+let allBestellingen = [];
+let huidigStatus = '';
+
+// ── Login ──────────────────────────────────────────────────────────────────────
+async function doAdminLogin() {
+  const pw = document.getElementById('admin-pw').value;
+  const r = await api('admin-login', { wachtwoord: pw });
+  if(r.ok) {
+    adminToken = r.token;
+    document.getElementById('login-scherm').style.display = 'none';
+    document.getElementById('app').style.display = 'grid';
+    laadDashboard();
+  } else {
+    const el = document.getElementById('login-err');
+    el.textContent = r.fout || 'Onjuist wachtwoord';
+    el.style.display = 'block';
+  }
+}
+
+function uitloggen() {
+  adminToken = '';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-scherm').style.display = 'flex';
+  document.getElementById('admin-pw').value = '';
+}
+
+// ── Navigatie ──────────────────────────────────────────────────────────────────
+const PANEELEN = ['dashboard','bestellingen','klanten','producten','prijzen','levertijden','drukkosten'];
+const TITELS = { dashboard:'Dashboard', bestellingen:'Bestellingen', klanten:'Klanten', producten:'Producten', prijzen:'Prijsmarges', levertijden:'Levertijden', drukkosten:'Drukkosten' };
+
+function toonPaneel(naam) {
+  if (naam === 'levertijden') laadLevertijden();
+  if (naam === 'drukkosten') laadDrukkosten();
+  PANEELEN.forEach(p => {
+    document.getElementById('paneel-'+p).style.display = p===naam ? 'block' : 'none';
+    document.getElementById('nav-'+p)?.classList.toggle('actief', p===naam);
+  });
+  document.getElementById('topbar-ttl').textContent = TITELS[naam] || naam;
+  if(naam==='bestellingen') laadBestellingen();
+  if(naam==='klanten')      laadKlanten();
+  if(naam==='producten')    laadProducten();
+  if(naam==='prijzen')      laadMarges();
+}
+
+// ── Dashboard ──────────────────────────────────────────────────────────────────
+async function laadDashboard() {
+  const r = await api('admin-stats');
+  if(!r.ok) return;
+  const s = r.stats;
+
+  // Stat cards
+  document.getElementById('stat-grid').innerHTML = `
+    <div class="stat-card accent">
+      <div class="stat-val">€ ${num(s.omzet_maand)}</div>
+      <div class="stat-lbl">Omzet deze maand</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val">€ ${num(s.omzet_totaal)}</div>
+      <div class="stat-lbl">Totale omzet</div>
+    </div>
+    <div class="stat-card success">
+      <div class="stat-val">${s.bestellingen_nieuw}</div>
+      <div class="stat-lbl">Nieuwe bestellingen</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val">${s.bestellingen_totaal}</div>
+      <div class="stat-lbl">Bestellingen totaal</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val">${s.klanten_totaal}</div>
+      <div class="stat-lbl">Klanten</div>
+    </div>`;
+
+  // Grafiek
+  const maanden = s.omzet_per_maand || [];
+  if(maanden.length > 0) {
+    const max = Math.max(...maanden.map(m => parseFloat(m.omzet)));
+    const barsEl = document.getElementById('grafiek-bars');
+    const labelsEl = document.getElementById('grafiek-labels');
+    barsEl.innerHTML = maanden.map(m => {
+      const h = max > 0 ? Math.round((parseFloat(m.omzet)/max)*100) : 0;
+      return `<div class="grafiek-bar" style="height:${Math.max(h,4)}%" data-tip="€${num(m.omzet)} (${m.aantal}x)"></div>`;
+    }).join('');
+    labelsEl.innerHTML = maanden.map(m => `<div class="grafiek-label">${m.maand.slice(5)}</div>`).join('');
+  } else {
+    document.getElementById('grafiek-bars').innerHTML = '<div style="color:var(--ink3);font-size:.8rem;">Nog geen data</div>';
+  }
+
+  // Recente bestellingen
+  const rb = await api('admin-bestellingen', { status: '' });
+  if(rb.ok) {
+    allBestellingen = rb.bestellingen;
+    renderBestellingenTabel(rb.bestellingen.slice(0,8), 'recente-bestellingen');
+  }
+}
+
+// ── Bestellingen ──────────────────────────────────────────────────────────────
+async function laadBestellingen(status = '') {
+  document.getElementById('bestellingen-tbl').innerHTML = '<div class="loading"><span class="spinner"></span>Laden...</div>';
+  const r = await api('admin-bestellingen', { status });
+  if(r.ok) {
+    allBestellingen = r.bestellingen;
+    renderBestellingenTabel(r.bestellingen, 'bestellingen-tbl');
+  }
+}
+
+function filterBestellingen(status) {
+  huidigStatus = status;
+  document.querySelectorAll('#paneel-bestellingen .tbl-filter').forEach(b => b.classList.remove('actief'));
+  event.target.classList.add('actief');
+  laadBestellingen(status);
+}
+
+function renderBestellingenTabel(bestellingen, containerId) {
+  const el = document.getElementById(containerId);
+  if(!bestellingen.length) { el.innerHTML = '<div class="loading">Geen bestellingen gevonden</div>'; return; }
+  el.innerHTML = `<table>
+    <thead><tr>
+      <th>Order</th><th>Klant</th><th>Producten</th><th>Totaal</th><th>Datum</th><th>Status</th><th></th>
+    </tr></thead>
+    <tbody>${bestellingen.map(b => `
+      <tr>
+        <td><code style="font-family:var(--mono);font-size:.75rem;color:var(--accent);">#${b.order_id}</code></td>
+        <td>
+          <div style="font-weight:600;">${b.voornaam||''} ${b.achternaam||''}</div>
+          <div style="font-size:.72rem;color:var(--ink3);">${b.bedrijf||b.email||''}</div>
+        </td>
+        <td style="font-size:.75rem;color:var(--ink3);">${(b.regels||[]).length} product(en)</td>
+        <td style="font-weight:700;">€ ${num(b.totaal_incl)}</td>
+        <td style="font-size:.75rem;color:var(--ink3);">${formatDatum(b.aangemaakt)}</td>
+        <td>
+          <select class="status-sel" onchange="wijzigStatus(${b.id}, this.value)">
+            ${['concept','betaald','in_behandeling','geleverd','geannuleerd'].map(s =>
+              `<option value="${s}" ${s===b.status?'selected':''}>${statusLabel(s)}</option>`
+            ).join('')}
+          </select>
+        </td>
+        <td><button class="btn btn-s" style="font-size:.72rem;padding:.3rem .65rem;" onclick="toonDetail(${b.id})">Details</button></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+async function wijzigStatus(id, status) {
+  const r = await api('admin-status', { id, status });
+  if(r.ok) toast('Status bijgewerkt');
+}
+
+function toonDetail(id) {
+  const b = allBestellingen.find(x => x.id === id);
+  if(!b) return;
+  const panel = document.getElementById('detail-panel');
+  panel.innerHTML = `
+    <button class="detail-close" onclick="sluitDetail()">✕</button>
+    <div class="detail-ttl">#${b.order_id}</div>
+    <div class="detail-sec">Klant</div>
+    ${detailRow('Naam', (b.voornaam||'')+' '+(b.achternaam||''))}
+    ${detailRow('E-mail', b.email||'–')}
+    ${detailRow('Bedrijf', b.bedrijf||'–')}
+    <div class="detail-sec">Bestelling</div>
+    ${detailRow('Datum', formatDatum(b.aangemaakt))}
+    ${detailRow('Status', `<span class="badge badge-${b.status}">${statusLabel(b.status)}</span>`)}
+    ${detailRow('Totaal', `<b style="color:var(--accent)">€ ${num(b.totaal_incl)}</b>`)}
+    ${detailRow('PayPal ID', b.paypal_id||'–')}
+    <div class="detail-sec">Producten (${(b.regels||[]).length})</div>
+    ${(b.regels||[]).map((r,i) => `
+      <div class="regel-item">
+        <b>Product ${i+1}: ${r.textiel_merk||''} ${r.textiel_naam||''}</b>
+        Kleur: ${r.kleur_naam||'–'} · Positie: ${r.positie||'–'}<br>
+        Techniek: ${r.techniek_a||'–'} · Stuks: ${r.aantal||0}<br>
+        <span style="font-size:.72rem;color:var(--ink3);">${JSON.stringify(r.maten||{})}</span>
+      </div>`).join('')}
+    ${b.opmerkingen ? `<div class="detail-sec">Opmerkingen</div><div style="font-size:.8rem;color:var(--ink2);">${b.opmerkingen}</div>` : ''}`;
+  document.getElementById('detail-overlay').style.display = 'flex';
+}
+
+function detailRow(k, v) {
+  return `<div class="detail-row"><span class="k">${k}</span><span>${v}</span></div>`;
+}
+
+function sluitDetail() {
+  document.getElementById('detail-overlay').style.display = 'none';
+}
+
+// ── Klanten ───────────────────────────────────────────────────────────────────
+async function laadKlanten() {
+  document.getElementById('klanten-tbl').innerHTML = '<div class="loading"><span class="spinner"></span>Laden...</div>';
+  const r = await api('admin-klanten');
+  if(!r.ok) return;
+  document.getElementById('klanten-tbl').innerHTML = `<table>
+    <thead><tr><th>Naam</th><th>E-mail</th><th>Bedrijf</th><th>Bestellingen</th><th>Omzet</th><th>Aangemeld</th></tr></thead>
+    <tbody>${r.klanten.map(k => `
+      <tr>
+        <td style="font-weight:600;">${k.voornaam} ${k.achternaam}</td>
+        <td style="font-size:.8rem;color:var(--ink3);">${k.email}</td>
+        <td style="font-size:.8rem;">${k.bedrijf||'–'}</td>
+        <td style="text-align:center;">${k.bestellingen}</td>
+        <td style="font-weight:600;color:var(--accent);">€ ${num(k.omzet)}</td>
+        <td style="font-size:.75rem;color:var(--ink3);">${formatDatum(k.aangemaakt)}</td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+// ── Producten ─────────────────────────────────────────────────────────────────
+async function laadProducten() {
+  document.getElementById('producten-tbl').innerHTML = '<div class="loading"><span class="spinner"></span>Laden...</div>';
+  const r = await api('admin-producten');
+  if(!r.ok || !r.producten.length) {
+    document.getElementById('producten-tbl').innerHTML = '<div class="loading">Nog geen eigen producten toegevoegd.</div>';
+    return;
+  }
+  document.getElementById('producten-tbl').innerHTML = `<table>
+    <thead><tr><th>Naam</th><th>SKU</th><th>Categorie</th><th>Segment</th><th>Inkoopprijs</th><th>Actief</th></tr></thead>
+    <tbody>${r.producten.map(p => `
+      <tr>
+        <td style="font-weight:600;">${p.naam}</td>
+        <td><code style="font-family:var(--mono);font-size:.75rem;">${p.sku||'–'}</code></td>
+        <td>${p.categorie||'–'}</td>
+        <td><span class="badge badge-${p.segment==='budget'?'concept':p.segment==='premium'?'geleverd':'betaald'}">${p.segment}</span></td>
+        <td>€ ${num(p.inkoop)}</td>
+        <td>${p.actief ? '✓' : '–'}</td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+function toonProductForm() {
+  document.getElementById('product-form-wrap').style.display = 'block';
+}
+
+async function slaProductOp() {
+  const d = {
+    naam:    document.getElementById('pf-naam').value.trim(),
+    sku:     document.getElementById('pf-sku').value.trim(),
+    categorie: document.getElementById('pf-cat').value,
+    segment: document.getElementById('pf-segment').value,
+    inkoop:  parseFloat(document.getElementById('pf-inkoop').value) || 0,
+  };
+  if(!d.naam) return;
+  const r = await api('admin-product-opslaan', d);
+  if(r.ok) {
+    toast('Product opgeslagen');
+    document.getElementById('product-form-wrap').style.display = 'none';
+    laadProducten();
+  }
+}
+
+// ── Marges ────────────────────────────────────────────────────────────────────
+async function laadMarges() {
+  const r = await api('admin-prijzen');
+  if(!r.ok) return;
+
+  const cats = {};
+  r.prijzen.forEach(p => {
+    if(!cats[p.categorie]) cats[p.categorie] = {};
+    cats[p.categorie][p.segment] = p.markup;
+  });
+
+  const catLabels = { shirt:'T-shirt', hoodie:'Hoodie/Sweater', jas:'Jas', polo:'Polo', cap:'Cap/Beanie', tas:'Tas', baby:'Baby & Kids' };
+  const segLabels = { budget:'Budget', standaard:'Standaard', premium:'Premium' };
+
+  document.getElementById('prijs-grid').innerHTML = Object.entries(cats).map(([cat, segs]) => `
+    <div class="prijs-card">
+      <div class="prijs-cat">${catLabels[cat]||cat}</div>
+      ${['budget','standaard','premium'].filter(s => segs[s] !== undefined).map(seg => `
+        <div class="prijs-row">
+          <span class="prijs-seg">${segLabels[seg]}</span>
+          <input class="prijs-inp" type="number" step="0.01" data-cat="${cat}" data-seg="${seg}" value="${segs[seg]||1.65}">
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+async function slaMargesOp() {
+  const prijzen = [];
+  document.querySelectorAll('.prijs-inp').forEach(inp => {
+    prijzen.push({ categorie: inp.dataset.cat, segment: inp.dataset.seg, markup: parseFloat(inp.value)||1.65 });
+  });
+  const r = await api('admin-prijzen-opslaan', { prijzen });
+  if(r.ok) toast('Marges opgeslagen');
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function statusLabel(s) {
+  return { concept:'Concept', betaald:'Betaald ✓', in_behandeling:'In behandeling', geleverd:'Geleverd ✓', geannuleerd:'Geannuleerd' }[s] || s;
+}
+function formatDatum(d) {
+  if(!d) return '–';
+  return new Date(d).toLocaleDateString('nl-NL', { day:'numeric', month:'short', year:'numeric' });
+}
+function num(v) { return parseFloat(v||0).toFixed(2).replace('.',','); }
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+async function api(action, data = {}) {
+  try {
+    const r = await fetch(HANDLER, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Token': adminToken },
+      body: JSON.stringify({ action, ...data }),
+    });
+    return await r.json();
+  } catch { return { ok: false, fout: 'Verbindingsfout' }; }
+}
+
+// Enter key op wachtwoord
+document.getElementById('admin-pw').addEventListener('keydown', e => { if(e.key==='Enter') doAdminLogin(); });
+</script>
+</body>
+</html>

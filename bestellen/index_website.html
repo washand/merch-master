@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Merch Master — Print & Borduur voor Festivals, Events & Eco Merken</title>
+<meta name="description" content="Merch Master maakt bedrukte en geborduurde kleding voor particulieren, festivals, evenementen en duurzame merken. DTF, zeefdruk en borduren. Bestel direct online — vanaf 1 stuk.">
+<meta name="keywords" content="festival merchandise, evenement kleding bedrukken, eco friendly textieldruk, DTF druk, zeefdruk Utrecht, borduren kleding, groepsshirts, festival shirts">
+<link rel="canonical" href="https://merch-master.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --creme:#f5f0e8;--zand:#e8ddc8;--terracotta:#c4622d;--accent:#e84c1e;
+  --groen:#3a5a40;--groen2:#5a7a60;--donkergroen:#243326;
+  --ink:#1e1a16;--ink2:#5a5248;--ink3:#8a8278;
+  --wit:#faf7f2;--kaart:#fff9f2;
+  --r:8px;
+  --display:'Playfair Display',serif;
+  --body:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth;}
+body{font-family:var(--body);background:var(--creme);color:var(--ink);overflow-x:hidden;}
+
+/* ── NAV ─────────────────────────────────────────────────────────────────────*/
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 2.5rem;display:flex;align-items:center;justify-content:space-between;height:68px;background:rgba(245,240,232,.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(196,98,45,.15);}
+.nav-logo{display:flex;align-items:center;gap:.7rem;text-decoration:none;}
+.nav-logo-mark{width:38px;height:38px;background:var(--terracotta);border-radius:6px;display:flex;align-items:center;justify-content:center;}
+.nav-logo-mark svg{width:20px;height:20px;fill:#fff;}
+.nav-logo-txt{font-family:var(--display);font-size:1.25rem;font-weight:700;color:var(--ink);line-height:1.1;}
+.nav-logo-txt em{font-style:normal;color:var(--terracotta);}
+.nav-logo-sub{font-size:.58rem;color:var(--ink3);letter-spacing:.12em;text-transform:uppercase;display:block;font-family:var(--body);}
+.nav-links{display:flex;align-items:center;gap:2.25rem;}
+.nav-links a{font-size:.85rem;font-weight:500;color:var(--ink2);text-decoration:none;transition:color .15s;}
+.nav-links a:hover{color:var(--terracotta);}
+.nav-cta{background:var(--terracotta);color:#fff!important;padding:.55rem 1.2rem;border-radius:50px;font-weight:600!important;transition:background .15s!important;}
+.nav-cta:hover{background:#a84e22!important;}
+.nav-toggle{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:.5rem;}
+.nav-toggle span{display:block;width:22px;height:2px;background:var(--ink);border-radius:2px;}
+.mob-menu{display:none;position:fixed;inset:68px 0 0;background:var(--wit);z-index:99;padding:2rem;flex-direction:column;gap:1.5rem;border-top:1px solid var(--zand);}
+.mob-menu.open{display:flex;}
+.mob-menu a{font-size:1.05rem;font-weight:500;color:var(--ink2);text-decoration:none;}
+.mob-menu .nav-cta{color:#fff!important;text-align:center;padding:.85rem;font-size:.95rem;border-radius:50px;}
+
+/* ── HERO ─────────────────────────────────────────────────────────────────────*/
+.hero{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;position:relative;padding-top:68px;overflow:hidden;}
+.hero-left{background:var(--donkergroen);display:flex;flex-direction:column;justify-content:center;padding:5rem 4rem 5rem 6rem;position:relative;overflow:hidden;}
+.hero-left::before{content:'';position:absolute;bottom:-80px;left:-80px;width:320px;height:320px;border-radius:50%;background:rgba(90,122,96,.25);pointer-events:none;}
+.hero-left::after{content:'';position:absolute;top:-40px;right:-60px;width:200px;height:200px;border-radius:50%;background:rgba(196,98,45,.15);pointer-events:none;}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:.5rem;font-size:.7rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:rgba(250,247,242,.5);margin-bottom:1.5rem;}
+.hero-eyebrow::before{content:'';width:24px;height:1px;background:var(--terracotta);}
+h1{font-family:var(--display);font-size:clamp(2.8rem,5vw,4rem);font-weight:900;line-height:1.05;color:var(--wit);margin-bottom:1.5rem;}
+h1 em{font-style:italic;color:var(--terracotta);}
+.hero-sub{font-size:1rem;color:rgba(250,247,242,.65);line-height:1.75;margin-bottom:2.5rem;max-width:400px;}
+.hero-btns{display:flex;flex-direction:column;gap:.75rem;max-width:280px;}
+.btn-p{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;background:var(--terracotta);color:#fff;font-family:var(--body);font-size:.9rem;font-weight:700;padding:.9rem 1.8rem;border-radius:50px;text-decoration:none;transition:all .2s;border:none;cursor:pointer;width:100%;}
+.btn-p:hover{background:#a84e22;transform:translateY(-1px);}
+.btn-ghost{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;background:transparent;color:rgba(250,247,242,.7);font-family:var(--body);font-size:.88rem;font-weight:500;padding:.85rem 1.8rem;border-radius:50px;text-decoration:none;transition:all .2s;border:1px solid rgba(250,247,242,.2);width:100%;}
+.btn-ghost:hover{border-color:rgba(250,247,242,.5);color:var(--wit);}
+.hero-badges{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:2.5rem;}
+.hero-badge{font-size:.65rem;font-weight:600;color:rgba(250,247,242,.5);background:rgba(250,247,242,.07);border:1px solid rgba(250,247,242,.12);border-radius:20px;padding:.25rem .7rem;letter-spacing:.05em;}
+
+.hero-right{background:var(--zand);display:flex;flex-direction:column;padding:0;position:relative;}
+.hero-right-top{flex:1;overflow:hidden;position:relative;}
+.hero-right-top img,.hero-img-placeholder{width:100%;height:100%;object-fit:cover;}
+.hero-img-placeholder{background:linear-gradient(135deg,#d4c9b0 0%,#c4b898 50%,#b8a880 100%);display:flex;align-items:center;justify-content:center;min-height:300px;}
+.hero-img-placeholder span{font-size:5rem;opacity:.3;}
+.hero-right-bottom{background:var(--kaart);border-top:1px solid rgba(196,98,45,.15);padding:1.75rem 2rem;display:grid;grid-template-columns:repeat(3,1fr);gap:1px;}
+.hero-stat{text-align:center;padding:.75rem;}
+.hero-stat-n{font-family:var(--display);font-size:1.8rem;font-weight:700;color:var(--terracotta);}
+.hero-stat-l{font-size:.65rem;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em;margin-top:.15rem;}
+
+/* ── Gemeenschappelijk ───────────────────────────────────────────────────────*/
+.container{max-width:1100px;margin:0 auto;}
+.sec-kop{text-align:center;margin-bottom:3.5rem;}
+.sec-oogje{font-size:.7rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--terracotta);margin-bottom:.6rem;}
+h2{font-family:var(--display);font-size:clamp(2rem,4vw,2.8rem);font-weight:700;line-height:1.1;color:var(--ink);}
+h2 em{font-style:italic;color:var(--terracotta);}
+.sec-sub{font-size:1rem;color:var(--ink2);line-height:1.7;max-width:540px;margin:.85rem auto 0;}
+
+/* ── ECO SECTION ─────────────────────────────────────────────────────────────*/
+.eco-band{background:var(--donkergroen);padding:4rem 2.5rem;}
+.eco-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;}
+.eco-tekst .sec-oogje{color:rgba(90,122,96,1);}
+.eco-tekst h2{color:var(--wit);}
+.eco-tekst p{font-size:.95rem;color:rgba(250,247,242,.65);line-height:1.75;margin-top:.85rem;margin-bottom:1.75rem;}
+.eco-punten{display:flex;flex-direction:column;gap:.85rem;}
+.eco-punt{display:flex;align-items:flex-start;gap:.85rem;}
+.eco-punt-icon{width:36px;height:36px;background:rgba(90,122,96,.3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.eco-punt-info strong{display:block;font-size:.88rem;color:var(--wit);margin-bottom:.15rem;}
+.eco-punt-info span{font-size:.78rem;color:rgba(250,247,242,.5);line-height:1.5;}
+.eco-visual{background:rgba(250,247,242,.05);border:1px solid rgba(250,247,242,.1);border-radius:12px;padding:2rem;}
+.eco-vis-ttl{font-family:var(--display);font-size:1.1rem;color:var(--wit);margin-bottom:1.25rem;}
+.eco-stoffen{display:flex;flex-direction:column;gap:.6rem;}
+.eco-stof{background:rgba(250,247,242,.06);border-radius:8px;padding:.75rem 1rem;display:flex;justify-content:space-between;align-items:center;}
+.eco-stof-nm{font-size:.83rem;color:rgba(250,247,242,.8);}
+.eco-stof-tag{font-size:.62rem;font-weight:700;background:rgba(90,122,96,.3);color:#86efac;border-radius:12px;padding:.2rem .6rem;letter-spacing:.06em;}
+
+/* ── HOE WERKT HET ────────────────────────────────────────────────────────────*/
+.hoe{padding:5rem 2.5rem;background:var(--creme);}
+.hoe-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:3rem;position:relative;}
+.hoe-grid::before{content:'';position:absolute;top:2rem;left:12%;right:12%;height:1px;background:repeating-linear-gradient(90deg,var(--terracotta) 0,var(--terracotta) 8px,transparent 8px,transparent 20px);}
+.hoe-stap{text-align:center;padding:0 1.25rem;position:relative;}
+.hoe-nr{width:40px;height:40px;border-radius:50%;background:var(--terracotta);color:#fff;font-family:var(--display);font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;position:relative;z-index:1;}
+.hoe-ttl{font-family:var(--display);font-size:1rem;font-weight:700;margin-bottom:.4rem;}
+.hoe-txt{font-size:.78rem;color:var(--ink2);line-height:1.6;}
+
+/* ── TECHNIEKEN ──────────────────────────────────────────────────────────────*/
+.tech{padding:5rem 2.5rem;background:var(--wit);}
+.tech-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-top:3rem;}
+.tech-card{border-radius:12px;border:1px solid rgba(196,98,45,.12);overflow:hidden;background:var(--kaart);transition:border-color .2s;}
+.tech-card:hover{border-color:rgba(196,98,45,.4);}
+.tech-top{padding:2rem 1.75rem 0;}
+.tech-icoon{font-size:2rem;margin-bottom:.85rem;}
+.tech-naam{font-family:var(--display);font-size:1.4rem;font-weight:700;margin-bottom:.25rem;}
+.tech-sub{font-size:.75rem;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.85rem;}
+.tech-uitleg{font-size:.83rem;color:var(--ink2);line-height:1.65;padding:0 1.75rem;}
+.tech-pros-cons{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:1.5rem;border-top:1px solid rgba(196,98,45,.1);}
+.tech-pros,.tech-cons{padding:1.25rem 1.75rem;}
+.tech-pros{border-right:1px solid rgba(196,98,45,.1);}
+.tech-col-ttl{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.6rem;}
+.tech-pros .tech-col-ttl{color:var(--groen);}
+.tech-cons .tech-col-ttl{color:#c0392b;}
+.tech-li{font-size:.75rem;color:var(--ink2);line-height:1.55;padding:.15rem 0;display:flex;align-items:flex-start;gap:.4rem;}
+.tech-li-pro::before{content:'✓';color:var(--groen);flex-shrink:0;font-weight:700;}
+.tech-li-con::before{content:'·';color:#c0392b;flex-shrink:0;}
+.tech-best{background:rgba(196,98,45,.05);padding:1.25rem 1.75rem;border-top:1px solid rgba(196,98,45,.1);}
+.tech-best-ttl{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);margin-bottom:.4rem;}
+.tech-best-txt{font-size:.78rem;color:var(--ink2);line-height:1.5;}
+
+/* ── CTA MIDDEN ──────────────────────────────────────────────────────────────*/
+.cta-mid{padding:5rem 2.5rem;background:var(--zand);text-align:center;position:relative;overflow:hidden;}
+.cta-mid::before{content:'Maak iets van jou.';font-family:var(--display);font-size:12rem;font-weight:900;color:rgba(196,98,45,.06);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap;pointer-events:none;}
+.cta-mid h2{font-size:clamp(2.2rem,5vw,3.5rem);margin-bottom:.85rem;position:relative;}
+.cta-mid p{font-size:1.05rem;color:var(--ink2);line-height:1.7;max-width:520px;margin:0 auto 2.5rem;position:relative;}
+.cta-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;position:relative;}
+.btn-groot{display:inline-flex;align-items:center;gap:.6rem;background:var(--terracotta);color:#fff;font-family:var(--body);font-size:1rem;font-weight:700;padding:1rem 2.25rem;border-radius:50px;text-decoration:none;transition:all .2s;}
+.btn-groot:hover{background:#a84e22;transform:translateY(-2px);box-shadow:0 8px 24px rgba(196,98,45,.35);}
+.btn-lijn{display:inline-flex;align-items:center;gap:.6rem;background:transparent;color:var(--ink);font-family:var(--body);font-size:1rem;font-weight:600;padding:1rem 2.25rem;border-radius:50px;text-decoration:none;transition:all .2s;border:2px solid rgba(30,26,22,.25);}
+.btn-lijn:hover{border-color:var(--terracotta);color:var(--terracotta);}
+
+/* ── OVER ONS ────────────────────────────────────────────────────────────────*/
+.over{padding:5rem 2.5rem;background:var(--wit);}
+.over-grid{display:grid;grid-template-columns:1fr 1fr;gap:4.5rem;align-items:start;margin-top:3rem;}
+.over-tekst p{font-size:.95rem;color:var(--ink2);line-height:1.8;margin-bottom:1rem;}
+.over-vals{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;margin-top:2rem;}
+.over-val{background:var(--kaart);border:1px solid rgba(196,98,45,.12);border-radius:10px;padding:1.1rem;}
+.over-val-icon{font-size:1.3rem;margin-bottom:.4rem;}
+.over-val-ttl{font-size:.85rem;font-weight:700;color:var(--ink);margin-bottom:.25rem;}
+.over-val-txt{font-size:.75rem;color:var(--ink3);line-height:1.5;}
+.over-reviews{display:flex;flex-direction:column;gap:1rem;}
+.review{background:var(--kaart);border:1px solid rgba(196,98,45,.12);border-radius:10px;padding:1.5rem;}
+.stars{color:#f59e0b;font-size:.85rem;margin-bottom:.6rem;}
+.review-txt{font-size:.88rem;color:var(--ink2);line-height:1.65;font-style:italic;}
+.review-auteur{font-size:.75rem;font-weight:600;color:var(--ink3);margin-top:.75rem;display:flex;align-items:center;gap:.5rem;}
+.review-auteur::before{content:'';width:20px;height:1px;background:var(--terracotta);}
+
+/* ── CONTACT ─────────────────────────────────────────────────────────────────*/
+.contact{padding:5rem 2.5rem;background:var(--creme);}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:4rem;margin-top:3rem;}
+.contact-info p{font-size:.95rem;color:var(--ink2);line-height:1.8;margin-bottom:2rem;}
+.contact-methods{display:flex;flex-direction:column;gap:.75rem;}
+.contact-method{display:flex;align-items:center;gap:.85rem;padding:1rem 1.25rem;background:var(--kaart);border:1px solid rgba(196,98,45,.12);border-radius:10px;text-decoration:none;transition:all .18s;}
+.contact-method:hover{border-color:var(--terracotta);transform:translateX(4px);}
+.cm-icon{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.cm-wa{background:rgba(37,211,102,.12);}
+.cm-mail{background:rgba(196,98,45,.1);}
+.cm-ig{background:rgba(193,53,132,.1);}
+.cm-info strong{display:block;font-size:.85rem;font-weight:600;color:var(--ink);}
+.cm-info span{font-size:.75rem;color:var(--ink3);}
+.contact-form{background:var(--kaart);border:1px solid rgba(196,98,45,.15);border-radius:12px;padding:2.25rem;}
+.form-ttl{font-family:var(--display);font-size:1.4rem;font-weight:700;margin-bottom:.35rem;}
+.form-sub{font-size:.82rem;color:var(--ink3);margin-bottom:1.75rem;}
+.f-group{margin-bottom:1rem;}
+.f-group label{display:block;font-size:.7rem;font-weight:600;color:var(--ink3);margin-bottom:.35rem;text-transform:uppercase;letter-spacing:.07em;}
+.f-group input,.f-group textarea,.f-group select{width:100%;background:var(--creme);border:1.5px solid rgba(196,98,45,.2);border-radius:8px;padding:.7rem .95rem;color:var(--ink);font-size:.88rem;font-family:var(--body);transition:border-color .15s;}
+.f-group input:focus,.f-group textarea:focus,.f-group select:focus{outline:none;border-color:var(--terracotta);}
+.f-group textarea{height:110px;resize:vertical;}
+.f-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+.f-send{width:100%;background:var(--terracotta);color:#fff;font-family:var(--body);font-size:.9rem;font-weight:700;padding:.9rem;border:none;border-radius:50px;cursor:pointer;transition:background .15s;margin-top:.25rem;}
+.f-send:hover{background:#a84e22;}
+.f-ok{display:none;text-align:center;padding:.75rem;background:rgba(58,90,64,.1);border-radius:8px;font-size:.83rem;color:var(--groen);margin-top:.75rem;}
+
+/* ── FOOTER ──────────────────────────────────────────────────────────────────*/
+footer{background:var(--donkergroen);padding:3.5rem 2.5rem 1.5rem;}
+.footer-inner{max-width:1100px;margin:0 auto;}
+.footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:2.5rem;margin-bottom:3rem;}
+.footer-brand p{font-size:.82rem;color:rgba(250,247,242,.45);line-height:1.7;max-width:260px;margin-top:.85rem;}
+.footer-logo{font-family:var(--display);font-size:1.2rem;font-weight:700;color:var(--wit);text-decoration:none;display:inline-flex;align-items:center;gap:.5rem;}
+.footer-logo-mark{width:30px;height:30px;background:var(--terracotta);border-radius:5px;display:flex;align-items:center;justify-content:center;}
+.footer-logo-mark svg{width:16px;height:16px;fill:#fff;}
+.footer-col h4{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.15em;color:rgba(250,247,242,.3);margin-bottom:.85rem;}
+.footer-col a{display:block;font-size:.82rem;color:rgba(250,247,242,.5);text-decoration:none;margin-bottom:.4rem;transition:color .15s;}
+.footer-col a:hover{color:var(--wit);}
+.footer-bottom{border-top:1px solid rgba(250,247,242,.08);padding-top:1.5rem;display:flex;align-items:center;justify-content:space-between;font-size:.73rem;color:rgba(250,247,242,.3);}
+.footer-bottom a{color:rgba(250,247,242,.3);text-decoration:none;}
+.footer-bottom a:hover{color:rgba(250,247,242,.6);}
+
+/* ── WA FLOAT ────────────────────────────────────────────────────────────────*/
+.wa-float{position:fixed;bottom:1.5rem;right:1.5rem;width:52px;height:52px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:90;box-shadow:0 4px 20px rgba(0,0,0,.2);text-decoration:none;transition:transform .2s;}
+.wa-float:hover{transform:scale(1.1);}
+.wa-float svg{width:26px;height:26px;fill:#fff;}
+
+/* ── ANIMATIES ───────────────────────────────────────────────────────────────*/
+.fade-in{opacity:0;transform:translateY(20px);transition:opacity .55s ease,transform .55s ease;}
+.fade-in.zichtbaar{opacity:1;transform:translateY(0);}
+.fade-in:nth-child(2){transition-delay:.1s;}
+.fade-in:nth-child(3){transition-delay:.2s;}
+
+/* ── MOBILE ──────────────────────────────────────────────────────────────────*/
+@media(max-width:960px){
+  .hero{grid-template-columns:1fr;min-height:auto;}
+  .hero-left{padding:4rem 2rem 3rem;}
+  .hero-right-top{min-height:240px;}
+  .niches-grid{grid-template-columns:1fr;}
+  .eco-inner{grid-template-columns:1fr;}
+  .tech-grid{grid-template-columns:1fr;}
+  .over-grid{grid-template-columns:1fr;}
+  .contact-grid{grid-template-columns:1fr;}
+  .footer-top{grid-template-columns:1fr 1fr;}
+  .hoe-grid{grid-template-columns:1fr 1fr;}
+  .hoe-grid::before{display:none;}
+  .nav-links{display:none;}
+  .nav-toggle{display:flex;}
+}
+@media(max-width:560px){
+  .hero-left{padding:3rem 1.5rem;}
+  .hero-right-bottom{grid-template-columns:1fr 1fr 1fr;}
+  .tech-pros-cons{grid-template-columns:1fr;}
+  .tech-pros{border-right:none;border-bottom:1px solid rgba(196,98,45,.1);}
+  .f-row{grid-template-columns:1fr;}
+  .footer-top{grid-template-columns:1fr;}
+  .over-vals{grid-template-columns:1fr;}
+  .hoe-grid{grid-template-columns:1fr;}
+  section,.niches,.eco-band,.hoe,.tech,.cta-mid,.over,.contact{padding-left:1.25rem;padding-right:1.25rem;}
+}
+
+/* ── Get Started Button (pijl-effect) ───────────────────────────────────────*/
+.btn-arrow{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;background:var(--terracotta);color:#fff;font-family:var(--body);font-size:.95rem;font-weight:700;padding:.9rem 1.8rem;border-radius:50px;text-decoration:none;border:none;cursor:pointer;min-width:220px;transition:background .2s;}
+.btn-arrow:hover{background:#a84e22;}
+.btn-arrow-txt{margin-right:2rem;transition:opacity .4s;white-space:nowrap;}
+.btn-arrow:hover .btn-arrow-txt{opacity:0;}
+.btn-arrow-icon{position:absolute;right:6px;top:6px;bottom:6px;border-radius:40px;display:grid;place-items:center;width:20%;background:rgba(255,255,255,.18);transition:width .4s ease;z-index:1;}
+.btn-arrow:hover .btn-arrow-icon{width:calc(100% - 12px);}
+.btn-arrow-icon svg{width:16px;height:16px;stroke:#fff;flex-shrink:0;}
+.btn-arrow.wit{background:#fff;color:var(--terracotta);}
+.btn-arrow.wit:hover{background:#f5f0e8;}
+.btn-arrow.wit .btn-arrow-icon{background:rgba(196,98,45,.15);}
+.btn-arrow.wit .btn-arrow-icon svg{stroke:var(--terracotta);}
+.btn-arrow.groen{background:var(--donkergroen);}
+.btn-arrow.groen:hover{background:#1a2620;}
+
+/* ── Scrollende reviews ──────────────────────────────────────────────────────*/
+.reviews-scroll-wrap{overflow:hidden;max-height:600px;mask-image:linear-gradient(to bottom,transparent,black 15%,black 85%,transparent);-webkit-mask-image:linear-gradient(to bottom,transparent,black 15%,black 85%,transparent);margin-top:2rem;}
+.reviews-cols{display:flex;gap:1.25rem;}
+.reviews-col{flex:1;display:flex;flex-direction:column;gap:1.25rem;}
+.reviews-col-inner{display:flex;flex-direction:column;gap:1.25rem;animation:scrollUp 20s linear infinite;}
+.reviews-col:nth-child(2) .reviews-col-inner{animation-duration:26s;animation-delay:-8s;}
+.reviews-col:nth-child(3) .reviews-col-inner{animation-duration:23s;animation-delay:-4s;}
+@keyframes scrollUp{0%{transform:translateY(0);}100%{transform:translateY(-50%);}}
+.review-scroll-card{background:var(--kaart);border:1px solid rgba(196,98,45,.12);border-radius:12px;padding:1.5rem;flex-shrink:0;}
+.review-scroll-txt{font-size:.85rem;color:var(--ink2);line-height:1.7;font-style:italic;margin-bottom:1rem;}
+.review-scroll-auteur{display:flex;align-items:center;gap:.65rem;}
+.review-scroll-avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--zand);}
+.review-scroll-naam{font-size:.8rem;font-weight:600;color:var(--ink);}
+.review-scroll-stad{font-size:.72rem;color:var(--ink3);}
+.review-scroll-stars{color:#f59e0b;font-size:.75rem;margin-bottom:.6rem;}
+@media(max-width:768px){.reviews-col:nth-child(2),.reviews-col:nth-child(3){display:none;}}
+
+/* ── FAQ ─────────────────────────────────────────────────────────────────────*/
+.faq{padding:5rem 2.5rem;background:var(--zand);}
+.faq-lijst{max-width:680px;margin:3rem auto 0;}
+.faq-item{display:flex;gap:1.25rem;margin-bottom:2rem;}
+.faq-nr{width:28px;height:28px;border-radius:6px;background:var(--terracotta);color:#fff;font-family:var(--display);font-size:.85rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.faq-body h3{font-size:.95rem;font-weight:700;color:var(--ink);margin-bottom:.4rem;}
+.faq-body p{font-size:.85rem;color:var(--ink2);line-height:1.75;}
+@media(max-width:560px){.faq{padding:3.5rem 1.25rem;}}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-mark">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
+    <div>
+      <div class="nav-logo-txt">Merch<em>Master</em></div>
+      <span class="nav-logo-sub">Garment decoratorion</span>
+    </div>
+  </a>
+  <div class="nav-links">
+    <a href="#technieken">Technieken</a>
+    <a href="#over">Over ons</a>
+    <a href="#contact">Contact</a>
+    <a href="/bestellen/" class="nav-cta">Bestel online →</a>
+  </div>
+  <div class="nav-toggle" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+<div class="mob-menu" id="mob-menu">
+  <a href="#technieken" onclick="toggleMenu()">Technieken</a>
+  <a href="#over" onclick="toggleMenu()">Over ons</a>
+  <a href="#contact" onclick="toggleMenu()">Contact</a>
+  <a href="/bestellen/" class="nav-cta">Bestel direct online →</a>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow">Print & borduur service</div>
+    <h1>Maak iets<br>van <em>jou.</em></h1>
+    <p class="hero-sub">Voor festivals, evenementen, groepen en duurzame merken. Wij drukken en borduren op textiel dat past bij jouw verhaal — vanaf 1 stuk, zonder gedoe.</p>
+    <div class="hero-btns">
+      <a href="/bestellen/" class="btn-arrow">
+        <span class="btn-arrow-txt">Start je bestelling</span>
+        <span class="btn-arrow-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+      </a>
+      <a href="#contact" class="btn-ghost">Eerst een vraag stellen</a>
+    </div>
+    <div class="hero-badges">
+      <span class="hero-badge">DTF vanaf 1 stuk</span>
+      <span class="hero-badge">Zeefdruk vanaf 25 stuks</span>
+      <span class="hero-badge">Eco-friendly opties</span>
+      <span class="hero-badge">Snel geleverd</span>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-right-top">
+      <img src="/img/hero.jpg" alt="Merch Master — bedrukte sweater" style="width:100%;height:100%;object-fit:cover;object-position:top center;">
+    </div>
+    <div class="hero-right-bottom">
+      <div class="hero-stat">
+        <div class="hero-stat-n">1</div>
+        <div class="hero-stat-l">Stuk minimaal</div>
+      </div>
+      <div class="hero-stat" style="border-left:1px solid rgba(196,98,45,.15);border-right:1px solid rgba(196,98,45,.15);">
+        <div class="hero-stat-n">100+</div>
+        <div class="hero-stat-l">Textielmodellen</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-n">3</div>
+        <div class="hero-stat-l">Technieken</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- ECO SECTIE -->
+<div class="eco-band" id="eco">
+  <div class="eco-inner">
+    <div class="eco-tekst fade-in">
+      <div class="sec-oogje">Bewust ondernemen</div>
+      <h2 style="color:var(--wit);">Duurzame keuzes,<br><em style="color:#86efac;">zonder compromis</em></h2>
+      <p>Bij Merch Master begrijpen we dat jouw merk meer is dan een logo. Daarom bieden we textielopties die aansluiten bij jouw waarden — van biologisch katoen tot gerecyclede materialen.</p>
+      <div class="eco-punten">
+        <div class="eco-punt">
+          <div class="eco-punt-icon">🌱</div>
+          <div class="eco-punt-info">
+            <strong>Biologisch katoen</strong>
+            <span>GOTS-gecertificeerde stoffen voor bewuste merken en foodlabels.</span>
+          </div>
+        </div>
+        <div class="eco-punt">
+          <div class="eco-punt-icon">♻️</div>
+          <div class="eco-punt-info">
+            <strong>Gerecyclede materialen</strong>
+            <span>T-shirts en hoodies van gerecycled polyester en katoen beschikbaar.</span>
+          </div>
+        </div>
+        <div class="eco-punt">
+          <div class="eco-punt-icon">💧</div>
+          <div class="eco-punt-info">
+            <strong>Watergebaseerde inkt</strong>
+            <span>Milieuverantwoorde drukinkt op aanvraag voor zeefdruk en DTF.</span>
+          </div>
+        </div>
+        <div class="eco-punt">
+          <div class="eco-punt-icon">🤝</div>
+          <div class="eco-punt-info">
+            <strong>Eerlijke productie</strong>
+            <span>Fair Wear Foundation gecertificeerde merken in ons assortiment.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="eco-visual fade-in">
+      <img src="/img/borduren.jpg" alt="Duurzaam borduurwerk" style="width:100%;height:160px;object-fit:cover;border-radius:8px;margin-bottom:1.25rem;opacity:.85;">
+      <div class="eco-vis-ttl">Duurzame stoffen in ons assortiment</div>
+      <div class="eco-stoffen">
+        <div class="eco-stof">
+          <span class="eco-stof-nm">Biologisch katoen (GOTS)</span>
+          <span class="eco-stof-tag">GOTS</span>
+        </div>
+        <div class="eco-stof">
+          <span class="eco-stof-nm">Gerecycled polyester (rPET)</span>
+          <span class="eco-stof-tag">Recycled</span>
+        </div>
+        <div class="eco-stof">
+          <span class="eco-stof-nm">Biologisch katoen / recycled mix</span>
+          <span class="eco-stof-tag">Blended</span>
+        </div>
+        <div class="eco-stof">
+          <span class="eco-stof-nm">Fair Wear gecertificeerd</span>
+          <span class="eco-stof-tag">Fair Wear</span>
+        </div>
+        <div class="eco-stof">
+          <span class="eco-stof-nm">Vegan friendly stoffen</span>
+          <span class="eco-stof-tag">Vegan</span>
+        </div>
+      </div>
+      <a href="#contact" style="display:block;text-align:center;margin-top:1.5rem;font-size:.83rem;color:rgba(250,247,242,.5);text-decoration:none;">Vraag naar duurzame opties →</a>
+    </div>
+  </div>
+</div>
+
+<!-- HOE WERKT HET -->
+<section class="hoe">
+  <div class="container">
+    <div class="sec-kop fade-in">
+      <div class="sec-oogje">Zo simpel</div>
+      <h2>In 4 stappen <em>geregeld</em></h2>
+    </div>
+    <div class="hoe-grid fade-in">
+      <div class="hoe-stap">
+        <div class="hoe-nr">1</div>
+        <div class="hoe-ttl">Kies je textiel</div>
+        <p class="hoe-txt">Selecteer uit 100+ modellen — t-shirts, hoodies, petten, tassen en meer. Filter op merk, prijs of materiaal.</p>
+      </div>
+      <div class="hoe-stap">
+        <div class="hoe-nr">2</div>
+        <div class="hoe-ttl">Kies je techniek</div>
+        <p class="hoe-txt">DTF voor kleine oplages en complexe designs. Zeefdruk voor grote aantallen. Borduren voor een premium look.</p>
+      </div>
+      <div class="hoe-stap">
+        <div class="hoe-nr">3</div>
+        <div class="hoe-ttl">Upload je ontwerp</div>
+        <p class="hoe-txt">Logo, foto of idee — upload het direct in de tool. Geen ontwerp? Beschrijf je wens en wij denken mee.</p>
+      </div>
+      <div class="hoe-stap">
+        <div class="hoe-nr">4</div>
+        <div class="hoe-ttl">Betaal & ontvang</div>
+        <p class="hoe-txt">Veilig betalen via PayPal. Na akkoord op het ontwerp starten we direct. Snel en netjes aan de deur.</p>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:3rem;">
+      <a href="/bestellen/" class="btn-arrow">
+        <span class="btn-arrow-txt">Probeer de besteltool</span>
+        <span class="btn-arrow-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- TECHNIEKEN -->
+<section class="tech" id="technieken">
+  <div class="container">
+    <div class="sec-kop fade-in">
+      <div class="sec-oogje">Productietechnieken</div>
+      <h2>Drie technieken,<br><em>één plek</em></h2>
+      <p class="sec-sub">Wij adviseren je altijd welke techniek het beste past. Geen kennis nodig — dat is ons werk.</p>
+    </div>
+    <div class="tech-grid fade-in">
+      <div class="tech-card">
+        <div class="tech-top">
+          <img src="/img/dtf_machine.jpg" alt="DTF transferdruk machine" style="width:calc(100% + 3.5rem);margin:-2rem -1.75rem 1.25rem;height:160px;object-fit:cover;border-radius:12px 12px 0 0;">
+          <div class="tech-naam">DTF Transferdruk</div>
+          <div class="tech-sub">Meest flexibel · Vanaf 1 stuk</div>
+          <p class="tech-uitleg">Je ontwerp wordt in full colour op transferfilm geprint en daarna met hitte op het textiel geperst. Ideaal voor foto's, kleurverlopen en kleine aantallen.</p>
+        </div>
+        <div class="tech-pros-cons">
+          <div class="tech-pros">
+            <div class="tech-col-ttl">Voordelen</div>
+            <div class="tech-li tech-li-pro">Full colour, geen kleurbeperking</div>
+            <div class="tech-li tech-li-pro">Geen minimale oplage</div>
+            <div class="tech-li tech-li-pro">Haarscharpe details</div>
+            <div class="tech-li tech-li-pro">Bijna elk materiaal</div>
+          </div>
+          <div class="tech-cons">
+            <div class="tech-col-ttl">Nadelen</div>
+            <div class="tech-li tech-li-con">Minder geschikt voor enorme oplages</div>
+            <div class="tech-li tech-li-con">Minder ademend bij grote prints</div>
+          </div>
+        </div>
+        <div class="tech-best">
+          <div class="tech-best-ttl">Perfect voor</div>
+          <div class="tech-best-txt">Particulieren · Kleine evenementen · Gepersonaliseerde kleding · Foodlabels · Print on Demand</div>
+        </div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-top">
+          <img src="/img/zeefdruk.jpg" alt="Zeefdruk" style="width:calc(100% + 3.5rem);margin:-2rem -1.75rem 1.25rem;height:160px;object-fit:cover;border-radius:12px 12px 0 0;">
+          <div class="tech-naam">Zeefdruk</div>
+          <div class="tech-sub">Meest duurzaam · Vanaf 25 stuks</div>
+          <p class="tech-uitleg">Inkt wordt via een sjabloon (zeef) direct op het textiel gedrukt. Klassieke techniek die jarenlang mooi blijft. Ideaal voor grote oplages met effen kleuren.</p>
+        </div>
+        <div class="tech-pros-cons">
+          <div class="tech-pros">
+            <div class="tech-col-ttl">Voordelen</div>
+            <div class="tech-li tech-li-pro">Jarenlang mooi, ook na wassen</div>
+            <div class="tech-li tech-li-pro">Perfecte kleurdekking</div>
+            <div class="tech-li tech-li-pro">Goedkoper bij grote aantallen</div>
+            <div class="tech-li tech-li-pro">Professionele uitstraling</div>
+          </div>
+          <div class="tech-cons">
+            <div class="tech-col-ttl">Nadelen</div>
+            <div class="tech-li tech-li-con">Minimaal 25 stuks</div>
+            <div class="tech-li tech-li-con">Max 4 kleuren per ontwerp</div>
+          </div>
+        </div>
+        <div class="tech-best">
+          <div class="tech-best-ttl">Perfect voor</div>
+          <div class="tech-best-txt">Festivals · Sportclubs · Bedrijfskleding · Kledingmerken · Promotie giveaways</div>
+        </div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-top">
+          <img src="/img/zeefdruk2.jpg" alt="Borduren" style="width:calc(100% + 3.5rem);margin:-2rem -1.75rem 1.25rem;height:160px;object-fit:cover;border-radius:12px 12px 0 0;">
+          <div class="tech-naam">Borduren</div>
+          <div class="tech-sub">Premium uitstraling · Prijs op aanvraag</div>
+          <p class="tech-uitleg">Je logo of ontwerp wordt in steekjes op het textiel geborduurd. Luxe, duurzaam en tijdloos. Geschikt voor bijna elk materiaal — van petten tot fleece jassen.</p>
+        </div>
+        <div class="tech-pros-cons">
+          <div class="tech-pros">
+            <div class="tech-col-ttl">Voordelen</div>
+            <div class="tech-li tech-li-pro">Extreem duurzaam, vervaagt niet</div>
+            <div class="tech-li tech-li-pro">Luxe en professionele uitstraling</div>
+            <div class="tech-li tech-li-pro">Meerdere kleuren, geen meerkosten</div>
+            <div class="tech-li tech-li-pro">Ideaal voor petten en jassen</div>
+          </div>
+          <div class="tech-cons">
+            <div class="tech-col-ttl">Nadelen</div>
+            <div class="tech-li tech-li-con">Niet voor zeer fijne details</div>
+            <div class="tech-li tech-li-con">Prijs afhankelijk van complexiteit</div>
+          </div>
+        </div>
+        <div class="tech-best">
+          <div class="tech-best-ttl">Perfect voor</div>
+          <div class="tech-best-txt">Bedrijfskleding · Caps en petten · Horeca uniformen · Sportteams · Promotieartikelen</div>
+        </div>
+        <div style="margin-top:1rem;border-radius:10px;overflow:hidden;border:1px solid rgba(196,98,45,.12);">
+          <img src="/img/dtf2.jpg" alt="DTF print resultaat" style="width:100%;height:140px;object-fit:cover;display:block;">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA MIDDEN -->
+<div class="cta-mid">
+  <h2>Klaar om iets <em>moois</em> te maken?</h2>
+  <p>Onze online tool maakt bestellen eenvoudig. Kies je textiel, upload je ontwerp en wij regelen de rest. Geen minimale aantallen bij DTF.</p>
+  <div class="cta-btns">
+    <a href="/bestellen/" class="btn-arrow">
+      <span class="btn-arrow-txt">Begin je bestelling</span>
+      <span class="btn-arrow-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+    </a>
+    <a href="https://wa.me/31617255170" class="btn-lijn" target="_blank">💬 WhatsApp ons</a>
+  </div>
+</div>
+
+<!-- OVER ONS -->
+<section class="over" id="over">
+  <div class="container">
+    <div class="sec-kop fade-in">
+      <div class="sec-oogje">Wie zijn wij</div>
+      <h2>Over <em>Merch Master</em></h2>
+    </div>
+    <div class="over-grid fade-in">
+      <div>
+        <p>Wij doen waar we goed in zijn: borduren en bedrukken op diverse soorten textiel. Geen enkele bestelling is te groot of te klein. Bedrukken kan al vanaf 1 stuk, maar ook grote oplages zijn geen probleem.</p>
+        <p>Bij Merch Master bieden we print- en borduurservices voor zowel particulieren als ondernemers. Onze technieken omvatten DTF, zeefdruk en borduren — voor unieke en hoogwaardige producten die bij jouw verhaal passen.</p>
+        <p>Of je nu een festivalshirt wilt voor 200 bezoekers, een biologisch katoenen tote bag voor je foodlabel, of een groepsshirt voor je verjaardag — wij helpen je verder.</p>
+        <div class="over-vals">
+          <div class="over-val">
+            <div class="over-val-icon">⚡</div>
+            <div class="over-val-ttl">Snel geleverd</div>
+            <div class="over-val-txt">DTF al vanaf 5–8 werkdagen na akkoord op je ontwerp.</div>
+          </div>
+          <div class="over-val">
+            <div class="over-val-icon">🎯</div>
+            <div class="over-val-ttl">Altijd overleg</div>
+            <div class="over-val-txt">We nemen contact op bij vragen. Geen verrassingen aan de deur.</div>
+          </div>
+          <div class="over-val">
+            <div class="over-val-icon">🌿</div>
+            <div class="over-val-ttl">Eco opties</div>
+            <div class="over-val-txt">Biologisch katoen, recycled stoffen en eerlijke productie beschikbaar.</div>
+          </div>
+          <div class="over-val">
+            <div class="over-val-icon">💬</div>
+            <div class="over-val-ttl">Persoonlijk contact</div>
+            <div class="over-val-txt">Direct via WhatsApp bereikbaar voor vragen en advies.</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="border-radius:12px;overflow:hidden;margin-bottom:1rem;border:1px solid rgba(196,98,45,.12);">
+          <img src="/img/ramen.jpg" alt="Voorbeeld DTF bedrukking — Ramen shirt" style="width:100%;height:220px;object-fit:cover;display:block;">
+        </div>
+      <div class="reviews-scroll-wrap">
+        <div class="reviews-cols">
+          <!-- Kolom 1 -->
+          <div class="reviews-col">
+            <div class="reviews-col-inner">
+              <div class="review-scroll-card"><div class="review-scroll-stars">★★★★★</div><p class="review-scroll-txt">"De printservice van Merch-Master.com is fantastisch! Ze hebben mijn verwachtingen overtroffen met hun precisie en kwaliteit."</p><div class="review-scroll-auteur"><img class="review-scroll-avatar" src="https://randomuser.me/api/portraits/women/44.jpg" alt="Sophie"><div><div class="review-scroll-naam">Sophie L.</div><div class="review-scroll-stad">Utrecht</div></div></div></div>
+              <div class="review-scroll-card"><div class="review-scroll-stars">★★★★★</div><p class="review-scroll-txt">"Super blij met het resultaat! Onze festival shirts zagen er geweldig uit. Iedereen vroeg waar we ze vandaan hadden."</p><div class="review-scroll-auteur"><img class="review-scroll-avatar" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Tim"><div><div class="review-scroll-naam">Tim V.</div><div class="review-scroll-stad">Amsterdam</div></div></div></div>
+              <div class="review-scroll-card"><div class="review-scroll-stars">★★★★★</div><p class="review-scroll-txt">"Snel geleverd en precies zoals ik het wilde. De kwaliteit van de bedrukking is echt top, ook na meerdere wassen."</p><div class="review-scroll-auteur"><img class="review-scroll-avatar" src="https://randomuser.me/api/portraits/women/68.jpg" alt="Lisa"><div><div class="review-scroll-naam">Lisa M.</div><div class="review-scroll-stad">Den Haag</div></div></div></div>
+              <!-- Herhaling voor loop -->
+              <div class="review-scroll-card"><div class="review-scroll-stars">★★★★★</div><p class="review-scroll-txt">"De printservice van Merch-Master.com is fantastisch! Ze hebben mijn verwachtingen overtroffen met hun precisie en kwaliteit."</p><div class="review-scroll-auteur"><img class="review-scroll-avatar" src="https://randomuser.me/api/portraits/women/44.jpg" alt="Sophie"><div><div class="review-scroll-naam">Sophie L.</div><div class="review-scroll-stad">Utrecht</div></div></div></div>
+              <div class="review-scroll-card"><div class="review-scroll-stars">★★★★★</div><p class="review-scroll-txt">"Super blij met het resultaat! Onze festival shirts zagen er geweldig uit. Iedereen vroeg waar we ze vandaan hadden."</p><div class="review-scroll-auteur"><img class="review-scroll-avatar" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Tim"><div><div class="review-scroll-naam">Tim V.</div><div class="review-scroll-stad">Amsterdam</div></div></div></div>
+              <div class="review-scroll-card"><div class="review-scroll-stars">★★★★★</div><p class="review-scroll-txt">"Snel geleverd en precies zoals ik het wilde. De kwaliteit van de bedrukking is echt top, ook na meerdere wassen."</p><div class="review-scroll-auteur"><img class="review-scroll-avatar" src="https://randomuser.me/api/portraits/women/68.jpg" alt="Lisa"><div><div class="review-scroll-naam">Lisa M.</div><div class="review-scroll-stad">Den Haag</div></div></div></div>
+            </div>
+          </div>
+          <!-- Kolom 2 -->
+          <div class="reviews-col">
+            <div class="reviews-col-inner">
+              <div class="review-scroll-card"><div class="review-scroll-stars">★★★★★</div><p class="review-scroll-txt">"Geweldige service en kwaliteit! Mijn shirts zijn perfect bedrukt en snel geleverd."</p><div class="review-scroll-auteur"><img class="review-scroll-avatar" src="https://randomuser.me/api/portraits/men/22.jpg" alt="Jasper"><div><div class="review-scroll-naam">Jasper K.</div><div class="review-scroll-stad">Amsterdam</div></div></div></div>
+              <div class="review-scroll-card"><div class="review-scroll-stars">★★★★★</div><p class="review-scroll-txt">"Voor onze horeca uniforms precies wat we zochten. Professioneel geborduurde logo's die er na een jaar nog als nieuw uitzien."</p><div class="review-scroll-auteur"><img class="review-scroll-avatar" src="https://randomuser.me/api/portraits/women/55.jpg" alt="Sarah"><div><div class="review-scroll-naam">Sarah B.</div><div class="review-scroll-stad">Rotterdam</div></div></div></div>
+              <div class="review-scroll-card"><div class="review-scroll-stars">★★★★★</div><p class="review-scroll-txt">"Besteld voor ons voetbalteam, 22 shirts in dezelfde stijl. Resultaat was perfect en de communicatie verliep soepel."</p><div class="review-scroll-auteur"><img class="review-scroll-avatar" src="https://randomuser.me/api/portraits/men/41.jpg" alt="Marco"><div><div class="review-scroll-naam">Marco D.</div><div class="review-scroll-stad">Utrecht</div></div></div></div>
+              <!-- Herhaling -->
+              <div class="review-scroll-card"><div class="review-scroll-stars">★★★★★</div><p class="review-scroll-txt">"Geweldige service en kwaliteit! Mijn shirts zijn perfect bedrukt en snel geleverd."</p><div class="review-scroll-auteur"><img class="review-scroll-avatar" src="https://randomuser.me/api/portraits/men/22.jpg" alt="Jasper"><div><div class="review-scroll-naam">Jasper K.</div><div class="review-scroll-stad">Amsterdam</div></div></div></div>
+              <div class="review-scroll-card"><div class="review-scroll-stars">★★★★★</div><p class="review-scroll-txt">"Voor onze horeca uniforms precies wat we zochten. Professioneel geborduurde logo's die er na een jaar nog als nieuw uitzien."</p><div class="review-scroll-auteur"><img class="review-scroll-avatar" src="https://randomuser.me/api/portraits/women/55.jpg" alt="Sarah"><div><div class="review-scroll-naam">Sarah B.</div><div class="review-scroll-stad">Rotterdam</div></div></div></div>
+              <div class="review-scroll-card"><div class="review-scroll-stars">★★★★★</div><p class="review-scroll-txt">"Besteld voor ons voetbalteam, 22 shirts in dezelfde stijl. Resultaat was perfect en de communicatie verliep soepel."</p><div class="review-scroll-auteur"><img class="review-scroll-avatar" src="https://randomuser.me/api/portraits/men/41.jpg" alt="Marco"><div><div class="review-scroll-naam">Marco D.</div><div class="review-scroll-stad">Utrecht</div></div></div></div>
+            </div>
+          </div>
+          <!-- Kolom 3 -->
+          <div class="reviews-col">
+            <div class="reviews-col-inner">
+              <div class="review-scroll-card"><div class="review-scroll-stars">★★★★★</div><p class="review-scroll-txt">"Voor ons biologisch voedingsmerk hebben ze prachtige eco-vriendelijke tote bags gedrukt. Precies de uitstraling die we zochten."</p><div class="review-scroll-auteur"><img class="review-scroll-avatar" src="https://randomuser.me/api/portraits/women/29.jpg" alt="Emma"><div><div class="review-scroll-naam">Emma V.</div><div class="review-scroll-stad">Haarlem</div></div></div></div>
+              <div class="review-scroll-card"><div class="review-scroll-stars">★★★★★</div><p class="review-scroll-txt">"Onze groepsuitje shirts waren een hit. Snel besteld, snel ontvangen en de kwaliteit was boven verwachting."</p><div class="review-scroll-auteur"><img class="review-scroll-avatar" src="https://randomuser.me/api/portraits/men/67.jpg" alt="Antony"><div><div class="review-scroll-naam">Antony R.</div><div class="review-scroll-stad">Rotterdam</div></div></div></div>
+              <div class="review-scroll-card"><div class="review-scroll-stars">★★★★★</div><p class="review-scroll-txt">"Altijd al moeite gehad met het vinden van een goede printservice. Bij Merch Master ben ik eindelijk gevonden wat ik zocht."</p><div class="review-scroll-auteur"><img class="review-scroll-avatar" src="https://randomuser.me/api/portraits/women/12.jpg" alt="Nora"><div><div class="review-scroll-naam">Nora K.</div><div class="review-scroll-stad">Eindhoven</div></div></div></div>
+              <!-- Herhaling -->
+              <div class="review-scroll-card"><div class="review-scroll-stars">★★★★★</div><p class="review-scroll-txt">"Voor ons biologisch voedingsmerk hebben ze prachtige eco-vriendelijke tote bags gedrukt. Precies de uitstraling die we zochten."</p><div class="review-scroll-auteur"><img class="review-scroll-avatar" src="https://randomuser.me/api/portraits/women/29.jpg" alt="Emma"><div><div class="review-scroll-naam">Emma V.</div><div class="review-scroll-stad">Haarlem</div></div></div></div>
+              <div class="review-scroll-card"><div class="review-scroll-stars">★★★★★</div><p class="review-scroll-txt">"Onze groepsuitje shirts waren een hit. Snel besteld, snel ontvangen en de kwaliteit was boven verwachting."</p><div class="review-scroll-auteur"><img class="review-scroll-avatar" src="https://randomuser.me/api/portraits/men/67.jpg" alt="Antony"><div><div class="review-scroll-naam">Antony R.</div><div class="review-scroll-stad">Rotterdam</div></div></div></div>
+              <div class="review-scroll-card"><div class="review-scroll-stars">★★★★★</div><p class="review-scroll-txt">"Altijd al moeite gehad met het vinden van een goede printservice. Bij Merch Master ben ik eindelijk gevonden wat ik zocht."</p><div class="review-scroll-auteur"><img class="review-scroll-avatar" src="https://randomuser.me/api/portraits/women/12.jpg" alt="Nora"><div><div class="review-scroll-naam">Nora K.</div><div class="review-scroll-stad">Eindhoven</div></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- FAQ -->
+<section class="faq">
+  <div class="container">
+    <div class="sec-kop fade-in">
+      <div class="sec-oogje">Veelgestelde vragen</div>
+      <h2>Alles wat je wilt <em>weten</em></h2>
+      <p class="sec-sub">Staat jouw vraag er niet bij? Stuur ons een berichtje via WhatsApp of het contactformulier.</p>
+    </div>
+    <div class="faq-lijst fade-in">
+      <div class="faq-item">
+        <div class="faq-nr">1</div>
+        <div class="faq-body">
+          <h3>Wat is de minimale bestelhoeveelheid?</h3>
+          <p>Bij DTF-druk kun je al vanaf 1 stuk bestellen — ideaal voor gepersonaliseerde kleding of kleine oplages. Voor zeefdruk geldt een minimum van 25 stuks. Borduren heeft geen vaste minimum en is prijs per aanvraag.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-nr">2</div>
+        <div class="faq-body">
+          <h3>Welke bestandsformaten accepteren jullie?</h3>
+          <p>Voor de beste kwaliteit werken we het liefst met vectorbestanden: AI, EPS of PDF. Ook PNG-bestanden met een hoge resolutie (minimaal 300 dpi) zijn geschikt. Twijfel je over je bestand? Stuur het op en we kijken mee.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-nr">3</div>
+        <div class="faq-body">
+          <h3>Hoe lang duurt levering?</h3>
+          <p>DTF-druk: 5–8 werkdagen na akkoord op het ontwerp. Zeefdruk: 6–10 werkdagen. Borduren: 7–12 werkdagen. Heb je een deadline? Neem contact op en we kijken wat mogelijk is.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-nr">4</div>
+        <div class="faq-body">
+          <h3>Hebben jullie duurzame of eco-vriendelijke opties?</h3>
+          <p>Ja — we hebben biologisch katoen (GOTS-gecertificeerd), gerecyclede materialen en Fair Wear gecertificeerde merken in ons assortiment. Vraag naar de mogelijkheden via het contactformulier.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-nr">5</div>
+        <div class="faq-body">
+          <h3>Kan ik een voorbeeld zien voordat jullie starten met productie?</h3>
+          <p>Ja. Na het plaatsen van je bestelling sturen we een digitale proef (mock-up) ter goedkeuring. Pas als jij akkoord geeft starten we met productie.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-nr">6</div>
+        <div class="faq-body">
+          <h3>Welke techniek past het beste bij mijn ontwerp?</h3>
+          <p>Heel simpel: veel kleuren of een foto? → DTF. Effen kleuren, grote aantallen? → Zeefdruk. Premium uitstraling op caps of jassen? → Borduren. Weet je het niet zeker, dan adviseren we je graag persoonlijk.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact" id="contact">
+  <div class="container">
+    <div class="sec-kop fade-in">
+      <div class="sec-oogje">Laten we praten</div>
+      <h2>Neem <em>contact op</em></h2>
+    </div>
+    <div class="contact-grid fade-in">
+      <div>
+        <p class="contact-info" style="font-size:.95rem;color:var(--ink2);line-height:1.8;margin-bottom:2rem;">Heb je een vraag, wil je een offerte of even sparren over wat het beste bij jouw project past? We staan klaar — ook voor last-minute festival opdrachten.</p>
+        <div class="contact-methods">
+          <a href="https://wa.me/31617255170" class="contact-method" target="_blank">
+            <div class="cm-icon cm-wa">💬</div>
+            <div class="cm-info">
+              <strong>WhatsApp</strong>
+              <span>+31 6 17 25 51 70 — snelste antwoord</span>
+            </div>
+          </a>
+          <a href="mailto:info@merch-master.com" class="contact-method">
+            <div class="cm-icon cm-mail">✉️</div>
+            <div class="cm-info">
+              <strong>E-mail</strong>
+              <span>info@merch-master.com</span>
+            </div>
+          </a>
+          <a href="https://instagram.com/merchmasterprinthouse" class="contact-method" target="_blank">
+            <div class="cm-icon cm-ig">📸</div>
+            <div class="cm-info">
+              <strong>Instagram</strong>
+              <span>@merchmasterprinthouse — bekijk ons werk</span>
+            </div>
+          </a>
+        </div>
+      </div>
+      <div class="contact-form">
+        <div class="form-ttl">Stuur een bericht</div>
+        <div class="form-sub">We reageren binnen 1 werkdag.</div>
+        <div class="f-row">
+          <div class="f-group">
+            <label>Voornaam</label>
+            <input type="text" id="cf-naam" placeholder="Jan">
+          </div>
+          <div class="f-group">
+            <label>E-mail *</label>
+            <input type="email" id="cf-email" placeholder="jan@bedrijf.nl">
+          </div>
+        </div>
+        <div class="f-group">
+          <label>Onderwerp</label>
+          <select id="cf-onderwerp">
+            <option value="">Kies een onderwerp</option>
+            <option>Festival / evenement merchandise</option>
+            <option>Duurzame / eco kleding</option>
+            <option>Groepsbestelling particulier</option>
+            <option>Offerte aanvragen</option>
+            <option>Vraag over bestelling</option>
+            <option>Overig</option>
+          </select>
+        </div>
+        <div class="f-group">
+          <label>Bericht *</label>
+          <textarea id="cf-bericht" placeholder="Vertel ons over je project — aantal stuks, gewenste techniek, deadline..."></textarea>
+        </div>
+        <button class="f-send" id="cf-btn" onclick="verstuurContact()">Verstuur bericht</button>
+        <div class="f-ok" id="cf-ok">✓ Bericht verzonden! We nemen zo snel mogelijk contact op.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="#" class="footer-logo">
+          <div class="footer-logo-mark">
+            <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </div>
+          <span style="margin-left:.4rem;">Merch<span style="color:var(--terracotta)">Master</span></span>
+        </a>
+        <p>Print- en borduurservice voor particulieren, festivals en duurzame merken. Hoge kwaliteit, persoonlijk contact.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Diensten</h4>
+        <a href="#technieken">DTF Transferdruk</a>
+        <a href="#technieken">Zeefdruk</a>
+        <a href="#technieken">Borduren</a>
+        <a href="/bestellen/">Online bestellen</a>
+      </div>
+      <div class="footer-col">
+        <h4>Klantenservice</h4>
+        <a href="/bestellen/portaal/">Mijn account</a>
+        <a href="#contact">Contact</a>
+        <a href="#">Verzendkosten</a>
+        <a href="#">Levertijden</a>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <a href="mailto:info@merch-master.com">info@merch-master.com</a>
+        <a href="https://wa.me/31617255170">+31 6 17 25 51 70</a>
+        <a href="https://instagram.com/merchmasterprinthouse">Instagram</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 Merch Master. All rights reserved.</span>
+      <div style="display:flex;gap:1.5rem;">
+        <a href="#">Privacybeleid</a>
+        <a href="#">Algemene voorwaarden</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- WA FLOAT -->
+<a href="https://wa.me/31617255170" class="wa-float" target="_blank" aria-label="WhatsApp">
+  <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/><path d="M11.5 0C5.159 0 0 5.159 0 11.5c0 2.065.549 4.002 1.508 5.674L0 23l5.974-1.484A11.45 11.45 0 0011.5 23C17.841 23 23 17.841 23 11.5S17.841 0 11.5 0zm0 21.077a9.54 9.54 0 01-4.976-1.395l-.356-.214-3.695.917.944-3.606-.235-.372A9.522 9.522 0 011.923 11.5C1.923 6.216 6.216 1.923 11.5 1.923S21.077 6.216 21.077 11.5 16.784 21.077 11.5 21.077z"/></svg>
+</a>
+
+<script>
+function toggleMenu(){
+  document.getElementById('mob-menu').classList.toggle('open');
+}
+
+// Scroll animaties
+const obs = new IntersectionObserver(els=>{
+  els.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('zichtbaar'); });
+},{threshold:.1});
+document.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
+
+// Contact form
+function verstuurContact(){
+  const btn = document.getElementById('cf-btn');
+  const email = document.getElementById('cf-email').value.trim();
+  const bericht = document.getElementById('cf-bericht').value.trim();
+  if(!email||!bericht){ 
+    btn.textContent = 'Vul e-mail en bericht in ↑';
+    btn.style.background = '#c0392b';
+    setTimeout(()=>{ btn.textContent='Verstuur bericht'; btn.style.background=''; }, 2500);
+    return; 
+  }
+  // Stap 1: Bezig
+  btn.textContent = 'Bezig met verzenden...';
+  btn.disabled = true;
+  const sub = encodeURIComponent(document.getElementById('cf-onderwerp').value||'Contactformulier Merch Master');
+  const naam = document.getElementById('cf-naam').value.trim();
+  const body = encodeURIComponent(`Naam: ${naam}\nE-mail: ${email}\n\n${bericht}`);
+  setTimeout(()=>{
+    window.location.href=`mailto:info@merch-master.com?subject=${sub}&body=${body}`;
+    // Stap 2: Verzonden
+    btn.textContent = '✓ Verzonden!';
+    btn.style.background = 'var(--groen)';
+    document.getElementById('cf-ok').style.display='block';
+    setTimeout(()=>{ btn.textContent='Nog een bericht sturen'; btn.disabled=false; btn.style.background=''; }, 3000);
+  }, 800);
+}
+</script>
+</body>
+</html>

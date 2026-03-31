@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mijn account — Merch Master</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --accent:#e84c1e;--ink:#1a1a1a;--ink2:#3a3832;--ink3:#7a7670;
+  --border:#e8e4dc;--surface:#fff;--paper:#f5f3ef;--r:10px;
+  --success:#1a7a45;--shadow:0 2px 12px rgba(0,0,0,.07);
+}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;}
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@700;800&display=swap');
+
+/* ── Header ── */
+.hdr{background:var(--ink);padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;}
+.hdr-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;color:#fff;text-decoration:none;}
+.hdr-logo span{color:var(--accent);}
+.hdr-nav{display:flex;gap:1rem;align-items:center;}
+.hdr-nav a{color:#aaa;font-size:.82rem;text-decoration:none;}
+.hdr-nav a:hover{color:#fff;}
+
+/* ── Layout ── */
+.shell{max-width:900px;margin:0 auto;padding:2rem 1rem;}
+.page-ttl{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;margin-bottom:1.5rem;}
+
+/* ── Auth schermen ── */
+.auth-wrap{max-width:440px;margin:3.5rem auto;}
+.auth-card{background:var(--surface);border-radius:16px;padding:2.25rem;box-shadow:0 4px 32px rgba(0,0,0,.08);border:1px solid var(--border);}
+/* Logo in auth card */
+.auth-logo{display:flex;align-items:center;gap:.6rem;margin-bottom:1.75rem;}
+.auth-logo-mark{width:36px;height:36px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.auth-logo-mark svg{width:18px;height:18px;fill:#fff;}
+.auth-logo-txt{font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:var(--ink);}
+.auth-logo-txt em{font-style:normal;color:var(--accent);}
+/* Titels */
+.auth-ttl{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;margin-bottom:.3rem;color:var(--ink);}
+.auth-subtl{font-size:.83rem;color:var(--ink3);margin-bottom:1.5rem;}
+/* Divider */
+.auth-divider{display:flex;align-items:center;gap:.75rem;margin:1.25rem 0;color:var(--ink3);font-size:.78rem;}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+/* Velden */
+.field{margin-bottom:.85rem;}
+.field label{display:block;font-size:.72rem;font-weight:700;margin-bottom:.35rem;color:var(--ink2);text-transform:uppercase;letter-spacing:.05em;}
+.field input{width:100%;padding:.7rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-size:.88rem;color:var(--ink);background:#faf8f5;transition:border-color .2s,background .2s;font-family:'DM Sans',system-ui,sans-serif;}
+.field input:focus{outline:none;border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px rgba(232,76,30,.08);}
+/* Wachtwoord vergeten link */
+.pw-vergeten{text-align:right;margin-top:-.5rem;margin-bottom:.85rem;}
+.pw-vergeten a{font-size:.75rem;color:var(--ink3);text-decoration:none;}
+.pw-vergeten a:hover{color:var(--accent);}
+/* Knoppen */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.75rem 1.4rem;border-radius:50px;font-weight:700;font-size:.88rem;cursor:pointer;border:none;transition:all .2s;font-family:'DM Sans',system-ui,sans-serif;}
+.btn-p{background:var(--accent);color:#fff;}
+.btn-p:hover{background:#c73d15;transform:translateY(-1px);}
+.btn-s{background:var(--paper);color:var(--ink2);border:1.5px solid var(--border);}
+.btn-s:hover{border-color:#ccc;}
+.btn-danger{background:#fee2e2;color:#991b1b;border:none;}
+.btn-full{width:100%;}
+/* Switch link */
+.auth-switch{text-align:center;margin-top:1.25rem;font-size:.82rem;color:var(--ink3);}
+.auth-switch a{color:var(--accent);cursor:pointer;font-weight:600;text-decoration:none;}
+.auth-switch a:hover{text-decoration:underline;}
+/* Meldingen */
+.fout{background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:.65rem .9rem;font-size:.82rem;color:#991b1b;margin-bottom:1rem;display:flex;align-items:flex-start;gap:.5rem;}
+.fout::before{content:'⚠';flex-shrink:0;}
+.ok{background:#dcfce7;border:1px solid #86efac;border-radius:8px;padding:.65rem .9rem;font-size:.82rem;color:#166534;margin-bottom:1rem;}
+/* Voordelen onder form */
+.auth-voordelen{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-top:1.25rem;}
+.auth-voordeel{font-size:.68rem;color:var(--ink3);display:flex;align-items:center;gap:.3rem;}
+.auth-voordeel::before{content:'✓';color:var(--accent);font-weight:700;}
+
+/* ── Portaal layout ── */
+.portaal{display:grid;grid-template-columns:220px 1fr;gap:1.5rem;align-items:start;}
+@media(max-width:640px){.portaal{grid-template-columns:1fr;}}
+
+/* ── Sidebar ── */
+.sidebar{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;}
+.sidebar-naam{padding:1.2rem;border-bottom:1px solid var(--border);}
+.sidebar-naam strong{display:block;font-size:.95rem;}
+.sidebar-naam span{font-size:.78rem;color:var(--ink3);}
+.nav-item{display:flex;align-items:center;gap:.6rem;padding:.8rem 1.2rem;font-size:.85rem;cursor:pointer;transition:background .15s;border-left:3px solid transparent;}
+.nav-item:hover{background:#faf8f4;}
+.nav-item.actief{background:#fff9f7;border-left-color:var(--accent);font-weight:600;color:var(--accent);}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;}
+
+/* ── Panelen ── */
+.paneel{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:1.5rem;}
+.paneel-ttl{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;margin-bottom:1.2rem;padding-bottom:.75rem;border-bottom:2px solid var(--border);}
+
+/* ── Bestellingen ── */
+.bestelling-card{border:1px solid var(--border);border-radius:8px;margin-bottom:1rem;overflow:hidden;}
+.bestelling-hdr{display:flex;justify-content:space-between;align-items:center;padding:.85rem 1rem;background:#faf8f4;cursor:pointer;}
+.bestelling-id{font-weight:700;font-size:.9rem;}
+.bestelling-datum{font-size:.78rem;color:var(--ink3);}
+.bestelling-status{font-size:.72rem;font-weight:700;padding:3px 8px;border-radius:12px;}
+.status-betaald{background:#dcfce7;color:#166534;}
+.status-concept{background:#f0ede6;color:#6b6560;}
+.status-in_behandeling{background:#dbeafe;color:#1e40af;}
+.status-geleverd{background:#dcfce7;color:#166534;}
+.bestelling-body{padding:1rem;border-top:1px solid var(--border);display:none;}
+.bestelling-body.open{display:block;}
+.regel-item{padding:.6rem 0;border-bottom:1px solid #f5f3ef;font-size:.85rem;}
+.regel-item:last-child{border:none;}
+.bestelling-acties{display:flex;gap:.5rem;margin-top:1rem;}
+
+/* ── Concepten ── */
+.concept-card{display:flex;justify-content:space-between;align-items:center;padding:.85rem 1rem;border:1px solid var(--border);border-radius:8px;margin-bottom:.6rem;}
+.concept-naam{font-weight:600;font-size:.9rem;}
+.concept-datum{font-size:.75rem;color:var(--ink3);}
+.concept-acties{display:flex;gap:.4rem;}
+
+/* ── Gegevens form ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+@media(max-width:500px){.form-grid{grid-template-columns:1fr;}}
+.form-divider{border:none;border-top:1px solid var(--border);margin:1.2rem 0;}
+
+/* ── Loading ── */
+.spinner{display:inline-block;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading{text-align:center;padding:2rem;color:var(--ink3);font-size:.88rem;}
+
+/* ── Leeg ── */
+.leeg{text-align:center;padding:2.5rem 1rem;color:var(--ink3);}
+.leeg-icon{font-size:2.5rem;margin-bottom:.75rem;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <a class="hdr-logo" href="/">Merch<span>Master</span></a>
+  <div class="hdr-nav">
+    <a href="/bestellen">Nieuwe bestelling</a>
+    <a href="#" onclick="uitloggen()" id="logout-link" style="display:none;">Uitloggen</a>
+  </div>
+</div>
+
+<div class="shell">
+
+  <!-- ── AUTH SCHERMEN ── -->
+  <div id="auth-scherm" class="auth-wrap">
+    <!-- Login -->
+    <div id="login-card" class="auth-card">
+      <!-- Logo -->
+      <div class="auth-logo">
+        <div class="auth-logo-mark">
+          <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="auth-logo-txt">Merch<em>Master</em></div>
+      </div>
+
+      <div class="auth-ttl">Welkom terug</div>
+      <div class="auth-subtl">Log in op je account om je bestellingen te bekijken.</div>
+
+      <div id="login-fout" class="fout" style="display:none;"></div>
+
+      <div class="field">
+        <label>E-mailadres</label>
+        <input type="email" id="login-email" placeholder="jan@bedrijf.nl" autocomplete="email">
+      </div>
+      <div class="field">
+        <label>Wachtwoord</label>
+        <input type="password" id="login-pw" placeholder="••••••••" autocomplete="current-password"
+               onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+
+      <button class="btn btn-p btn-full" id="login-btn" onclick="doLoginSteps()">Inloggen</button>
+
+      <div class="pw-vergeten" style="text-align:right;margin:.5rem 0 .25rem;">
+        <a onclick="toonScherm('vergeten')" style="font-size:.75rem;color:var(--ink3);text-decoration:none;cursor:pointer;">Wachtwoord vergeten?</a>
+      </div>
+
+      <div class="auth-divider">of</div>
+
+      <button class="btn btn-full" style="background:#25D366;color:#fff;border-radius:50px;"
+              onclick="window.open('https://wa.me/31617255170?text=Hallo, ik wil graag inloggen op mijn account.','_blank')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/></svg>
+        Hulp nodig? WhatsApp ons
+      </button>
+
+      <div class="auth-switch">Nog geen account? <a onclick="toonScherm('registreer')">Gratis registreren →</a></div>
+
+    </div>
+
+    <!-- Registreren -->
+    <div id="registreer-card" class="auth-card" style="display:none;">
+      <!-- Logo -->
+      <div class="auth-logo">
+        <div class="auth-logo-mark">
+          <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="auth-logo-txt">Merch<em>Master</em></div>
+      </div>
+
+      <div class="auth-ttl">Account aanmaken</div>
+      <div class="auth-subtl">Gratis — bestellingen volgen, offertes opslaan, snel herbestellen.</div>
+
+      <div id="reg-fout" class="fout" style="display:none;"></div>
+
+      <div class="form-grid">
+        <div class="field"><label>Voornaam *</label><input type="text" id="reg-vnaam" placeholder="Jan" autocomplete="given-name"></div>
+        <div class="field"><label>Achternaam *</label><input type="text" id="reg-anaam" placeholder="de Vries" autocomplete="family-name"></div>
+      </div>
+      <div class="field"><label>E-mailadres *</label><input type="email" id="reg-email" placeholder="jan@bedrijf.nl" autocomplete="email"></div>
+      <div class="field"><label>Wachtwoord * <span style="font-weight:400;text-transform:none;letter-spacing:0;">(min. 8 tekens)</span></label><input type="password" id="reg-pw" placeholder="••••••••" autocomplete="new-password"></div>
+      <div class="field"><label>Telefoonnummer <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optioneel)</span></label><input type="tel" id="reg-tel" placeholder="+31 6 12345678" autocomplete="tel"></div>
+
+      <button class="btn btn-p btn-full" onclick="doRegistreer()">Account aanmaken</button>
+
+      <div class="auth-switch">Al een account? <a onclick="toonScherm('login')">← Inloggen</a></div>
+
+      <div class="auth-voordelen">
+        <span class="auth-voordeel">Bestellingen volgen</span>
+        <span class="auth-voordeel">Offertes opslaan</span>
+        <span class="auth-voordeel">Snel herbestellen</span>
+      </div>
+
+
+    </div>
+  </div>
+
+    <!-- Wachtwoord vergeten -->
+    <div id="vergeten-card" class="auth-card" style="display:none;">
+      <div class="auth-logo">
+        <div class="auth-logo-mark">
+          <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="auth-logo-txt">Merch<em>Master</em></div>
+      </div>
+      <div class="auth-ttl">Wachtwoord vergeten</div>
+      <div class="auth-subtl">Vul uw e-mailadres in. Als er een account bestaat sturen wij een resetlink.</div>
+      <div id="vergeten-fout" class="fout" style="display:none;"></div>
+      <div id="vergeten-ok" style="display:none;background:rgba(26,122,69,.15);border:1px solid rgba(26,122,69,.3);border-radius:8px;padding:.85rem 1rem;font-size:.82rem;color:#1a7a45;margin-bottom:1rem;">
+        Als dit e-mailadres bij ons bekend is, ontvangt u binnen enkele minuten een resetlink.
+      </div>
+      <div class="field">
+        <label>E-mailadres</label>
+        <input type="email" id="vergeten-email" placeholder="jan@bedrijf.nl" autocomplete="email"
+               onkeydown="if(event.key==='Enter')doWachtwoordVergeten()">
+      </div>
+      <button class="btn btn-p btn-full" id="vergeten-btn" onclick="doWachtwoordVergeten()">Resetlink versturen</button>
+      <div class="auth-switch" style="margin-top:1rem;">
+        <a onclick="toonScherm('login')" style="cursor:pointer;">← Terug naar inloggen</a>
+      </div>
+    </div>
+  </div>
+
+    <!-- Nieuw wachtwoord instellen (via resetlink) -->
+    <div id="reset-card" class="auth-card" style="display:none;">
+      <div class="auth-logo">
+        <div class="auth-logo-mark">
+          <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="auth-logo-txt">Merch<em>Master</em></div>
+      </div>
+      <div class="auth-ttl">Nieuw wachtwoord instellen</div>
+      <div class="auth-subtl">Kies een sterk wachtwoord van minimaal 8 tekens.</div>
+      <div id="reset-fout" class="fout" style="display:none;"></div>
+      <div id="reset-ok" style="display:none;background:rgba(26,122,69,.15);border:1px solid rgba(26,122,69,.3);border-radius:8px;padding:.85rem 1rem;font-size:.82rem;color:#1a7a45;margin-bottom:1rem;">
+        Wachtwoord gewijzigd! U kunt nu inloggen.
+      </div>
+      <div class="field">
+        <label>Nieuw wachtwoord</label>
+        <input type="password" id="reset-pw" placeholder="••••••••" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label>Bevestig wachtwoord</label>
+        <input type="password" id="reset-pw2" placeholder="••••••••" autocomplete="new-password"
+               onkeydown="if(event.key==='Enter')doResetWachtwoord()">
+      </div>
+      <button class="btn btn-p btn-full" id="reset-btn" onclick="doResetWachtwoord()">Wachtwoord opslaan</button>
+    </div>
+  </div>
+
+  <!-- ── PORTAAL ── -->
+  <div id="portaal-scherm" style="display:none;">
+    <div class="page-ttl" id="portaal-ttl">Welkom terug!</div>
+    <div class="portaal">
+
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="sidebar-naam">
+          <strong id="sidebar-naam">–</strong>
+          <span id="sidebar-email">–</span>
+        </div>
+        <div class="nav-item actief" onclick="toonPaneel('bestellingen')" id="nav-bestellingen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          Bestellingen
+        </div>
+        <div class="nav-item" onclick="toonPaneel('concepten')" id="nav-concepten">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          Opgeslagen offertes
+        </div>
+        <div class="nav-item" onclick="toonPaneel('gegevens')" id="nav-gegevens">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          Mijn gegevens
+        </div>
+        <div class="nav-item" onclick="toonPaneel('wachtwoord')" id="nav-wachtwoord">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          Wachtwoord
+        </div>
+        <div class="nav-item" onclick="uitloggen()" style="color:#999;margin-top:.5rem;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          Uitloggen
+        </div>
+      </div>
+
+      <!-- Panelen -->
+      <div>
+
+        <!-- Bestellingen -->
+        <div class="paneel" id="paneel-bestellingen">
+          <div class="paneel-ttl">Mijn bestellingen</div>
+          <div id="bestellingen-lijst"><div class="loading">Bestellingen laden...</div></div>
+        </div>
+
+        <!-- Concepten -->
+        <div class="paneel" id="paneel-concepten" style="display:none;">
+          <div class="paneel-ttl">Opgeslagen offertes</div>
+          <div id="concepten-lijst"><div class="loading">Offertes laden...</div></div>
+        </div>
+
+        <!-- Gegevens -->
+        <div class="paneel" id="paneel-gegevens" style="display:none;">
+          <div class="paneel-ttl">Mijn gegevens</div>
+          <div id="geg-ok" class="ok" style="display:none;">Gegevens opgeslagen!</div>
+          <div id="geg-fout" class="fout" style="display:none;"></div>
+          <div class="form-grid">
+            <div class="field"><label>Voornaam</label><input type="text" id="geg-vnaam"></div>
+            <div class="field"><label>Achternaam</label><input type="text" id="geg-anaam"></div>
+          </div>
+          <div class="field"><label>E-mailadres</label><input type="email" id="geg-email"></div>
+          <div class="field"><label>Telefoonnummer</label><input type="tel" id="geg-tel"></div>
+          <hr class="form-divider">
+          <div class="field"><label>Bedrijfsnaam (optioneel)</label><input type="text" id="geg-bedrijf"></div>
+          <div class="form-grid">
+            <div class="field"><label>KVK-nummer</label><input type="text" id="geg-kvk" maxlength="8"></div>
+            <div class="field"><label>BTW-nummer</label><input type="text" id="geg-btwnr"></div>
+          </div>
+          <hr class="form-divider">
+          <div class="field"><label>Straat + huisnummer</label><input type="text" id="geg-straat"></div>
+          <div class="form-grid">
+            <div class="field"><label>Postcode</label><input type="text" id="geg-postcode"></div>
+            <div class="field"><label>Stad</label><input type="text" id="geg-stad"></div>
+          </div>
+          <div class="field"><label>Land</label>
+            <select id="geg-land" style="width:100%;padding:.65rem .85rem;border:2px solid var(--border);border-radius:8px;font-size:.88rem;background:#fff;">
+              <option value="NL">Nederland</option>
+              <option value="BE">België</option>
+              <option value="DE">Duitsland</option>
+            </select>
+          </div>
+          <button class="btn btn-p" onclick="slaGegevensOp()">Opslaan</button>
+        </div>
+
+        <!-- Wachtwoord -->
+        <div class="paneel" id="paneel-wachtwoord" style="display:none;">
+          <div class="paneel-ttl">Wachtwoord wijzigen</div>
+          <div id="pw-ok" class="ok" style="display:none;">Wachtwoord gewijzigd!</div>
+          <div id="pw-fout" class="fout" style="display:none;"></div>
+          <div class="field"><label>Huidig wachtwoord</label><input type="password" id="pw-oud"></div>
+          <div class="field"><label>Nieuw wachtwoord (min. 8 tekens)</label><input type="password" id="pw-nieuw"></div>
+          <div class="field"><label>Bevestig nieuw wachtwoord</label><input type="password" id="pw-bevestig"></div>
+          <button class="btn btn-p" onclick="wijzigWachtwoord()">Wachtwoord wijzigen</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const HANDLER = 'handler.php';
+let huidigKlant = null;
+let huidigPaneel = 'bestellingen';
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+async function init() {
+  const token = getCookie('mm_sessie');
+  if (!token) { toonScherm('login'); return; }
+  try {
+    const r = await api('klant');
+    if (r.ok) { setKlant(r.klant); toonPortaal(); }
+    else toonScherm('login');
+  } catch { toonScherm('login'); }
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+async function doLoginSteps() {
+  const btn = g('login-btn');
+  const email = g('login-email').value.trim();
+  const pw    = g('login-pw').value;
+  if (!email || !pw) {
+    toonFout('login-fout', 'Vul je e-mailadres en wachtwoord in');
+    return;
+  }
+  // Stap 1: bezig
+  btn.textContent = 'Bezig...';
+  btn.disabled = true;
+  const r = await api('login', { email, wachtwoord: pw });
+  if (r.ok) {
+    btn.textContent = '✓ Ingelogd!';
+    setTimeout(() => { setKlant(r.klant); toonPortaal(); }, 400);
+  } else {
+    btn.textContent = 'Inloggen';
+    btn.disabled = false;
+    toonFout('login-fout', r.fout);
+  }
+}
+
+async function doLogin() { doLoginSteps(); }
+
+async function doRegistreer() {
+  const d = {
+    voornaam: g('reg-vnaam').value.trim(), achternaam: g('reg-anaam').value.trim(),
+    email: g('reg-email').value.trim(), wachtwoord: g('reg-pw').value,
+    telefoon: g('reg-tel').value.trim(),
+  };
+  if (!d.voornaam || !d.achternaam || !d.email || !d.wachtwoord)
+    return toonFout('reg-fout', 'Vul alle verplichte velden in');
+  const r = await api('registreer', d);
+  if (r.ok) { const kr = await api('klant'); if(kr.ok){setKlant(kr.klant);toonPortaal();} }
+  else toonFout('reg-fout', r.fout);
+}
+
+async function uitloggen() {
+  await api('logout');
+  huidigKlant = null;
+  toonScherm('login');
+  g('logout-link').style.display = 'none';
+}
+
+function setKlant(k) {
+  huidigKlant = k;
+  g('portaal-ttl').textContent = 'Welkom, ' + k.voornaam + '!';
+  g('sidebar-naam').textContent = k.voornaam + ' ' + k.achternaam;
+  g('sidebar-email').textContent = k.email;
+  g('logout-link').style.display = 'block';
+  // Vul gegevens form
+  g('geg-vnaam').value  = k.voornaam || '';
+  g('geg-anaam').value  = k.achternaam || '';
+  g('geg-email').value  = k.email || '';
+  g('geg-tel').value    = k.telefoon || '';
+  g('geg-bedrijf').value= k.bedrijf || '';
+  g('geg-kvk').value    = k.kvk || '';
+  g('geg-btwnr').value  = k.btwnr || '';
+  g('geg-straat').value = k.straat || '';
+  g('geg-postcode').value=k.postcode || '';
+  g('geg-stad').value   = k.stad || '';
+  g('geg-land').value   = k.land || 'NL';
+}
+
+// ── Panelen ───────────────────────────────────────────────────────────────────
+function toonPaneel(naam) {
+  huidigPaneel = naam;
+  ['bestellingen','concepten','gegevens','wachtwoord'].forEach(p => {
+    g('paneel-'+p).style.display = p === naam ? 'block' : 'none';
+    g('nav-'+p)?.classList.toggle('actief', p === naam);
+  });
+  if (naam === 'bestellingen') laadBestellingen();
+  if (naam === 'concepten')    laadConcepten();
+}
+
+// ── Bestellingen ──────────────────────────────────────────────────────────────
+let alleBestellingen = [];
+async function laadBestellingen() {
+  const r = await api('bestellingen');
+  alleBestellingen = r.bestellingen || [];
+  const el = g('bestellingen-lijst');
+  if (!r.ok || !r.bestellingen.length) {
+    el.innerHTML = '<div class="leeg"><div class="leeg-icon">📦</div>Je hebt nog geen bestellingen.</div>';
+    return;
+  }
+  el.innerHTML = r.bestellingen.map(b => `
+    <div class="bestelling-card">
+      <div class="bestelling-hdr" onclick="toggleBestelling(${b.id})">
+        <div>
+          <div class="bestelling-id">#${b.order_id}</div>
+          <div class="bestelling-datum">${formatDatum(b.aangemaakt)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:.75rem;">
+          <span>€ ${num(b.totaal_incl)}</span>
+          <span class="bestelling-status status-${b.status}">${statusLabel(b.status)}</span>
+        </div>
+      </div>
+      <div class="bestelling-body" id="body-${b.id}">
+        ${(b.regels||[]).map(r => `
+          <div class="regel-item">
+            <strong>${r.textiel_merk||''} ${r.textiel_naam||''}</strong> — ${r.kleur_naam||''}<br>
+            <span style="font-size:.78rem;color:var(--ink3);">${r.positie||''} · ${r.techniek_a||''} · ${r.aantal||0} stuks</span>
+          </div>`).join('')}
+        <div class="bestelling-acties">
+          <button class="btn btn-s" onclick="herplaats(${b.id})">↩ Opnieuw bestellen</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleBestelling(id) {
+  const el = g('body-' + id);
+  if (el) el.classList.toggle('open');
+}
+
+async function herplaats(bestelId) {
+  // Zoek bestelling in al geladen data
+  const bestelling = alleBestellingen?.find(b => b.id === bestelId);
+  if(!bestelling || !bestelling.regels?.length) {
+    alert('Bestelgegevens niet gevonden. Probeer de pagina te herladen.');
+    return;
+  }
+
+  // Sla herplaatsdata op in sessionStorage
+  const herplaatsData = {
+    van_bestelling: bestelling.order_id,
+    regels: bestelling.regels.map(r => ({
+      textiel_sku:   r.textiel_sku,
+      textiel_naam:  r.textiel_naam,
+      textiel_merk:  r.textiel_merk,
+      kleur_code:    r.kleur_code,
+      kleur_naam:    r.kleur_naam,
+      kleur_hex:     r.kleur_hex || null,
+      positie:       r.positie,
+      techniek_a:    r.techniek_a,
+      techniek_b:    r.techniek_b,
+      is_dual:       r.is_dual,
+      maten:         r.maten,
+    })),
+    // Klantgegevens voor pre-invullen
+    klant: {
+      fname:    (huidigKlant?.voornaam || ''),
+      lname:    (huidigKlant?.achternaam || ''),
+      email:    (huidigKlant?.email || ''),
+      phone:    (huidigKlant?.telefoon || ''),
+      company:  (huidigKlant?.bedrijf || ''),
+      street:   (huidigKlant?.adres || ''),
+      zip:      (huidigKlant?.postcode || ''),
+      city:     (huidigKlant?.stad || ''),
+      country:  (huidigKlant?.land || 'NL'),
+    }
+  };
+
+  try {
+    sessionStorage.setItem('mm_herplaats', JSON.stringify(herplaatsData));
+  } catch(e) {
+    alert('Kan herplaatsdata niet opslaan. Probeer het opnieuw.');
+    return;
+  }
+
+  // Ga naar besteltool
+  window.location.href = '/bestellen/';
+}
+
+// ── Concepten ─────────────────────────────────────────────────────────────────
+async function laadConcepten() {
+  const r = await api('concepten');
+  const el = g('concepten-lijst');
+  if (!r.ok || !r.concepten.length) {
+    el.innerHTML = '<div class="leeg"><div class="leeg-icon">📝</div>Geen opgeslagen offertes. Sla een configuratie op vanuit de besteltool.</div>';
+    return;
+  }
+  el.innerHTML = r.concepten.map(c => `
+    <div class="concept-card">
+      <div>
+        <div class="concept-naam">${c.naam}</div>
+        <div class="concept-datum">Opgeslagen: ${formatDatum(c.bijgewerkt)}</div>
+      </div>
+      <div class="concept-acties">
+        <button class="btn btn-s" onclick="laadConcept(${c.id})">Laden</button>
+        <button class="btn btn-danger" onclick="verwijderConcept(${c.id})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+async function laadConcept(id) {
+  const r = await api('concept-laden', { id });
+  if (r.ok) {
+    localStorage.setItem('mm_concept', JSON.stringify(r.concept.configuratie));
+    window.location.href = '/bestellen?concept=laden';
+  }
+}
+
+async function verwijderConcept(id) {
+  if (!confirm('Offerte verwijderen?')) return;
+  await api('concept-verwijder', { id });
+  laadConcepten();
+}
+
+// ── Gegevens ──────────────────────────────────────────────────────────────────
+async function slaGegevensOp() {
+  g('geg-ok').style.display = 'none';
+  g('geg-fout').style.display = 'none';
+  const r = await api('wijzig-gegevens', {
+    voornaam: g('geg-vnaam').value.trim(), achternaam: g('geg-anaam').value.trim(),
+    email: g('geg-email').value.trim(), telefoon: g('geg-tel').value.trim(),
+    bedrijf: g('geg-bedrijf').value.trim(), kvk: g('geg-kvk').value.trim(),
+    btwnr: g('geg-btwnr').value.trim(), straat: g('geg-straat').value.trim(),
+    postcode: g('geg-postcode').value.trim(), stad: g('geg-stad').value.trim(),
+    land: g('geg-land').value,
+  });
+  if (r.ok) {
+    g('geg-ok').style.display = 'block';
+    const kr = await api('klant'); if(kr.ok) setKlant(kr.klant);
+  } else toonFout('geg-fout', r.fout);
+}
+
+// ── Wachtwoord ────────────────────────────────────────────────────────────────
+async function wijzigWachtwoord() {
+  g('pw-ok').style.display = 'none';
+  g('pw-fout').style.display = 'none';
+  const oud = g('pw-oud').value, nieuw = g('pw-nieuw').value, bev = g('pw-bevestig').value;
+  if (nieuw !== bev) return toonFout('pw-fout', 'Wachtwoorden komen niet overeen');
+  const r = await api('wijzig-wachtwoord', { oud, nieuw });
+  if (r.ok) { g('pw-ok').style.display = 'block'; g('pw-oud').value='';g('pw-nieuw').value='';g('pw-bevestig').value=''; }
+  else toonFout('pw-fout', r.fout);
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+function toonScherm(naam) {
+  g('auth-scherm').style.display = 'block';
+  g('portaal-scherm').style.display = 'none';
+  g('login-card').style.display     = naam === 'login'      ? 'block' : 'none';
+  g('registreer-card').style.display = naam === 'registreer' ? 'block' : 'none';
+}
+
+function toonPortaal() {
+  g('auth-scherm').style.display = 'none';
+  g('portaal-scherm').style.display = 'block';
+  toonPaneel('bestellingen');
+}
+
+function toonFout(id, msg) {
+  const el = g(id);
+  if (el) { el.textContent = msg; el.style.display = 'block'; }
+}
+
+function statusLabel(s) {
+  return {betaald:'Betaald ✓',concept:'Concept',in_behandeling:'In behandeling',geleverd:'Geleverd ✓',geannuleerd:'Geannuleerd'}[s]||s;
+}
+
+function formatDatum(d) {
+  if (!d) return '–';
+  return new Date(d).toLocaleDateString('nl-NL', {day:'numeric',month:'long',year:'numeric'});
+}
+
+function num(v) { return parseFloat(v||0).toFixed(2).replace('.',','); }
+function g(id) { return document.getElementById(id); }
+function getCookie(n) { return document.cookie.split('; ').find(r=>r.startsWith(n+'='))?.split('=')[1]||''; }
+
+async function api(action, data = {}) {
+  try {
+    const r = await fetch(HANDLER, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, ...data }),
+    });
+    return await r.json();
+  } catch { return { ok: false, fout: 'Verbindingsfout' }; }
+}
+
+init();
+</script>
+</body>
+</html>
