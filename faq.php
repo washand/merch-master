@@ -25,7 +25,7 @@ require_once __DIR__ . '/includes/header.php';
       </div>
       <div class="faq-item">
         <div class="faq-nr">4</div>
-        <div class="faq-body"><h3><?= t('faq_q4') ?></h3><p><?= t('faq_a4') ?></p></div>
+        <div class="faq-body"><h3><?= t('faq_q4') ?></h3><p><?= t_lt('faq_a4') ?></p></div>
       </div>
       <div class="faq-item">
         <div class="faq-nr">5</div>
@@ -37,11 +37,47 @@ require_once __DIR__ . '/includes/header.php';
       </div>
       <div class="faq-item">
         <div class="faq-nr">7</div>
-        <div class="faq-body"><h3><?= t('faq_q7') ?></h3><p><?= t('faq_a7') ?></p></div>
+        <div class="faq-body"><h3><?= t('faq_q7') ?></h3><p><?= t_lt('faq_a7') ?></p></div>
       </div>
       <div class="faq-item">
         <div class="faq-nr">8</div>
         <div class="faq-body"><h3><?= t('faq_q8') ?></h3><p><?= t('faq_a8') ?></p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-nr">9</div>
+        <div class="faq-body"><h3><?= t('faq_q9') ?></h3><p><?= t('faq_a9') ?></p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-nr">10</div>
+        <div class="faq-body"><h3><?= t('faq_q10') ?></h3><p><?= t('faq_a10') ?></p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-nr">11</div>
+        <div class="faq-body"><h3><?= t('faq_q11') ?></h3><p><?= t_lt('faq_a11') ?></p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-nr">12</div>
+        <div class="faq-body"><h3><?= t('faq_q12') ?></h3><p><?= t_lt('faq_a12') ?></p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-nr">13</div>
+        <div class="faq-body"><h3><?= t('faq_q13') ?></h3><p><?= t('faq_a13') ?></p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-nr">14</div>
+        <div class="faq-body"><h3><?= t('faq_q14') ?></h3><p><?= t('faq_a14') ?></p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-nr">15</div>
+        <div class="faq-body"><h3><?= t('faq_q15') ?></h3><p><?= t('faq_a15') ?></p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-nr">16</div>
+        <div class="faq-body"><h3><?= t('faq_q16') ?></h3><p><?= t('faq_a16') ?></p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-nr">17</div>
+        <div class="faq-body"><h3><?= t('faq_q17') ?></h3><p><?= t('faq_a17') ?></p></div>
       </div></div>
     <div style="text-align:center;margin-top:3rem;">
       <a href="/contact.php" class="btn-arrow" style="display:inline-flex;">
