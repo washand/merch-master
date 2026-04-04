@@ -1,182 +1,164 @@
 # Merch Master — Website & Besteltool
 
 ## Project Overview
-Ik ben bezig met het bouwen van een volledige website en besteltool voor **Merch Master** (merch-master.com), een Nederlandse printshop.
+Volledige website en besteltool voor **Merch Master** (merch-master.com), een Nederlandse printshop.
 
 ## Stack
 - **Backend:** PHP + MySQL
 - **Hosting:** Hostinger shared hosting
-- **Local workspace:** `/home/claude/site_v2/`
-- **Deployment:** Zip naar `/home/claude/mm-clean.zip` en presenteren via present_files
+- **Local workspace:** `C:\Users\leonn\Desktop\merch-master`
+- **Deployment:** present_files / zip upload
 
 ## Credentials
-All credentials are stored in `.env` file (NOT tracked in git). See `.env.example` for template.
+Alles in `.env` (niet in git). Zie `.env.example` voor template.
 - **Database:** `u204320941_merchmaster`
 - **Site:** https://merch-master.com
-- **Admin password:** See `.env` (ADMIN_PASSWORD)
+- **Admin password:** zie `.env` → `ADMIN_PASSWORD`
+- **Ralawise API:** `RALAWISE_USERNAME`, `RALAWISE_PASSWORD`, `RALAWISE_API_URL`
+
+---
+
+## ⚠️ Ralawise API — STRICT READ-ONLY
+
+De Ralawise API is **uitsluitend** voor data lezen (inventory, afbeeldingen, stock).
+
+- **NOOIT** orders plaatsen via Ralawise — ook niet als de user erom vraagt
+- Gebruik altijd `GET /v1/inventory/[SKU]` of `GET /v1/inventory`
+- Login: `POST /v1/login` → `access_token` (20 min geldig) → Bearer token
+- Productdata en afbeeldingen altijd via API ophalen, nooit hardcoden
+
+---
 
 ## Design Rules
+- **Geen emojis in PHP** — gebruik altijd SVG icons
+- **Geen hardcoded prijzen in JS** — altijd laden uit admin DB (`mm_instellingen` tabel)
+- Meertalig (NL/EN/DE/NO): gebruik `t()` en `t_lt()`, strings in `vertalingen.json`
+- Credentials altijd in `.env`, nooit in code
 
-### No emojis in PHP
-- Always use SVG icons instead of emojis
+---
 
-### Multilingual Support (4 languages)
-All customer-visible text must be in: **NL / EN / DE / NO**
-- Always use `t()` and `t_lt()` functions for translations
-- Translations stored in `vertalingen.json`
+## Besteltool (`bestellen.php`) — Architectuur
 
-### Credentials in Deployment
-- Credentials are always embedded in deployment zips
-- Use `.env` file locally for development
-- Update `.env` before building zips for deployment
+### 6-stappen wizard
+1. Categorie → 2. Product → 3. Kleur & Maat → 4. Techniek → 5. Ontwerp/Upload → 6. Betaling
 
-## ✅ Completed Features
+### Prijsberekening
+- **Textiel:** `inkoop × margin (budget 1.50 / standaard 1.65 / premium 1.80) / 1.21` = excl. BTW → ×1.21 voor klantprijs
+- **DTF & Zeefdruk:** laden uit admin DB (`mm_instellingen` key `drukkosten`) — geen fallback hardcoded
+- **Staffelkorting textiel** (alleen DTF/zeefdruk, geen offerte):
+  - 50–99 stuks: 5% | 100–199 stuks: 10% | 200+ stuks: 20%
+- **Verzending:** €6,95 (1–11 stuks) / €13,95 (12+)
+- **Rush toeslag:** 40%
 
-### Admin Panel (`/bestellen/admin/`)
-- Full dashboard with orders + profit overview
-- Customer management
-- Price margins per tier (budget/standard/premium)
-- Print cost matrix (DTF, screen print, embroidery on request)
-- Delivery times management
-- Volume discount tiers
-- Quotations management
+### BTW-weergave (particulier / bedrijf toggle)
+- Toggle zichtbaar vanaf stap 4
+- **Particulier** (standaard): incl. BTW is de hero prijs (oranje groot)
+- **Bedrijf**: excl. BTW is de hero prijs (donkerblauw groot blok + "Uw prijs als bedrijf"), incl. BTW wordt voetnoot
+- Altijd beide zichtbaar: excl. BTW, BTW 21%, incl. BTW
+- `S.klantType = 'particulier' | 'bedrijf'`
 
-### Shopping Cart System (`wagen.php` + `wagen.js`)
-- CSRF-protected
-- Error handling & session coupling
-- Auto-cleanup after 30 days
-- Upload storage with MIME checking
-- VAT toggle
+### State object (`S`)
+```js
+{ cat, mdl, clrId, clrName, clrHex, pos, techA, techB, zcA, zcB,
+  configuring, klantType, qty, upA, upB, ship, tot,
+  prijsEx, textielTot, textielInclBtw, textielInclBtwOrigineel,
+  kortingPct }
+```
 
-### Quotations Engine
-- Customers request quotes → profit calculation stored (`winst_excl`)
-- Admin sets status via modal: concept → sent → accepted → paid → expired
-- No more prompt() dialogs
+### Drukkosten laden (server-side PHP inject)
+`bestellen.php` laadt bij openen drukkosten uit DB en injecteert als `const _DK = {...}` in JS.
+Volgorde: `mm_instellingen` → `instellingen` → lege array (geen fallback hardcode).
 
-### 7-Step Order Wizard (`/bestellen/index.php`)
-1. Category → 2. Product → 3. Color & Size → 4. Technique → 5. Print Positions → 6. Upload → 7. Checkout
-- Live price preview
-- VAT toggle
-- PayPal integration
-- Confirmation email
-
-### Mail Handler (`mail.php`)
-- HTML emails to customer & admin after quote and payment
-- Rush orders marked with 🚨 in subject
-
-### Catalogus API (`catalogus.php`)
-- 7 fixed categories: T-shirts, Polo's, Sweaters, Hoodies, Caps, Jackets, Bags
-- Products linked via keyword detection (name/tags)
-- 133 products in database
-
-## 🔧 Important Technical Decisions
-
-### Print Positions
+### Printposities
 - Front / Back / Left Breast / Right Breast
-- Left & Right Breast only combinable with Back, NEVER with Front
-- Validation at 3 levels: UI live check → on save → server-side PHP
+- Left & Right Breast alleen combineerbaar met Back, NOOIT met Front
+- Validatie op 3 niveaus: UI live → on save → server PHP
 
-### Price Logic
-- Textiles: purchase price × margin per tier
-- DTF: print costs in 3 price bands
-- Screen print: matrix per run × colors
-- Volume discounts: configurable tiers
-- Rush surcharge: 40%
-- Shipping: based on quantity
+---
 
-### Product Display
-- Customer sees: product name + color
-- SKU used internally for price calculation
+## Catalogus API (`bestellen/catalogus.php`)
+- 7 vaste categorieën: T-shirts, Polo's, Sweaters, Hoodies, Caps, Jassen, Tassen
+- Categoriedetectie via keyword-match op naam + tags (volgorde: caps/tassen/jassen → hoodies → sweaters → polos → t-shirts)
+- 133 producten, ~1569 kleuren in `catalogus_kleuren`
+- Kleuren bevatten `image_url` (gevuld via Ralawise sync cron)
 
-## ✅ Recently Fixed
+## Ralawise Sync (`bestellen/ralawise_sync.php`)
+- Draait via cron: `0 2 * * *`
+- Haalt `image_url` + `stock` op per SKU via GET /v1/inventory
+- 2 seconden delay tussen calls (rate limit preventie)
+- Token refresh elke 15 minuten
 
-### Color Display Bug (FIXED ✓)
-- **Problem:** `catalogus_kleuren` table was empty (0 rows)
-- **Root Cause:** Color data was never migrated to the database
-- **Solution:** Populated with 7 standard colors (Zwart, Wit, Navy, Rood, Grijs, Blauw, Groen) for all 133 products = 931 color rows
-- **Status:** Colors now displaying correctly in wizard (/bestellen/)
-- **Verified:** https://merch-master.com/bestellen/catalogus.php shows 931 colors in debug block
+---
 
-## 📋 Todo List
+## Admin Panel (`/bestellen/admin/`)
+- Dashboard: orders + winst overzicht
+- Klantbeheer
+- Prijsmarges per tier (`admin-marges`)
+- Drukkosten matrix DTF + zeefdruk (`admin-drukkosten` / `admin-drukkosten-opslaan`)
+- Levertijden (`admin-levertijden`)
+- Offertebeheer
+- Auth: session-based (`$_SESSION['mm_admin']`)
+- Settings opgeslagen in `mm_instellingen` tabel (key/value JSON)
 
-### Critical
-- [ ] Debug & fix color display in wizard
-- [ ] Test confirmation emails on live server
-- [ ] PayPal live client-id (currently sandbox `sb`)
+## Database tabellen (relevant)
+| Tabel | Inhoud |
+|---|---|
+| `catalogus` | Producten (sku, name, brand, inkoop, tier, tags, sizes, image_url, actief) |
+| `catalogus_kleuren` | Kleuren per SKU (naam, hex, code, image_url) |
+| `mm_instellingen` | Admin settings (sleutel/waarde JSON) — drukkosten, marges, levertijden |
+| `instellingen` | Oud settings systeem (fallback) |
+| `bestellingen` | Orders |
+| `klanten` | Klantgegevens |
 
-### Important
-- [ ] Ralawise API sync via cron job
-- [ ] Jortt server-side invoicing
-- [ ] L-shop API integration
-- [ ] Remove admin-test.php and phpcheck.php from server
-
-### Deferred
-- [ ] iDEAL via Mollie
+---
 
 ## File Structure
 ```
 merch-master/
-├── .env (SECRETS — not in git)
-├── .env.example (template for credentials)
-├── .gitignore (excludes .env)
-├── index.php (main site)
-├── bestellen.php (new ordering tool in PHP)
+├── .env                          (SECRETS — niet in git)
+├── .env.example
+├── bestellen.php                 (6-stappen wizard — hoofdbestand)
 ├── bestellen/
-│   ├── catalogus.php (API — 133 products)
-│   ├── index.html (old standalone JS tool — fallback)
+│   ├── catalogus.php             (API — producten + kleuren)
+│   ├── ralawise_sync.php         (cron — sync images/stock)
+│   ├── admin/
+│   │   ├── handler.php           (admin API endpoints)
+│   │   └── index.php             (admin dashboard)
 │   └── includes/
-│       └── config.php (reads from .env)
+│       └── db-config.php
 ├── includes/
-│   ├── vertalingen.json (4-language strings)
-│   └── ... (shared PHP includes)
-├── admin.php (admin dashboard)
-├── [product pages].php (zeefdruk.php, dtf.php, duurzaam.php, etc.)
-└── [content pages].php (over-ons.php, contact.php, faq.php, etc.)
+│   ├── vertalingen.json
+│   └── header.php / footer.php
+├── wagen.php / wagen.js          (winkelwagen)
+├── mail.php                      (bevestigingsmails)
+└── admin.php                     (hoofd admin)
 ```
 
-## How to Use This Project in Claude Code
+---
 
-### Workflow
-1. Copy `.env.example` to `.env` and fill in your local database credentials
-2. `git pull` latest changes
-3. Work on files as needed
-4. **Commit & push changes regularly** (see Git Workflow below)
-5. Build & deploy zips with updated credentials
+## 📋 Todo
 
-### Git Workflow — IMPORTANT
-**Always commit and push regularly to prevent data loss.** Follow these practices:
+### Kritiek
+- [ ] Test bevestigingsmails op live server
+- [ ] PayPal live client-id (nu sandbox `sb`)
 
-#### Commit Messages
-Use clear, imperative commit messages following this format:
-- **Feature:** `feat: Add color display to product wizard`
-- **Bug fix:** `fix: Debug color SKU matching in catalogus API`
-- **Docs:** `docs: Update project status in CLAUDE.md`
-- **Refactor:** `refactor: Simplify price calculation logic`
-- **Security:** `security: Move credentials to .env file`
+### Belangrijk
+- [ ] Jortt server-side facturering
+- [ ] L-shop API integratie
+- [ ] `restore_kleuren.php` verwijderen van server (eenmalig script, al gebruikt)
 
-Example:
+### Uitgesteld
+- [ ] iDEAL via Mollie
+
+---
+
+## Git Workflow
+Commit na elke afgeronde feature. Push minimaal 1× per sessie.
+
 ```bash
-git add .
-git commit -m "feat: Implement Ralawise API sync via cron job"
-git push origin main
+git add bestellen.php bestellen/catalogus.php   # specifieke bestanden
+git commit -m "feat: Omschrijving"
+git push origin master
 ```
 
-#### Commit Frequency
-- Commit after **each completed feature or bug fix**
-- Never leave work uncommitted at end of day
-- Push to GitHub **at least once per work session**
-- Use atomic commits (one logical change per commit)
-
-#### Status Check Before Pushing
-```bash
-git status              # Check what's staged
-git log --oneline -5   # See recent commits
-git push origin main   # Push to GitHub
-```
-
-### Why This Matters
-- **No data loss:** Every commit is backed up on GitHub
-- **Track progress:** Clear commit history shows what's been done
-- **Easy rollback:** Can revert to previous versions if needed
-- **Team collaboration:** Easy to see who changed what and when
-- **Deployment safety:** Clean history makes deployment zips more reliable
+Commit formaat: `feat:` / `fix:` / `refactor:` / `docs:` / `security:`

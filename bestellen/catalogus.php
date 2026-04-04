@@ -27,13 +27,13 @@ $CATEGORIEEN = [
 // ── Categorie-detectie op naam/tags ──────────────────────────────────────────
 // Trefwoorden per categorie — word-match op productnaam + tags
 $CAT_KEYWORDS = [
-    't-shirts'  => ['t-shirt','tshirt','t shirt','basic tee','jersey','tee'],
-    'polos'     => ['polo'],
-    'sweaters'  => ['sweater','sweat','crewneck','crew neck','pullover','raglan'],
-    'hoodies'   => ['hoodie','hooded','zip hoodie','hoody','kaptrui'],
     'caps'      => ['cap','hat','beanie','snapback','flexfit','baseball','trucker','5-panel','6-panel'],
-    'jassen'    => ['jacket','jas','softshell','fleece','vest','windbreaker','parka','bomber','coach'],
     'tassen'    => ['bag','tas','tote','backpack','rugzak','shopper','gymbag','drawstring'],
+    'jassen'    => ['jacket','jas','softshell','vest','windbreaker','wind runner','parka','bomber','coach'],
+    'hoodies'   => ['hoodie','hooded','zip hoodie','hoody','kaptrui','full zip','full-zip','zoodie','zip top'],
+    'sweaters'  => ['sweater','sweat','crewneck','crew neck','pullover','raglan','fleece','french terry','loopback','half-zip','quarter-zip','sweatshirt','varsity','college'],
+    'polos'     => ['polo'],
+    't-shirts'  => ['t-shirt','tshirt','t shirt','basic tee','tee','jersey'],
 ];
 
 // Maten per categorie
@@ -102,6 +102,15 @@ function db(): PDO {
 }
 
 try {
+    // ── Controleer of image_url kolom bestaat ─────────────────────────────────
+    $heeft_image_url = false;
+    try {
+        $col = db()->query("SHOW COLUMNS FROM catalogus LIKE 'image_url'")->fetch();
+        $heeft_image_url = !empty($col);
+    } catch (Exception $e) { /* kolom bestaat niet */ }
+
+    $image_select = $heeft_image_url ? "COALESCE(p.image_url, '') AS image_url," : "'' AS image_url,";
+
     // ── Producten ophalen ─────────────────────────────────────────────────────
     $producten_raw = db()->query(
         "SELECT
@@ -113,6 +122,7 @@ try {
             p.tier,
             COALESCE(p.tags,  '') AS tags,
             COALESCE(p.sizes, '') AS sizes,
+            $image_select
             p.actief,
             (SELECT COUNT(*) FROM catalogus_kleuren ck WHERE ck.product_sku = p.sku) AS kleur_count
          FROM catalogus p
@@ -121,26 +131,31 @@ try {
          LIMIT 500"
     )->fetchAll();
 
-    // ── Kleuren per product ───────────────────────────────────────────────────
+    // ── Kleuren per product (alleen voor actieve producten) ───────────────────
+    $heeft_kleur_image = false;
+    try {
+        $col2 = db()->query("SHOW COLUMNS FROM catalogus_kleuren LIKE 'image_url'")->fetch();
+        $heeft_kleur_image = !empty($col2);
+    } catch (Exception $e) {}
+
+    $kleur_img_select = $heeft_kleur_image ? ", COALESCE(ck.image_url, '') AS image_url" : ", '' AS image_url";
+
     $kleuren_raw = db()->query(
-        "SELECT product_sku, naam, hex, code
-         FROM catalogus_kleuren
-         ORDER BY product_sku, naam"
+        "SELECT ck.product_sku, ck.naam, ck.hex, ck.code $kleur_img_select
+         FROM catalogus_kleuren ck
+         INNER JOIN catalogus p ON p.sku = ck.product_sku AND p.actief = 1
+         ORDER BY ck.product_sku, ck.naam"
     )->fetchAll();
 
     $kleuren_idx = [];
     foreach ($kleuren_raw as $k) {
         $kleuren_idx[$k['product_sku']][] = [
-            'naam' => $k['naam'],
-            'hex'  => $k['hex'] ?: '#cccccc',
-            'code' => $k['code'] ?: strtolower($k['naam']),
+            'naam'      => $k['naam'],
+            'hex'       => $k['hex'] ?: '#cccccc',
+            'code'      => $k['code'] ?: strtolower($k['naam']),
+            'image_url' => $k['image_url'] ?: null,
         ];
     }
-
-    // Debug: vergelijk SKUs voor kleuren mismatch analyse
-    $kleuren_skus   = array_unique(array_column($kleuren_raw, 'product_sku'));
-    $catalogus_skus = array_column($producten_raw, 'sku');
-    $matched_skus   = array_intersect($kleuren_skus, $catalogus_skus);
 
     // ── Producten categoriseren ───────────────────────────────────────────────
     $producten     = [];
@@ -169,6 +184,7 @@ try {
             'kleur_count'    => (int)$p['kleur_count'],
             'kleuren'        => $kleuren_idx[$p['sku']] ?? [],
             'maten'          => $maten,
+            'image_url'      => $p['image_url'] ?: null,
         ];
 
         if (isset($cat_aantallen[$cat_slug])) {
@@ -187,29 +203,15 @@ try {
         ];
     }
 
-    // Enhanced debug info
-    $sample_product = count($producten) > 0 ? $producten[0] : null;
-
     echo json_encode([
         'ok'          => true,
         'categorieen' => $categorieen_output,
         'producten'   => $producten,
         'totaal'      => count($producten),
         'debug'       => [
-            'info'              => 'Database & SKU matching diagnostics',
-            'merken'            => array_values(array_unique(array_column($producten, 'merk'))),
+            'totaal_producten'  => count($producten),
             'kleuren_totaal'    => count($kleuren_raw),
-            'kleuren_empty'     => count($kleuren_raw) === 0 ? 'WAARSCHUWING: catalogus_kleuren tabel is LEEG!' : 'OK',
-            'kleuren_skus'      => count($kleuren_skus) > 0 ? array_values(array_slice($kleuren_skus, 0, 3)) : [],
-            'catalogus_skus'    => count($catalogus_skus) > 0 ? array_slice($catalogus_skus, 0, 3) : [],
-            'matched_skus'      => count($matched_skus),
-            'match_percentage'  => count($catalogus_skus) > 0 ? round((count($matched_skus) / count($catalogus_skus)) * 100, 1) . '%' : 'N/A',
-            'sample_product'    => $sample_product ? [
-                'sku' => $sample_product['sku'],
-                'naam' => $sample_product['naam'],
-                'kleur_count' => $sample_product['kleur_count'],
-                'kleuren_count' => count($sample_product['kleuren']),
-            ] : 'Geen producten',
+            'heeft_image_url'   => $heeft_image_url,
         ],
     ], JSON_UNESCAPED_UNICODE);
 
