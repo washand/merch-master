@@ -535,7 +535,7 @@ $_levertijdenJS = json_encode([
 
 <!-- STAP 4: MATEN & AANTALLEN -->
 <div id="step4" class="hidden">
-  <div class="s-lbl">Stap 4 van 6</div>
+  <div class="s-lbl">Stap 4 van 5</div>
   <div class="s-ttl">Maten &amp; aantallen</div>
 
   <!-- Staffelkorting info -->
@@ -864,22 +864,13 @@ function getTextielKorting(qty) {
   return 0;
 }
 
-// ── Klanttype ─────────────────────────────────────────────────────────────────
+// ── Klanttype (stap 4) ────────────────────────────────────────────────────────
 function setKlantType(type) {
   S.klantType = type;
   e('kt-particulier').classList.toggle('act', type==='particulier');
   e('kt-bedrijf').classList.toggle('act', type==='bedrijf');
-  e('kt-particulier2')?.classList.toggle('act', type==='particulier');
-  e('kt-bedrijf2')?.classList.toggle('act', type==='bedrijf');
-  // Bedrijfsvelden stap 6 tonen/verbergen
-  const isBedrijf = type==='bedrijf';
-  e('bedrijf-velden6')?.classList.toggle('hidden', !isBedrijf);
-  // Herbereken weergave zonder herberekening van prijzen
-  updBtwDisplay();
-  chk6();
-  // Als stap 6 al gevuld is: herteken BTW-blok
-  const step6Active = e('step6') && !e('step6').classList.contains('hidden');
-  if(step6Active) fillSum();
+  // Note: bedrijf/particulier toggle is only in stap 4
+  // Checkout will use this value when processing order
 }
 
 
@@ -1345,7 +1336,6 @@ function calcQ(){
   e('q-total').textContent=fmt(tot);
   // Toggle zichtbaar maken
   e('klant-toggle-wrap').style.display='flex';
-  updBtwDisplay();
   e('quote-box').style.display='block';
   e('btn4').disabled=false;
 }
