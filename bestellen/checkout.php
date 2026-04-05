@@ -29,6 +29,22 @@ function fmt($val) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Afrekenen - Merch Master</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css">
+  <style>
+    /* Tom Select aanpassen aan form stijl */
+    .ts-wrapper .ts-control {
+      border: 1px solid var(--border, #ddd);
+      border-radius: 3px;
+      padding: 0.5rem 0.7rem;
+      font-size: 0.9rem;
+      font-family: inherit;
+      box-shadow: none;
+    }
+    .ts-wrapper.focus .ts-control { border-color: var(--accent, #e84c1e); box-shadow: 0 0 0 2px rgba(232,76,30,.15); }
+    .ts-dropdown { font-size: 0.9rem; font-family: inherit; border-color: var(--border, #ddd); }
+    .ts-dropdown .option.selected { background: var(--accent, #e84c1e); }
+    .ts-dropdown .option:hover, .ts-dropdown .option.active { background: #fdf1ee; color: var(--ink, #1a1816); }
+  </style>
   <style>
     .checkout-main {
       max-width: 900px;
@@ -247,13 +263,11 @@ function fmt($val) {
         </div>
         <div class="form-group">
           <label>Telefoon</label>
-          <div style="display: flex; gap: 0.5rem;">
-            <select name="telefoon_landcode" id="telefoon_landcode" style="flex: 0 0 auto; max-width: 90px;">
-              <option value="+31" <?php echo ($klant['telefoon_landcode'] ?? '+31') === '+31' ? 'selected' : ''; ?>>🇳🇱 +31</option>
-              <option value="+32" <?php echo ($klant['telefoon_landcode'] ?? '') === '+32' ? 'selected' : ''; ?>>🇧🇪 +32</option>
-              <option value="+49" <?php echo ($klant['telefoon_landcode'] ?? '') === '+49' ? 'selected' : ''; ?>>🇩🇪 +49</option>
-            </select>
-            <input type="tel" name="telefoon" id="telefoon" placeholder="6 12345678" value="<?php echo htmlspecialchars(preg_replace('/^\+\d+/', '', $klant['telefoon'] ?? '')); ?>" style="flex: 1;">
+          <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
+            <div style="flex: 0 0 160px;">
+              <select name="telefoon_landcode" id="telefoon_landcode"></select>
+            </div>
+            <input type="tel" name="telefoon" id="telefoon" placeholder="6 12345678" value="<?php echo htmlspecialchars(preg_replace('/^\+\d+/', '', $klant['telefoon'] ?? '')); ?>" style="flex: 1; padding: 0.6rem 0.8rem; border: 1px solid var(--border); border-radius: 3px; font-size: 0.9rem; font-family: inherit;">
           </div>
         </div>
       </div>
@@ -265,7 +279,7 @@ function fmt($val) {
         </div>
         <div class="form-group">
           <label>Postcode *</label>
-          <input type="text" name="postcode" id="postcode" required value="<?php echo htmlspecialchars($klant['postcode'] ?? ''); ?>">
+          <input type="text" name="postcode" id="postcode" required value="<?php echo htmlspecialchars($klant['postcode'] ?? ''); ?>" placeholder="1234 AB" autocomplete="postal-code">
         </div>
       </div>
 
@@ -276,12 +290,7 @@ function fmt($val) {
         </div>
         <div class="form-group">
           <label>Land</label>
-          <select name="land" id="land">
-            <option value="NL" <?php echo ($klant['land'] ?? 'NL') === 'NL' ? 'selected' : ''; ?>>Nederland</option>
-            <option value="BE" <?php echo ($klant['land'] ?? '') === 'BE' ? 'selected' : ''; ?>>België</option>
-            <option value="DE" <?php echo ($klant['land'] ?? '') === 'DE' ? 'selected' : ''; ?>>Duitsland</option>
-            <option value="other" <?php echo !in_array($klant['land'] ?? '', ['NL', 'BE', 'DE']) ? 'selected' : ''; ?>>Anders</option>
-          </select>
+          <select name="land" id="land"></select>
         </div>
       </div>
 
@@ -660,6 +669,167 @@ function fmt($val) {
         if(container) container.innerHTML = '<p style="color: #e74c3c;">Fout bij laden wagen - vernieuw pagina.</p>';
       }
     });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+  <script>
+  // ── Landen data (alle UN-landen, Nederlandse namen) ─────────────────────────
+  const LANDEN = [
+    {v:'AF',n:'Afghanistan',t:'+93'},{v:'AL',n:'Albanië',t:'+355'},
+    {v:'DZ',n:'Algerije',t:'+213'},{v:'AD',n:'Andorra',t:'+376'},
+    {v:'AO',n:'Angola',t:'+244'},{v:'AG',n:'Antigua en Barbuda',t:'+1268'},
+    {v:'AR',n:'Argentinië',t:'+54'},{v:'AM',n:'Armenië',t:'+374'},
+    {v:'AU',n:'Australië',t:'+61'},{v:'AT',n:'Oostenrijk',t:'+43'},
+    {v:'AZ',n:'Azerbeidzjan',t:'+994'},{v:'BS',n:"Bahama's",t:'+1242'},
+    {v:'BH',n:'Bahrein',t:'+973'},{v:'BD',n:'Bangladesh',t:'+880'},
+    {v:'BB',n:'Barbados',t:'+1246'},{v:'BY',n:'Belarus',t:'+375'},
+    {v:'BE',n:'België',t:'+32'},{v:'BZ',n:'Belize',t:'+501'},
+    {v:'BJ',n:'Benin',t:'+229'},{v:'BT',n:'Bhutan',t:'+975'},
+    {v:'BO',n:'Bolivia',t:'+591'},{v:'BA',n:'Bosnië-Herzegovina',t:'+387'},
+    {v:'BW',n:'Botswana',t:'+267'},{v:'BR',n:'Brazilië',t:'+55'},
+    {v:'BN',n:'Brunei',t:'+673'},{v:'BG',n:'Bulgarije',t:'+359'},
+    {v:'BF',n:'Burkina Faso',t:'+226'},{v:'BI',n:'Burundi',t:'+257'},
+    {v:'CV',n:'Kaapverdië',t:'+238'},{v:'KH',n:'Cambodja',t:'+855'},
+    {v:'CM',n:'Kameroen',t:'+237'},{v:'CA',n:'Canada',t:'+1'},
+    {v:'CF',n:'Centraal-Afrikaanse Republiek',t:'+236'},{v:'TD',n:'Tsjaad',t:'+235'},
+    {v:'CL',n:'Chili',t:'+56'},{v:'CN',n:'China',t:'+86'},
+    {v:'CO',n:'Colombia',t:'+57'},{v:'KM',n:'Comoren',t:'+269'},
+    {v:'CD',n:'Congo (DRC)',t:'+243'},{v:'CG',n:'Congo (Rep.)',t:'+242'},
+    {v:'CR',n:'Costa Rica',t:'+506'},{v:'HR',n:'Kroatië',t:'+385'},
+    {v:'CU',n:'Cuba',t:'+53'},{v:'CY',n:'Cyprus',t:'+357'},
+    {v:'CZ',n:'Tsjechië',t:'+420'},{v:'DK',n:'Denemarken',t:'+45'},
+    {v:'DJ',n:'Djibouti',t:'+253'},{v:'DM',n:'Dominica',t:'+1767'},
+    {v:'DO',n:'Dominicaanse Republiek',t:'+1809'},{v:'EC',n:'Ecuador',t:'+593'},
+    {v:'EG',n:'Egypte',t:'+20'},{v:'SV',n:'El Salvador',t:'+503'},
+    {v:'GQ',n:'Equatoriaal-Guinea',t:'+240'},{v:'ER',n:'Eritrea',t:'+291'},
+    {v:'EE',n:'Estland',t:'+372'},{v:'SZ',n:'Eswatini',t:'+268'},
+    {v:'ET',n:'Ethiopië',t:'+251'},{v:'FJ',n:'Fiji',t:'+679'},
+    {v:'FI',n:'Finland',t:'+358'},{v:'FR',n:'Frankrijk',t:'+33'},
+    {v:'GA',n:'Gabon',t:'+241'},{v:'GM',n:'Gambia',t:'+220'},
+    {v:'GE',n:'Georgië',t:'+995'},{v:'DE',n:'Duitsland',t:'+49'},
+    {v:'GH',n:'Ghana',t:'+233'},{v:'GR',n:'Griekenland',t:'+30'},
+    {v:'GD',n:'Grenada',t:'+1473'},{v:'GT',n:'Guatemala',t:'+502'},
+    {v:'GN',n:'Guinee',t:'+224'},{v:'GW',n:'Guinee-Bissau',t:'+245'},
+    {v:'GY',n:'Guyana',t:'+592'},{v:'HT',n:'Haïti',t:'+509'},
+    {v:'HN',n:'Honduras',t:'+504'},{v:'HU',n:'Hongarije',t:'+36'},
+    {v:'IS',n:'IJsland',t:'+354'},{v:'IN',n:'India',t:'+91'},
+    {v:'ID',n:'Indonesië',t:'+62'},{v:'IR',n:'Iran',t:'+98'},
+    {v:'IQ',n:'Irak',t:'+964'},{v:'IE',n:'Ierland',t:'+353'},
+    {v:'IL',n:'Israël',t:'+972'},{v:'IT',n:'Italië',t:'+39'},
+    {v:'JM',n:'Jamaica',t:'+1876'},{v:'JP',n:'Japan',t:'+81'},
+    {v:'JO',n:'Jordanië',t:'+962'},{v:'KZ',n:'Kazachstan',t:'+7'},
+    {v:'KE',n:'Kenia',t:'+254'},{v:'KI',n:'Kiribati',t:'+686'},
+    {v:'KW',n:'Koeweit',t:'+965'},{v:'KG',n:'Kirgizstan',t:'+996'},
+    {v:'LA',n:'Laos',t:'+856'},{v:'LV',n:'Letland',t:'+371'},
+    {v:'LB',n:'Libanon',t:'+961'},{v:'LS',n:'Lesotho',t:'+266'},
+    {v:'LR',n:'Liberia',t:'+231'},{v:'LY',n:'Libië',t:'+218'},
+    {v:'LI',n:'Liechtenstein',t:'+423'},{v:'LT',n:'Litouwen',t:'+370'},
+    {v:'LU',n:'Luxemburg',t:'+352'},{v:'MG',n:'Madagaskar',t:'+261'},
+    {v:'MW',n:'Malawi',t:'+265'},{v:'MY',n:'Maleisië',t:'+60'},
+    {v:'MV',n:'Maldiven',t:'+960'},{v:'ML',n:'Mali',t:'+223'},
+    {v:'MT',n:'Malta',t:'+356'},{v:'MH',n:'Marshalleilanden',t:'+692'},
+    {v:'MR',n:'Mauritanië',t:'+222'},{v:'MU',n:'Mauritius',t:'+230'},
+    {v:'MX',n:'Mexico',t:'+52'},{v:'FM',n:'Micronesië',t:'+691'},
+    {v:'MD',n:'Moldavië',t:'+373'},{v:'MC',n:'Monaco',t:'+377'},
+    {v:'MN',n:'Mongolië',t:'+976'},{v:'ME',n:'Montenegro',t:'+382'},
+    {v:'MA',n:'Marokko',t:'+212'},{v:'MZ',n:'Mozambique',t:'+258'},
+    {v:'MM',n:'Myanmar',t:'+95'},{v:'NA',n:'Namibië',t:'+264'},
+    {v:'NR',n:'Nauru',t:'+674'},{v:'NP',n:'Nepal',t:'+977'},
+    {v:'NL',n:'Nederland',t:'+31'},{v:'NZ',n:'Nieuw-Zeeland',t:'+64'},
+    {v:'NI',n:'Nicaragua',t:'+505'},{v:'NE',n:'Niger',t:'+227'},
+    {v:'NG',n:'Nigeria',t:'+234'},{v:'KP',n:'Noord-Korea',t:'+850'},
+    {v:'MK',n:'Noord-Macedonië',t:'+389'},{v:'NO',n:'Noorwegen',t:'+47'},
+    {v:'OM',n:'Oman',t:'+968'},{v:'PK',n:'Pakistan',t:'+92'},
+    {v:'PW',n:'Palau',t:'+680'},{v:'PS',n:'Palestina',t:'+970'},
+    {v:'PA',n:'Panama',t:'+507'},{v:'PG',n:'Papoea-Nieuw-Guinea',t:'+675'},
+    {v:'PY',n:'Paraguay',t:'+595'},{v:'PE',n:'Peru',t:'+51'},
+    {v:'PH',n:'Filipijnen',t:'+63'},{v:'PL',n:'Polen',t:'+48'},
+    {v:'PT',n:'Portugal',t:'+351'},{v:'QA',n:'Qatar',t:'+974'},
+    {v:'RO',n:'Roemenië',t:'+40'},{v:'RU',n:'Rusland',t:'+7'},
+    {v:'RW',n:'Rwanda',t:'+250'},{v:'KN',n:'Saint Kitts en Nevis',t:'+1869'},
+    {v:'LC',n:'Saint Lucia',t:'+1758'},{v:'VC',n:'Saint Vincent',t:'+1784'},
+    {v:'WS',n:'Samoa',t:'+685'},{v:'SM',n:'San Marino',t:'+378'},
+    {v:'ST',n:'Sao Tomé en Príncipe',t:'+239'},{v:'SA',n:'Saoedi-Arabië',t:'+966'},
+    {v:'SN',n:'Senegal',t:'+221'},{v:'RS',n:'Servië',t:'+381'},
+    {v:'SC',n:'Seychellen',t:'+248'},{v:'SL',n:'Sierra Leone',t:'+232'},
+    {v:'SG',n:'Singapore',t:'+65'},{v:'SK',n:'Slowakije',t:'+421'},
+    {v:'SI',n:'Slovenië',t:'+386'},{v:'SB',n:'Salomonseilanden',t:'+677'},
+    {v:'SO',n:'Somalië',t:'+252'},{v:'ZA',n:'Zuid-Afrika',t:'+27'},
+    {v:'KR',n:'Zuid-Korea',t:'+82'},{v:'SS',n:'Zuid-Soedan',t:'+211'},
+    {v:'ES',n:'Spanje',t:'+34'},{v:'LK',n:'Sri Lanka',t:'+94'},
+    {v:'SD',n:'Soedan',t:'+249'},{v:'SR',n:'Suriname',t:'+597'},
+    {v:'SE',n:'Zweden',t:'+46'},{v:'CH',n:'Zwitserland',t:'+41'},
+    {v:'SY',n:'Syrië',t:'+963'},{v:'TW',n:'Taiwan',t:'+886'},
+    {v:'TJ',n:'Tadzjikistan',t:'+992'},{v:'TZ',n:'Tanzania',t:'+255'},
+    {v:'TH',n:'Thailand',t:'+66'},{v:'TL',n:'Oost-Timor',t:'+670'},
+    {v:'TG',n:'Togo',t:'+228'},{v:'TO',n:'Tonga',t:'+676'},
+    {v:'TT',n:'Trinidad en Tobago',t:'+1868'},{v:'TN',n:'Tunesië',t:'+216'},
+    {v:'TR',n:'Turkije',t:'+90'},{v:'TM',n:'Turkmenistan',t:'+993'},
+    {v:'TV',n:'Tuvalu',t:'+688'},{v:'UG',n:'Oeganda',t:'+256'},
+    {v:'UA',n:'Oekraïne',t:'+380'},{v:'AE',n:'Ver. Arabische Emiraten',t:'+971'},
+    {v:'GB',n:'Verenigd Koninkrijk',t:'+44'},{v:'US',n:'Verenigde Staten',t:'+1'},
+    {v:'UY',n:'Uruguay',t:'+598'},{v:'UZ',n:'Oezbekistan',t:'+998'},
+    {v:'VU',n:'Vanuatu',t:'+678'},{v:'VA',n:'Vaticaanstad',t:'+379'},
+    {v:'VE',n:'Venezuela',t:'+58'},{v:'VN',n:'Vietnam',t:'+84'},
+    {v:'YE',n:'Jemen',t:'+967'},{v:'ZM',n:'Zambia',t:'+260'},
+    {v:'ZW',n:'Zimbabwe',t:'+263'},
+  ];
+
+  // ── Bouw opties + init Tom Select ─────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    const savedLand  = '<?php echo htmlspecialchars($klant['land'] ?? 'NL'); ?>';
+    const savedDial  = '<?php echo htmlspecialchars($klant['telefoon_landcode'] ?? '+31'); ?>';
+
+    // Landenkeuze
+    const landSel = document.getElementById('land');
+    LANDEN.forEach(l => {
+      const o = document.createElement('option');
+      o.value = l.v; o.textContent = l.n;
+      if(l.v === (savedLand || 'NL')) o.selected = true;
+      landSel.appendChild(o);
+    });
+    new TomSelect('#land', { maxOptions: 300, placeholder: 'Zoek land…' });
+
+    // Landcode telefoon
+    const dialSel = document.getElementById('telefoon_landcode');
+    LANDEN.forEach(l => {
+      const o = document.createElement('option');
+      o.value = l.t; o.textContent = l.t + ' ' + l.n;
+      if(l.t === (savedDial || '+31') && l.v === (savedLand || 'NL')) o.selected = true;
+      dialSel.appendChild(o);
+    });
+    new TomSelect('#telefoon_landcode', {
+      maxOptions: 300,
+      placeholder: 'Zoek…',
+      render: {
+        option: (d) => `<div><strong>${d.value.split(' ')[0]}</strong> ${d.text.substring(d.text.indexOf(' ')+1)}</div>`,
+        item:   (d) => `<div>${d.value.split(' ')[0]}</div>`,
+      }
+    });
+
+    // ── Postcode: valideer NL-formaat + normaliseer naar "1234 AB" ───────────────
+    const postcodeEl = document.getElementById('postcode');
+    const landTsEl   = document.getElementById('land');
+    const NL_RE = /^([1-9][0-9]{3})\s?([A-Za-z]{2})$/;
+
+    function isNL() {
+      const ts = landTsEl.tomselect;
+      return (ts ? ts.getValue() : landTsEl.value) === 'NL';
+    }
+
+    postcodeEl.addEventListener('blur', () => {
+      if(!isNL()) return;
+      const m = postcodeEl.value.trim().match(NL_RE);
+      if(m) {
+        postcodeEl.value = m[1] + ' ' + m[2].toUpperCase();
+        postcodeEl.setCustomValidity('');
+      } else if(postcodeEl.value) {
+        postcodeEl.setCustomValidity('Vul een geldige Nederlandse postcode in (bijv. 1234 AB)');
+        postcodeEl.reportValidity();
+      }
+    });
+    postcodeEl.addEventListener('input', () => postcodeEl.setCustomValidity(''));
+  });
   </script>
 </body>
 </html>
