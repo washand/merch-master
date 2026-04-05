@@ -542,6 +542,10 @@ function fmt($val) {
         alert('Fout: formulier niet gevonden');
         return;
       }
+      if(!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
       const formData = new FormData(form);
 
       // Combine telefoon_landcode + telefoon
