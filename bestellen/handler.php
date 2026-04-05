@@ -14,8 +14,11 @@ require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/bestellingen.php';
 require_once __DIR__ . '/includes/concepten.php';
 
-// Vang PHP errors op en stuur als JSON terug
+// Vang PHP errors op en stuur als JSON terug (alleen fatale fouten, niet notices/warnings)
 set_error_handler(function($errno, $errstr) {
+    if ($errno & (E_NOTICE | E_WARNING | E_DEPRECATED | E_USER_NOTICE | E_USER_WARNING | E_USER_DEPRECATED)) {
+        return false; // Laat PHP zelf afhandelen
+    }
     header('Content-Type: application/json');
     echo json_encode(['success'=>false,'error'=>'PHP fout: '.$errstr]);
     exit;
@@ -719,7 +722,7 @@ function bestelTemplateNL(array $d): string {
             <strong>Maten:</strong> ".$matenStr."<br>
             <strong>Hoeveelheid:</strong> ".($r['aantal']??0)."x<br>
             <strong>Positie:</strong> ".($r['positie']??'–')."<br>
-            <strong>Techniek:</strong> ".($r['techniek_a']??'–').($r['techniek_b']?' + '.($r['techniek_b']??''):'')."
+            <strong>Techniek:</strong> ".($r['techniek_a']??'–').(!empty($r['techniek_b']) ? ' + '.$r['techniek_b'] : '')."
           </div>
           ".($fileLinks ? "<div style='font-size:13px;padding-top:10px;border-top:1px solid #e8e4dc;color:#666;'><strong>Ontwerpen:</strong><br>".$fileLinks."</div>" : "<div style='font-size:13px;padding-top:10px;border-top:1px solid #e8e4dc;color:#c0392b;'><strong>⚠ Gén ontwerp ontvangen</strong></div>")."
         </div>";
@@ -792,7 +795,7 @@ function bevestigingTemplate(array $d, string $taal = 'nl'): string {
             <strong>Maten:</strong> ".$matenStr."<br>
             <strong>Hoeveelheid:</strong> ".($r['aantal']??0)." ".mt($taal,'stuks')."<br>
             <strong>Positie:</strong> ".($r['positie']??'–')."<br>
-            <strong>Techniek:</strong> ".($r['techniek_a']??'–').($r['techniek_b']?' + '.($r['techniek_b']??''):'')."
+            <strong>Techniek:</strong> ".($r['techniek_a']??'–').(!empty($r['techniek_b']) ? ' + '.$r['techniek_b'] : '')."
           </div>
           ".($fileLinks ? "<div style='font-size:13px;padding-top:10px;border-top:1px solid #e8e4dc;'>".$fileLinks."</div>" : "")."
         </div>";
