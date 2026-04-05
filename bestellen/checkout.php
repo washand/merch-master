@@ -807,7 +807,7 @@ function fmt($val) {
     const dialHidden = document.getElementById('telefoon_landcode');
     const savedIso   = LANDEN.find(l => l.t === (savedDial||'+31'))?.v || 'NL';
     new TomSelect('#dial_ts', {
-      options:     LANDEN.map(l => ({ value: l.v, dial: l.t, name: l.n })),
+      options:     [...LANDEN].sort((a,b) => (MET_VLAG.has(b.v)?1:0) - (MET_VLAG.has(a.v)?1:0) || a.n.localeCompare(b.n)).map(l => ({ value: l.v, dial: l.t, name: l.n })),
       valueField:  'value',
       labelField:  'name',
       searchField: ['name', 'dial'],
