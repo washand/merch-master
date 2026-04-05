@@ -334,7 +334,7 @@ function fmt($val) {
     // Load cart from wagen.php
     async function loadCart() {
       try {
-        const response = await fetch('../wagen.php', {
+        const response = await fetch('/bestellen/wagen.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ actie: 'laden', wagen_token: WAGEN_TOKEN })
@@ -432,35 +432,46 @@ function fmt($val) {
 
     // Initialize PayPal
     function initPayPal() {
+      if(typeof paypal === 'undefined') {
+        console.error('PayPal SDK not loaded');
+        document.getElementById('pp-container').innerHTML = '<p style="color: #e74c3c;">PayPal kon niet laden. Gebruik de testknop of probeer opnieuw.</p>';
+        return;
+      }
+
       const totals = calcTotals();
 
-      paypal.Buttons({
-        style: { layout: 'vertical', color: 'blue', height: 45 },
-        createOrder: (data, actions) => {
-          return actions.order.create({
-            purchase_units: [{
-              amount: {
-                currency_code: 'EUR',
-                value: totals.totalIncl.toFixed(2),
-                breakdown: {
-                  item_total: { currency_code: 'EUR', value: (totals.totalIncl - totals.ship).toFixed(2) },
-                  shipping: { currency_code: 'EUR', value: totals.ship.toFixed(2) },
-                  tax_total: { currency_code: 'EUR', value: '0.00' }
+      try {
+        paypal.Buttons({
+          style: { layout: 'vertical', color: 'blue', height: 45 },
+          createOrder: (data, actions) => {
+            return actions.order.create({
+              purchase_units: [{
+                amount: {
+                  currency_code: 'EUR',
+                  value: totals.totalIncl.toFixed(2),
+                  breakdown: {
+                    item_total: { currency_code: 'EUR', value: (totals.totalIncl - totals.ship).toFixed(2) },
+                    shipping: { currency_code: 'EUR', value: totals.ship.toFixed(2) },
+                    tax_total: { currency_code: 'EUR', value: '0.00' }
+                  }
                 }
-              }
-            }]
-          });
-        },
-        onApprove: (data, actions) => {
-          return actions.order.capture().then(details => {
-            submitPayment(details);
-          });
-        },
-        onError: (err) => {
-          alert('Betaling mislukt. Probeer opnieuw.');
-          console.error(err);
-        }
-      }).render('#pp-container');
+              }]
+            });
+          },
+          onApprove: (data, actions) => {
+            return actions.order.capture().then(details => {
+              submitPayment(details);
+            });
+          },
+          onError: (err) => {
+            alert('Betaling mislukt. Probeer opnieuw.');
+            console.error(err);
+          }
+        }).render('#pp-container');
+      } catch(err) {
+        console.error('PayPal init error:', err);
+        document.getElementById('pp-container').innerHTML = '<p style="color: #e74c3c;">Er is een fout opgetreden bij het laden van PayPal.</p>';
+      }
     }
 
     // Submit payment (called from PayPal or test button)
