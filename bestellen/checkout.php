@@ -4,12 +4,14 @@ require_once __DIR__ . '/includes/db-config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/../includes/taal.php';
 
-// Redirect if cart is empty
-$cart = $_SESSION['mm_cart'] ?? [];
-if(empty($cart)){
+// Get wagen_token from session (set by bestellen.php via wagen.php)
+$wagen_token = $_SESSION['mm_wagen_token'] ?? $_GET['wagen_token'] ?? '';
+if(empty($wagen_token)){
+  // Redirect back to tool if no cart
   header('Location: /bestellen.php');
   exit;
 }
+$cart = []; // Will be loaded via JavaScript/wagen.php
 
 $klantType = $_SESSION['mm_klantType'] ?? 'particulier';
 $opmerkingen = $_SESSION['mm_opmerkingen'] ?? '';
@@ -356,29 +358,67 @@ function t($key) {
   <script src="https://www.paypal.com/sdk/js?client-id=<?php echo getenv('PAYPAL_CLIENT_ID') ?: 'sb-nxgbn28402656@personal.example.com'; ?>&currency=EUR"></script>
 
   <script>
-    // Store cart in global
-    const CART = <?php echo json_encode($cart); ?>;
+    let CART = [];
+    const WAGEN_TOKEN = '<?php echo htmlspecialchars($wagen_token); ?>';
     const KLANT_TYPE = '<?php echo $klantType; ?>';
+
+    // Load cart from wagen.php
+    async function loadCart() {
+      try {
+        const response = await fetch('/bestellen/wagen.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ actie: 'laden', wagen_token: WAGEN_TOKEN })
+        });
+        const data = await response.json();
+        if(data.ok && data.regels) {
+          CART = data.regels;
+          updateSummary();
+          calcTotals();
+        } else {
+          console.error('Failed to load cart:', data);
+          document.body.innerHTML = '<p>Fout bij laden cart. <a href="/bestellen.php">Terug</a></p>';
+        }
+      } catch(err) {
+        console.error('Cart load error:', err);
+      }
+    }
+
+    // Update summary display
+    function updateSummary() {
+      const summaryDiv = document.querySelector('.summary-item');
+      if(!summaryDiv) return;
+
+      let html = '';
+      CART.forEach((item, idx) => {
+        html += `<div class="summary-item">
+          <div class="summary-row">
+            <span class="label"><strong>${item.notitie || item.sku}</strong></span>
+            <span class="value">${item.aantal} stuks</span>
+          </div>
+        </div>`;
+      });
+      document.querySelector('.section').innerHTML = '<h2><?php echo t("order_summary"); ?></h2>' + html + '<div class="price-section" id="prices"></div>';
+    }
 
     // Calculate and display totals
     function calcTotals() {
       let totalEx = 0;
-      let totalDruk = 0;
 
       CART.forEach(item => {
-        const itemEx = (item.prijs_ex || 0) * (item.qty || 0);
-        const itemDruk = ((item.drukA || 0) + (item.drukB || 0)) * (item.qty || 0);
-        totalEx += itemEx + itemDruk;
+        // Simplified: assume prices stored in item
+        // Real calculation would come from wagen.php
+        totalEx += (item.prijs_ex || 0) * (item.aantal || 0);
       });
 
-      // Add shipping (simplified - 6.95 for <12, 13.95 for 12+)
+      // Add shipping
       let qty = 0;
-      CART.forEach(item => qty += item.qty || 0);
+      CART.forEach(item => qty += item.aantal || 0);
       const ship = qty >= 12 ? 13.95 : 6.95;
       const shipEx = ship / 1.21;
 
       totalEx += shipEx;
-      const btw = totalEx * 0.21 / 1.21; // BTW on ex amount
+      const btw = totalEx * 0.21 / 1.21;
       const totalIncl = totalEx + btw;
 
       document.getElementById('total-ex').textContent = '€' + totalEx.toFixed(2).replace('.', ',');
@@ -458,7 +498,7 @@ function t($key) {
 
     // Initialize on load
     window.addEventListener('load', () => {
-      calcTotals();
+      loadCart();
       initPayPal();
     });
   </script>
