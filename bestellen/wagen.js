@@ -344,7 +344,7 @@ const MerchWagen = {
           ${T.vol_pct>0?`<div class="mm-totaal-rij mm-korting"><span>Volumekorting (${T.vol_pct}%)</span><span>– ${fmt(T.vol_korting)}</span></div>`:''}
           <div class="mm-totaal-rij"><span>Totaal excl. BTW</span><span>${fmt(T.totaal_excl)}</span></div>
           <div class="mm-totaal-rij mm-btw-rij"><span>BTW 21%</span><span>${fmt(T.btw)}</span></div>
-          <div class="mm-totaal-rij mm-eindtotaal"><span>Totaal incl. BTW</span><span>${fmt(T.totaal_incl)}</span></div>
+          <div class="mm-totaal-rij mm-eindtotaal"><span>Totaal incl. BTW</span><span>${fmt(T.totaal_met_verzend || (T.totaal_incl + (T.verzend_incl || 0)))}</span></div>
           ${T.verzend_achteraf
             ? `<div class="mm-totaal-rij mm-verzend-info"><span style="font-size:.78rem;color:#7a7670;">📦 Verzendkosten worden achteraf berekend.</span></div>`
             : `<div class="mm-totaal-rij"><span>Verzending (${T.verzend_label})</span><span>+ ${fmt(T.verzend_excl)}</span></div>
@@ -423,7 +423,7 @@ const MerchWagen = {
             ${T.vol_pct>0?`<div class="mm-totaal-rij mm-korting"><span>Volumekorting (${T.vol_pct}%)</span><span>– ${fmt(T.vol_korting)}</span></div>`:''}
             <div class="mm-totaal-rij"><span>Totaal excl. BTW</span><span>${fmt(T.totaal_excl)}</span></div>
             <div class="mm-totaal-rij mm-btw-rij"><span>BTW 21%</span><span>${fmt(T.btw)}</span></div>
-            <div class="mm-totaal-rij mm-eindtotaal"><span>Totaal incl. BTW</span><span>${fmt(T.totaal_incl)}</span></div>
+            <div class="mm-totaal-rij mm-eindtotaal"><span>Totaal incl. BTW</span><span>${fmt(T.totaal_met_verzend || (T.totaal_incl + (T.verzend_incl || 0)))}</span></div>
             ${state.spoed?`<div class="mm-totaal-rij mm-spoed-rij"><span>Spoedtoeslag 40%</span><span>+ ${fmt(T.totaal_incl*0.40)}</span></div>
             <div class="mm-totaal-rij mm-eindtotaal"><span>Te betalen</span><span>${fmt(T.totaal_incl*1.40)}</span></div>`:''}
           </div>`:''}
