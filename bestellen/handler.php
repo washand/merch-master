@@ -142,7 +142,17 @@ function handleBestelling(array $d): void {
     
     // Bereken verwacht totaal incl. 21% BTW
     $server_totaal_incl = round($server_totaal_ex * 1.21, 2);
-    
+
+    // DEBUG: Log berekening
+    error_log(sprintf(
+        '[PRIJSVALIDATIE] Client stuurt: %s | Server berekent: %s (ex: %s + verzend: %s) | Verschil: %s',
+        $totaal_incl,
+        $server_totaal_incl,
+        $server_totaal_ex - $verzending_ex,
+        $verzending_ex,
+        abs($server_totaal_incl - $totaal_incl)
+    ));
+
     // Tolerantie van 5 cent (afronding)
     if (abs($server_totaal_incl - $totaal_incl) > 0.05) {
         // Log de poging
@@ -153,10 +163,17 @@ function handleBestelling(array $d): void {
             $server_totaal_incl,
             abs($server_totaal_incl - $totaal_incl)
         ));
-        
+
         jsonResponse([
             'success' => false,
-            'error'   => 'Prijsvalidatie mislukt. Herlaad de pagina en probeer opnieuw. Code: PV01'
+            'error'   => 'Prijsvalidatie mislukt. Herlaad de pagina en probeer opnieuw. Code: PV01',
+            'debug'   => [
+                'client_totaal' => (float)$totaal_incl,
+                'server_totaal' => (float)$server_totaal_incl,
+                'server_ex' => (float)($server_totaal_ex - $verzending_ex),
+                'verzending_ex' => (float)$verzending_ex,
+                'verschil' => abs($server_totaal_incl - $totaal_incl)
+            ]
         ], 400);
         return;
     }
