@@ -41,7 +41,7 @@ class Bestellingen {
                 $r['sku'] ?? null, $r['naam'] ?? null, $r['merk'] ?? null,
                 $r['kleur_code'] ?? null, $r['kleur_naam'] ?? null,
                 $r['positie'] ?? null, $r['techniek_a'] ?? null, $r['techniek_b'] ?? null,
-                $r['is_dual'] ? 1 : 0,
+                ($r['is_dual'] ?? false) ? 1 : 0,
                 json_encode($r['maten'] ?? []),
                 (int)($r['aantal'] ?? 0),
                 round((float)($r['prijs_ex'] ?? 0), 4),
@@ -50,13 +50,29 @@ class Bestellingen {
             ]
         );
 
-        // Uploads koppelen
+        // Uploads koppelen (van simPay: upload_url_a, upload_url_b)
+        $uploads_map = [
+            'upload_url_a' => 'Voorkant',
+            'upload_url_b' => 'Achterkant'
+        ];
+        $volgorde = 0;
+        foreach ($uploads_map as $key => $positie) {
+            $url = $r[$key] ?? null;
+            if ($url) {
+                DB::run(
+                    'INSERT INTO uploads (regel_id,positie,bestandsnaam,url,volgorde) VALUES (?,?,?,?,?)',
+                    [$regelId, $positie, basename($url), $url, $volgorde++]
+                );
+            }
+        }
+
+        // Fallback: als er 'uploads' array is (oud format), verwerk die ook
         foreach (($r['uploads'] ?? []) as $pos => $urls) {
             foreach ((array)$urls as $i => $url) {
                 if (!$url) continue;
                 DB::run(
                     'INSERT INTO uploads (regel_id,positie,bestandsnaam,url,volgorde) VALUES (?,?,?,?,?)',
-                    [$regelId, $pos, basename($url), $url, $i]
+                    [$regelId, $pos, basename($url), $url, $volgorde++]
                 );
             }
         }
