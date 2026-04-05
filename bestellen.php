@@ -1353,22 +1353,27 @@ function setupStep5(){
 
 async function checkWagenBanner(){
   try {
+    const banner = e('wagen-banner');
+    if(!banner) return; // Element niet gevonden - no crash
+
     const token = localStorage.getItem('mm_wagen_token');
     if(!token) {
-      e('wagen-banner').style.display = 'none';
+      banner.style.display = 'none';
       return;
     }
     const resp = await fetch('bestellen/wagen.php?actie=laden');
     const data = await resp.json();
     if(data.ok && data.wagen && data.wagen.regels && data.wagen.regels.length > 0) {
-      e('wagen-banner-count').textContent = data.wagen.regels.length;
-      e('wagen-banner').style.display = 'block';
+      const count = e('wagen-banner-count');
+      if(count) count.textContent = data.wagen.regels.length;
+      banner.style.display = 'block';
     } else {
-      e('wagen-banner').style.display = 'none';
+      banner.style.display = 'none';
     }
   } catch(err) {
     console.error('checkWagenBanner error:', err);
-    e('wagen-banner').style.display = 'none';
+    const banner = e('wagen-banner');
+    if(banner) banner.style.display = 'none';
   }
 }
 
@@ -1402,6 +1407,13 @@ function chk5(){
 async function toevoegenAanWagen(){
   try {
     console.log('toevoegenAanWagen: START');
+
+    // FIRST: Validate required state
+    if(!S.mdl) { alert('Selecteer eerst een product bij stap 1-2.'); return; }
+    if(!S.pos) { alert('Selecteer eerst een positie bij stap 4.'); return; }
+    if(!S.clrId) { alert('Selecteer eerst een kleur bij stap 3.'); return; }
+    if(!S.techA) { alert('Selecteer eerst een techniek bij stap 4.'); return; }
+
     // Herbereken qty direct uit inputs (betrouwbaarder dan S.qty state)
     let herberekendQty = 0;
     const sz = {};
@@ -1423,9 +1435,9 @@ async function toevoegenAanWagen(){
     if(S.pos === 'front' || S.pos === 'both') technieken.push({positie: 'voorkant', techniek: S.techA});
     if(S.pos === 'back' || S.pos === 'both') technieken.push({positie: 'achterkant', techniek: S.techB});
 
-    // Build regel voor wagen.php API
+    // Build regel voor wagen.php API (safe access)
     const regel = {
-      sku: S.mdl.sku,
+      sku: S.mdl.sku || S.mdl.code || '',
       aantal: S.qty,  // NODIG: totaal aantal stuks
       techniek: S.techA,  // fallback (nog steeds nodig voor validatie)
       technieken: technieken,  // per positie
