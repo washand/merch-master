@@ -432,7 +432,8 @@ function fmt($val) {
         totalEx: totalEx,
         btw: btw,
         totalIncl: totalWithShip,
-        ship: shipExcl
+        shipExcl: shipExcl,
+        shipIncl: shipIncl
       };
     }
 
@@ -456,8 +457,8 @@ function fmt($val) {
                   currency_code: 'EUR',
                   value: totals.totalIncl.toFixed(2),
                   breakdown: {
-                    item_total: { currency_code: 'EUR', value: (totals.totalIncl - totals.ship).toFixed(2) },
-                    shipping: { currency_code: 'EUR', value: totals.ship.toFixed(2) },
+                    item_total: { currency_code: 'EUR', value: (totals.totalIncl - totals.shipIncl).toFixed(2) },
+                    shipping: { currency_code: 'EUR', value: totals.shipIncl.toFixed(2) },
                     tax_total: { currency_code: 'EUR', value: '0.00' }
                   }
                 }
@@ -519,10 +520,17 @@ function fmt($val) {
 
       // Add handler-required fields using exact values from server
       formData.set('regels', JSON.stringify(regels));
-      formData.set('verzending_ex', TOTALEN ? (TOTALEN.verzend_excl || 0).toFixed(2) : '0.00');
+      formData.set('verzending_ex', TOTALEN && !TOTALEN.verzend_achteraf ? (TOTALEN.verzend_excl || 0).toFixed(2) : '0.00');
 
-      // Use totaal_met_verzend if available (includes shipping), otherwise use totaal_incl
-      const finalTotal = TOTALEN ? (TOTALEN.totaal_met_verzend || TOTALEN.totaal_incl || 0) : 0;
+      // Use totaal_met_verzend if available (includes shipping), otherwise calculate
+      let finalTotal = 0;
+      if(TOTALEN) {
+        if(!TOTALEN.verzend_achteraf && TOTALEN.totaal_met_verzend) {
+          finalTotal = TOTALEN.totaal_met_verzend;
+        } else {
+          finalTotal = TOTALEN.totaal_incl || 0;
+        }
+      }
       formData.set('totaal_incl', Number(finalTotal).toFixed(2));
       formData.set('taal', 'nl');
 
