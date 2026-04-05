@@ -337,7 +337,7 @@ function fmt($val) {
       return '€' + Number(val).toFixed(2).replace('.', ',');
     }
 
-    // Load cart from wagen.php
+    // Load cart from wagen.php (ASYNC - returns promise)
     async function loadCart() {
       try {
         const response = await fetch('/bestellen/wagen.php', {
@@ -346,16 +346,22 @@ function fmt($val) {
           body: JSON.stringify({ actie: 'laden', wagen_token: WAGEN_TOKEN })
         });
         const data = await response.json();
+        console.log('✓ loadCart() response:', data);
+
         if(data.ok && data.regels) {
           CART = data.regels;
-          TOTALEN = data.totalen; // Store totals from server for exact prices
+          TOTALEN = data.totalen; // Store totals from server
+          console.log('✓ TOTALEN loaded:', TOTALEN);
           updateSummary();
-          calcTotals();
+          calcTotals(); // Display totals
+          return true; // Signal success
         } else {
-          console.error('Failed to load cart:', data);
+          console.error('✗ Failed to load cart:', data);
+          return false;
         }
       } catch(err) {
-        console.error('Cart load error:', err);
+        console.error('✗ Cart load error:', err);
+        return false;
       }
     }
 
@@ -402,63 +408,90 @@ function fmt($val) {
     // Calculate and display totals - use exact values from wagen.php
     function calcTotals() {
       if(!TOTALEN) {
-        return { totalEx: 0, btw: 0, totalIncl: 0, ship: 0 };
+        console.warn('⚠ calcTotals() called but TOTALEN is null');
+        return { totalEx: 0, btw: 0, totalIncl: 0, shipExcl: 0, shipIncl: 0 };
       }
 
-      // Use exact totals from wagen.php (matches winkelwagen display)
-      const totalEx = TOTALEN.totaal_excl || 0;
-      const btw = TOTALEN.btw || 0;
-      const totalIncl = TOTALEN.totaal_incl || 0;
+      // Use exact totals from wagen.php
+      const totalEx = Number(TOTALEN.totaal_excl) || 0;
+      const btw = Number(TOTALEN.btw) || 0;
+      const totalIncl = Number(TOTALEN.totaal_incl) || 0;
 
-      // Shipping: use verzend_incl directly (NOT verzend_excl * 1.21)
+      // Shipping: always get BOTH incl and excl, with fallback
       let shipIncl = 0;
       let shipExcl = 0;
-      if(!TOTALEN.verzend_achteraf) {
-        shipIncl = TOTALEN.verzend_incl || 0;  // Use incl value directly
-        shipExcl = TOTALEN.verzend_excl || 0;  // For handler validation
+
+      if(!TOTALEN.verzend_achteraf && TOTALEN.verzend_incl !== null && TOTALEN.verzend_incl !== undefined) {
+        shipIncl = Number(TOTALEN.verzend_incl) || 0;
+        shipExcl = Number(TOTALEN.verzend_excl) || 0;
       }
 
-      // Add shipping to totals if not achteraf
-      let totalWithShip = totalIncl;
+      // Final total: use totaal_met_verzend if available, else calculate
+      let finalTotal = totalIncl;
       if(!TOTALEN.verzend_achteraf && shipIncl > 0) {
-        totalWithShip = TOTALEN.totaal_met_verzend || (totalIncl + shipIncl);
+        finalTotal = Number(TOTALEN.totaal_met_verzend) || (totalIncl + shipIncl);
       }
 
-      document.getElementById('total-ex').textContent = formatPrice(totalEx);
-      document.getElementById('total-btw').textContent = formatPrice(btw);
-      document.getElementById('total-incl').textContent = formatPrice(totalWithShip);
+      console.log('calcTotals():', { totalEx, btw, totalIncl, shipIncl, shipExcl, finalTotal });
+
+      // Update display
+      const exEl = document.getElementById('total-ex');
+      const btwEl = document.getElementById('total-btw');
+      const inclEl = document.getElementById('total-incl');
+      if(exEl) exEl.textContent = formatPrice(totalEx);
+      if(btwEl) btwEl.textContent = formatPrice(btw);
+      if(inclEl) inclEl.textContent = formatPrice(finalTotal);
 
       return {
         totalEx: totalEx,
         btw: btw,
-        totalIncl: totalWithShip,
+        totalIncl: finalTotal,
         shipExcl: shipExcl,
         shipIncl: shipIncl
       };
     }
 
-    // Initialize PayPal
+    // Initialize PayPal (CALLED AFTER loadCart() succeeds)
     function initPayPal() {
+      console.log('initPayPal() called');
+
       if(typeof paypal === 'undefined') {
-        console.error('PayPal SDK not loaded');
-        document.getElementById('pp-container').innerHTML = '<p style="color: #e74c3c;">PayPal kon niet laden. Gebruik de testknop of probeer opnieuw.</p>';
+        console.error('✗ PayPal SDK not loaded');
+        const container = document.getElementById('pp-container');
+        if(container) container.innerHTML = '<p style="color: #e74c3c;">PayPal kon niet laden. Gebruik de testknop of probeer opnieuw.</p>';
         return;
       }
 
-      const totals = calcTotals();
+      if(!TOTALEN) {
+        console.error('✗ TOTALEN still null at initPayPal()!');
+        const container = document.getElementById('pp-container');
+        if(container) container.innerHTML = '<p style="color: #e74c3c;">Fout: wagen gegevens niet geladen.</p>';
+        return;
+      }
 
       try {
+        console.log('✓ Creating PayPal buttons with TOTALEN:', TOTALEN);
+
         paypal.Buttons({
           style: { layout: 'vertical', color: 'blue', height: 45 },
           createOrder: (data, actions) => {
+            // CALCULATE FRESH totals here (don't rely on closure)
+            const freshTotals = calcTotals();
+            console.log('createOrder - freshTotals:', freshTotals);
+
+            if(!freshTotals.shipIncl && freshTotals.shipIncl !== 0) {
+              console.error('✗ shipIncl is undefined:', freshTotals);
+              throw new Error('Verzending waarde niet geladen');
+            }
+
             return actions.order.create({
               purchase_units: [{
                 amount: {
                   currency_code: 'EUR',
-                  value: totals.totalIncl.toFixed(2),
+                  value: Number(freshTotals.totalIncl).toFixed(2),
                   breakdown: {
-                    item_total: { currency_code: 'EUR', value: (totals.totalIncl - totals.shipIncl).toFixed(2) },
-                    shipping: { currency_code: 'EUR', value: totals.shipIncl.toFixed(2) },
+                    item_total: { currency_code: 'EUR', value: Number(freshTotals.totalIncl - (freshTotals.shipIncl || 0)).toFixed(2) },
+                    shipping: { currency_code: 'EUR', value: Number(freshTotals.shipIncl || 0).toFixed(2) },
                     tax_total: { currency_code: 'EUR', value: '0.00' }
                   }
                 }
@@ -466,107 +499,147 @@ function fmt($val) {
             });
           },
           onApprove: (data, actions) => {
+            console.log('✓ PayPal onApprove');
             return actions.order.capture().then(details => {
               submitPayment(details);
             });
           },
           onError: (err) => {
-            alert('Betaling mislukt. Probeer opnieuw.');
-            console.error(err);
+            console.error('✗ PayPal error:', err);
+            alert('Betaling mislukt: ' + (err.message || 'Onbekende fout'));
           }
         }).render('#pp-container');
+        console.log('✓ PayPal buttons rendered');
       } catch(err) {
-        console.error('PayPal init error:', err);
-        document.getElementById('pp-container').innerHTML = '<p style="color: #e74c3c;">Er is een fout opgetreden bij het laden van PayPal.</p>';
+        console.error('✗ PayPal init error:', err);
+        const container = document.getElementById('pp-container');
+        if(container) container.innerHTML = '<p style="color: #e74c3c;">PayPal fout: ' + err.message + '</p>';
       }
     }
 
     // Submit payment (called from PayPal or test button)
     async function submitPayment(paypalDetails) {
+      console.log('submitPayment() called', { paypalDetails });
+
       // Get form data
       const form = document.getElementById('checkout-form');
+      if(!form) {
+        alert('Fout: formulier niet gevonden');
+        return;
+      }
       const formData = new FormData(form);
 
       // Combine telefoon_landcode + telefoon
-      const landcode = document.getElementById('telefoon_landcode').value || '+31';
-      const telefoon_raw = document.getElementById('telefoon').value || '';
-      if(telefoon_raw) {
-        // Remove any + or spaces at start, prepend landcode
-        const telefoon_clean = telefoon_raw.replace(/^[\+\s]+/, '');
-        formData.set('telefoon', landcode + telefoon_clean);
+      const landcodeEl = document.getElementById('telefoon_landcode');
+      const telefoonEl = document.getElementById('telefoon');
+      if(landcodeEl && telefoonEl) {
+        const landcode = landcodeEl.value || '+31';
+        const telefoon_raw = telefoonEl.value || '';
+        if(telefoon_raw) {
+          const telefoon_clean = telefoon_raw.replace(/^[\+\s]+/, '');
+          formData.set('telefoon', landcode + telefoon_clean);
+        }
+        formData.delete('telefoon_landcode');
       }
-      formData.delete('telefoon_landcode');  // Don't send landcode separately
 
-      // Calculate totals
+      // Calculate totals FRESH here
+      console.log('submitPayment - calculating totals');
       const totals = calcTotals();
+      if(!totals || totals.totalIncl <= 0) {
+        console.error('✗ Invalid totals:', totals);
+        alert('Fout: prijzen kunnen niet berekend worden');
+        return;
+      }
+      console.log('✓ submitPayment totals:', totals);
 
       // Extract cart regels for handler validation
+      if(!CART || CART.length === 0) {
+        alert('Fout: winkelwagen is leeg');
+        return;
+      }
+
       const regels = CART.map(item => {
-        // Get item pricing from wagen.php response (nested in 'prijs' object)
         const prijs_obj = item.prijs || {};
-        const prijs_ex = prijs_obj.prijs_excl || 0;
-        const druk_ex = prijs_obj.druk_excl || 0;
-        const korting_pct = prijs_obj.volumekorting_pct || 0;
-        const aantal = item.aantal || 1;
+        const prijs_ex = Number(prijs_obj.prijs_excl) || 0;
+        const druk_ex = Number(prijs_obj.druk_excl) || 0;
+        const korting_pct = Number(prijs_obj.volumekorting_pct) || 0;
+        const aantal = Number(item.aantal) || 1;
 
         return {
           sku: item.sku,
-          prijs_ex: Number(prijs_ex).toFixed(2),
-          druk_ex: Number(druk_ex).toFixed(2),
+          prijs_ex: prijs_ex.toFixed(2),
+          druk_ex: druk_ex.toFixed(2),
           aantal: aantal,
-          korting_pct: Number(korting_pct).toFixed(2)
+          korting_pct: korting_pct.toFixed(2)
         };
       });
 
-      // Add handler-required fields using exact values from server
-      formData.set('regels', JSON.stringify(regels));
-      formData.set('verzending_ex', TOTALEN && !TOTALEN.verzend_achteraf ? (TOTALEN.verzend_excl || 0).toFixed(2) : '0.00');
+      console.log('submitPayment - regels:', regels);
 
-      // Use totaal_met_verzend if available (includes shipping), otherwise calculate
-      let finalTotal = 0;
-      if(TOTALEN) {
-        if(!TOTALEN.verzend_achteraf && TOTALEN.totaal_met_verzend) {
-          finalTotal = TOTALEN.totaal_met_verzend;
-        } else {
-          finalTotal = TOTALEN.totaal_incl || 0;
-        }
-      }
-      formData.set('totaal_incl', Number(finalTotal).toFixed(2));
+      // Add handler-required fields
+      formData.set('regels', JSON.stringify(regels));
+      formData.set('verzending_ex', (totals.shipExcl || 0).toFixed(2));
+      formData.set('totaal_incl', (totals.totalIncl || 0).toFixed(2));
       formData.set('taal', 'nl');
 
       if(paypalDetails) {
         formData.set('paypal_id', paypalDetails.id);
+        console.log('PayPal ID:', paypalDetails.id);
       }
+
+      console.log('submitPayment - sending to handler');
 
       try {
         const response = await fetch('/bestellen/handler.php', {
           method: 'POST',
           body: formData
         });
+
+        if(!response.ok) {
+          console.error('✗ Handler returned status:', response.status);
+        }
+
         const result = await response.json();
+        console.log('✓ Handler response:', result);
 
         if(result.success) {
-          // Redirect to success page
+          console.log('✓ Order success! Redirecting...');
           window.location.href = '/bestellen.php?success=' + (paypalDetails?.id || 'test');
         } else {
-          alert('Bestelling mislukt: ' + (result.error || 'Onbekende fout'));
+          const errorMsg = result.error || 'Onbekende fout';
+          console.error('✗ Handler error:', errorMsg);
+          alert('Bestelling mislukt: ' + errorMsg);
         }
       } catch(err) {
-        console.error('Error:', err);
+        console.error('✗ Fetch error:', err);
         alert('Fout bij versturen: ' + err.message);
       }
     }
 
     // Test payment button
-    document.getElementById('submit-btn').addEventListener('click', (e) => {
-      e.preventDefault();
-      submitPayment(null);
+    document.addEventListener('DOMContentLoaded', () => {
+      const submitBtn = document.getElementById('submit-btn');
+      if(submitBtn) {
+        submitBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          console.log('Test payment button clicked');
+          submitPayment(null);
+        });
+      }
     });
 
-    // Initialize on load
-    window.addEventListener('load', () => {
-      loadCart();
-      initPayPal();
+    // Initialize on load - WAIT for loadCart() BEFORE initPayPal()
+    window.addEventListener('load', async () => {
+      console.log('🚀 Page loaded - starting initialization');
+      const loadSuccess = await loadCart(); // WAIT for this to complete
+      if(loadSuccess) {
+        console.log('✓ loadCart succeeded, now initializing PayPal');
+        initPayPal();
+      } else {
+        console.error('✗ loadCart failed, skipping PayPal init');
+        const container = document.getElementById('pp-container');
+        if(container) container.innerHTML = '<p style="color: #e74c3c;">Fout bij laden wagen - vernieuw pagina.</p>';
+      }
     });
   </script>
 </body>
