@@ -117,8 +117,9 @@ Volgorde: `mm_instellingen` → `instellingen` → lege array (geen fallback har
 merch-master/
 ├── .env                          (SECRETS — niet in git)
 ├── .env.example
-├── bestellen.php                 (6-stappen wizard — hoofdbestand)
+├── bestellen.php                 (5-stappen wizard — hoofdbestand)
 ├── bestellen/
+│   ├── checkout.php              (Afrekenen — order review + betaling)
 │   ├── catalogus.php             (API — producten + kleuren)
 │   ├── ralawise_sync.php         (cron — sync images/stock)
 │   ├── admin/
@@ -129,7 +130,7 @@ merch-master/
 ├── includes/
 │   ├── vertalingen.json
 │   └── header.php / footer.php
-├── winkelwagen.php               (DEPRECATED — checkout moved to bestellen.php stap 6)
+├── winkelwagen.php               (DEPRECATED — checkout moved to bestellen/checkout.php)
 ├── wagen.php / wagen.js          (winkelwagen API/JS — basis winkelwagen functies)
 ├── mail.php                      (bevestigingsmails)
 └── admin.php                     (hoofd admin)
@@ -161,26 +162,29 @@ Cart panel styling moderniseren met minimalistisch design (meer whitespace, clea
 - Geen Tailwind (PHP/HTML, geen webpack setup) — enhance existing CSS instead
 - Mobile responsive layout maintained
 
-### 🔴 In uitvoering — Checkout herstructurering (bestellen.php) — STAP 6
-Stap 6 ombouwen tot gecombineerde winkelwagen-review + klantgegevens + betaling.
+### 🟢 Afgerond — Checkout herstructurering → standalone checkout.php
+Stap 6 uit bestellen.php verwijderd. Nieuwe standalone bestellen/checkout.php pagina met winkelwagen-review + klantgegevens + betaling.
 
-**Wat er moet gebeuren:**
-- [ ] Uitzoeken: klantenportaal tabel + sessie-structuur (welke $_SESSION variabelen bij inloggen?)
-- [ ] Uitzoeken: waar PayPal nu exact zit (handler.php? wagen.php? wagen.js?)
-- [ ] Stap 6 herstructureren: review (readonly) + klantgegevens + PayPal
-- [ ] Klantgegevens velden: voornaam, achternaam, straat+nr, postcode, plaats, email, telefoon + KVK (als bedrijf)
-- [ ] Bedrijf/Particulier toggle: blijft in stap 4 én zichtbaar in stap 6 review
-- [ ] Auto-invullen vanuit klantenportaal als ingelogd
-- [ ] Guest checkout ook mogelijk (gegevens in $_SESSION)
-- [ ] Opmerkingen veld: blijft in stap 5, WEL zichtbaar in stap 6 review
-- [ ] Bevestigingspagina + mail na betaling: bestaande flow behouden, niets nieuw toevoegen
-- [ ] Alles naar bestaande bestellingen tabel + admin + mail (geen wijzigingen in die flow)
+**Done:**
+- [x] bestellen.php gereduceerd naar 5 stappen (stap 6 verwijderd)
+- [x] Nieuwe bestellen/checkout.php gemaakt met order summary, customer form, payment
+- [x] Klantgegevens velden: voornaam, achternaam, straat+nr, postcode, plaats, email, telefoon
+- [x] Optionele bedrijfsvelden: bedrijfsnaam, btw-nummer, kvk (NIET in form, waren al optioneel)
+- [x] Bedrijf/Particulier toggle: blijft ALLEEN in stap 4 (niet in checkout form)
+- [x] Auto-invullen vanuit klantenportaal als ingelogd (via $_SESSION['mm_klant'])
+- [x] Guest checkout mogelijk (gegevens in form)
+- [x] Opmerkingen zichtbaar in checkout (readonly, uit stap 5)
+- [x] Bevestigingspagina behouden — success screen na betaling
+- [x] PayPal integratie in checkout.php (dezelfde SDK als bestellen.php)
+- [x] "Betalen" button navigeert naar checkout.php met wagen_token in URL
+- [x] URL parameter check — bij ?success=X automatisch success screen tonen
 
-**Constraints:**
-- Stappen 1–5 blijven ongewijzigd
-- Opmerkingen + file upload blijft in stap 5
-- Geen nieuwe betaalmethodes, geen extra features
-- PayPal exact zoals nu ingebouwd
+**Implementation Details:**
+- Pricing validation server-side in handler.php (bestaande logica behouden)
+- regels array geformatteerd voor handler: {sku, prijs_ex, druk_ex, aantal, korting_pct}
+- Verzending calculated based on total quantity (6.95€ < 12, 13.95€ ≥ 12)
+- Cart loaded via wagen.php 'laden' action — dynamic pricing always fresh
+- Form field names match handler expectations (voornaam, achternaam, etc)
 
 ### Kritiek
 - [ ] Test bevestigingsmails op live server
