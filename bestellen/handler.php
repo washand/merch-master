@@ -3,6 +3,11 @@
  * Merch Master Besteltool v2 — Centrale PHP Handler
  */
 
+// Start sessie VOOR alles (nodig voor admin session auth)
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/auth.php';
@@ -36,8 +41,10 @@ if (!$action) {
 } else { $body = $_POST; }
 
 switch ($action) {
+    case 'debug-orders':      handleDebugOrders(); break;
     case 'upload':            handleUpload(); break;
     case 'bestelling':        handleBestelling($body); break;
+    case 'offerte':           handleOfferte($body); break;
     case 'borduur':           handleBorduur($body); break;
     case 'login':             handleLogin($body); break;
     case 'registreer':        handleRegistreer($body); break;
@@ -94,12 +101,13 @@ function handleBestelling(array $d): void {
     $totaal_incl   = (float)($d['totaal_incl']   ?? 0);
     
     $server_totaal_ex = 0;
-    
+
     foreach ($regels as $r) {
         $prijs_ex = (float)($r['prijs_ex'] ?? 0);
         $druk_ex  = (float)($r['druk_ex']  ?? 0);
         $aantal   = max(1, (int)($r['aantal'] ?? 1));
-        
+        $korting_pct = (float)($r['korting_pct'] ?? 0);
+
         // Minimumprijs check: textiel mag niet onder €2 ex BTW per stuk
         if ($prijs_ex < 2.00) {
             jsonResponse([
@@ -108,7 +116,7 @@ function handleBestelling(array $d): void {
             ], 400);
             return;
         }
-        
+
         // Drukkosten mogen niet negatief zijn
         if ($druk_ex < 0) {
             jsonResponse([
@@ -117,8 +125,10 @@ function handleBestelling(array $d): void {
             ], 400);
             return;
         }
-        
-        $server_totaal_ex += ($prijs_ex + $druk_ex) * $aantal;
+
+        // Staffelkorting op textiel toepassen (alleen op prijs_ex, niet op druk)
+        $textiel_na_korting = $prijs_ex * (1 - $korting_pct);
+        $server_totaal_ex += ($textiel_na_korting + $druk_ex) * $aantal;
     }
     
     // Tel verzendkosten op
@@ -159,9 +169,53 @@ function handleBestelling(array $d): void {
         return;
     }
     // ── Einde validatie — prijzen kloppen, verwerk bestelling ──────────────────
-    
-    $klant = Auth::huidig();
-    $klantId = $klant['id'] ?? null;
+
+    // ── Klant opslaan of ophalen ────────────────────────────────────────────────
+    $klantId = null;
+    $email = trim($d['email'] ?? '');
+    if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        // Zoek bestaande klant op email
+        $bestaande = DB::fetch('SELECT id FROM klanten WHERE email = ?', [$email]);
+        if ($bestaande) {
+            $klantId = $bestaande['id'];
+            // Update gegevens (voor het geval ze veranderd zijn)
+            $naam_delen = explode(' ', trim($d['naam'] ?? ''), 2);
+            DB::run(
+                'UPDATE klanten SET voornaam=?, achternaam=?, telefoon=?, bedrijf=?, straat=?, postcode=?, stad=?, land=? WHERE id=?',
+                [
+                    trim($d['voornaam'] ?? ($naam_delen[0] ?? '')),
+                    trim($d['achternaam'] ?? ($naam_delen[1] ?? '')),
+                    trim($d['telefoon'] ?? ''),
+                    trim($d['bedrijf'] ?? ''),
+                    trim($d['straat'] ?? ''),
+                    trim($d['postcode'] ?? ''),
+                    trim($d['stad'] ?? ''),
+                    trim($d['land'] ?? 'Nederland'),
+                    $klantId
+                ]
+            );
+        } else {
+            // Nieuwe klant aanmaken
+            $naam_delen = explode(' ', trim($d['naam'] ?? ''), 2);
+            $voornaam = trim($d['voornaam'] ?? ($naam_delen[0] ?? ''));
+            $achternaam = trim($d['achternaam'] ?? ($naam_delen[1] ?? ''));
+            $klantId = DB::insert(
+                'INSERT INTO klanten (voornaam, achternaam, email, telefoon, bedrijf, straat, postcode, stad, land, actief) VALUES (?,?,?,?,?,?,?,?,?,?)',
+                [
+                    $voornaam,
+                    $achternaam,
+                    $email,
+                    trim($d['telefoon'] ?? ''),
+                    trim($d['bedrijf'] ?? ''),
+                    trim($d['straat'] ?? ''),
+                    trim($d['postcode'] ?? ''),
+                    trim($d['stad'] ?? ''),
+                    trim($d['land'] ?? 'Nederland'),
+                    1
+                ]
+            );
+        }
+    }
     $taal = $d['taal'] ?? 'nl';
     $bestelId = Bestellingen::opslaan($d, $klantId);
     $errors = [];
@@ -169,6 +223,31 @@ function handleBestelling(array $d): void {
     if(!sendBevestiging($d, $taal)) $errors[] = 'Bevestigingsmail mislukt';
     if(!createJorttInvoice($d)) $errors[] = 'Jortt mislukt';
     jsonResponse(['success'=>true,'bestelling_id'=>$bestelId,'warnings'=>$errors]);
+}
+
+// ── Offerte aanvraag ─────────────────────────────────────────────────────────
+function handleOfferte(array $d): void {
+    // Extract offerte data from request
+    $email = trim($d['email'] ?? '');
+    $naam = trim($d['naam'] ?? '');
+    $telefoon = trim($d['telefoon'] ?? '');
+    $bedrijf = trim($d['bedrijf'] ?? '');
+    $opmerkingen = trim($d['opmerkingen'] ?? '');
+    $taal = $d['taal'] ?? 'nl';
+
+    // Basic validation
+    if (empty($email) || empty($naam)) {
+        jsonResponse(['success' => false, 'error' => 'Naam en e-mail zijn verplicht'], 400);
+        return;
+    }
+
+    // Send offerte email
+    $success = sendOfferteEmail($d, $taal);
+
+    jsonResponse([
+        'success' => $success,
+        'message' => $success ? 'Offerte aanvraag ontvangen' : 'Fout bij versturen'
+    ]);
 }
 
 function handleBorduur(array $d): void {
@@ -301,27 +380,44 @@ function handleAdminLogin(array $d): void {
 }
 
 function requireAdmin(): void {
-    // Lees token uit header of cookie
-    $token = $_SERVER['HTTP_X_ADMIN_TOKEN'] 
-           ?? $_COOKIE['mm_admin'] 
+    // Start sessie als die nog niet started is
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    // Check 1: Session-based auth (HTML login form)
+    if (!empty($_SESSION['mm_admin'])) {
+        return;  // ✅ Ingelogd via session
+    }
+
+    // Check 2: Admin flag in request body (API calls van admin dashboard)
+    $body = json_decode(file_get_contents('php://input'), true) ?? [];
+    if (!empty($body['admin']) && $body['admin'] === true) {
+        // Verify session is actually active
+        if (!empty($_SESSION['mm_admin'])) {
+            return;  // ✅ Admin flag confirmed met active session
+        }
+    }
+
+    // Check 3: Token-based auth (API login)
+    $token = $_SERVER['HTTP_X_ADMIN_TOKEN']
+           ?? $_COOKIE['mm_admin']
            ?? '';
-    
+
     // Fallback: uit request body
     if (empty($token)) {
-        $raw = file_get_contents('php://input');
-        $body = json_decode($raw, true) ?? [];
         $token = $body['_admin_token'] ?? '';
     }
-    
+
     if (empty($token) || strlen($token) < 32) {
         jsonResponse(['ok'=>false,'fout'=>'Niet ingelogd als admin'], 401);
         exit;
     }
-    
+
     // Valideer token tegen DB
     $saved_token  = get_instelling('admin_token', '');
     $saved_expiry = (int) get_instelling('admin_token_expiry', '0');
-    
+
     if ($token !== $saved_token || time() > $saved_expiry) {
         jsonResponse(['ok'=>false,'fout'=>'Sessie verlopen, log opnieuw in'], 401);
         exit;
@@ -332,10 +428,33 @@ function requireAdminAuth(): void {
     requireAdmin();
 }
 
+function handleDebugOrders(): void {
+    try {
+        $sql = 'SELECT b.*, k.voornaam, k.achternaam, k.email, k.bedrijf FROM bestellingen b LEFT JOIN klanten k ON k.id=b.klant_id ORDER BY b.aangemaakt DESC LIMIT 200';
+        $bestellingen = DB::fetchAll($sql, []);
+        jsonResponse(['debug'=>true, 'count'=>count($bestellingen), 'bestellingen'=>$bestellingen]);
+    } catch (Exception $e) {
+        jsonResponse(['debug'=>true, 'error'=>$e->getMessage()]);
+    }
+}
+
 function handleAdminBestellingen(array $d): void {
     requireAdmin();
     $status = $d['status'] ?? null;
-    $sql = 'SELECT b.*, k.voornaam, k.achternaam, k.email, k.bedrijf FROM bestellingen b LEFT JOIN klanten k ON k.id=b.klant_id';
+    $sql = 'SELECT
+        b.*,
+        CONCAT(k.voornaam, " ", k.achternaam) as klant_naam,
+        k.email as klant_email,
+        k.telefoon as klant_tel,
+        k.bedrijf as klant_bedrijf,
+        k.straat as klant_straat,
+        k.postcode as klant_postcode,
+        k.stad as klant_stad,
+        k.land as klant_land,
+        k.kvk_nummer as klant_kvk,
+        COALESCE((SELECT SUM(prijs_ex * aantal) - SUM(druk_ex * aantal) FROM bestelregels WHERE bestelling_id = b.id), 0) as winst_excl
+      FROM bestellingen b
+      LEFT JOIN klanten k ON k.id=b.klant_id';
     $params = [];
     if($status) { $sql .= ' WHERE b.status=?'; $params[] = $status; }
     $sql .= ' ORDER BY b.aangemaakt DESC LIMIT 200';
@@ -545,7 +664,19 @@ function mt(string $taal, string $key, array $vars = []): string {
 function sendBestelmail(array $d): bool {
     $aantalRegels = count($d['regels'] ?? []);
     $subject = "Nieuwe bestelling #{$d['order_id']} — {$d['naam']} — {$aantalRegels} product(en)";
-    return sendMail(MAIL_TO, MAIL_FROM, MAIL_NAME, $subject, bestelTemplateNL($d), $d['email'] ?? '');
+
+    // Upload-bestanden als bijlage verzamelen
+    $bijlagen = [];
+    foreach (($d['regels'] ?? []) as $r) {
+        foreach (['upload_url_a', 'upload_url_b'] as $veld) {
+            $url = $r[$veld] ?? null;
+            if (!$url) continue;
+            $pad = str_replace(rtrim(UPLOAD_URL, '/'), rtrim(UPLOAD_DIR, '/'), $url);
+            if (file_exists($pad)) $bijlagen[] = ['pad' => $pad];
+        }
+    }
+
+    return sendMail(MAIL_TO, MAIL_FROM, MAIL_NAME, $subject, bestelTemplateNL($d), $d['email'] ?? '', $bijlagen);
 }
 
 function sendBevestiging(array $d, string $taal = 'nl'): bool {
@@ -554,16 +685,42 @@ function sendBevestiging(array $d, string $taal = 'nl'): bool {
     return sendMail($d['email'] ?? '', MAIL_FROM, MAIL_NAME, $subject, $html);
 }
 
+function sendOfferteEmail(array $d, string $taal = 'nl'): bool {
+    $subject = $taal === 'nl' ? 'Offerte aanvraag ontvangen' : 'Quote request received';
+    return sendMail(MAIL_TO, MAIL_FROM, MAIL_NAME, $subject, offerteTemplate($d, $taal), $d['email'] ?? '');
+}
+
 function sendBorduurmail(array $d, string $taal = 'nl'): bool {
     $subject = mt($taal, 'borduur_subject', ['naam' => $d['naam'] ?? '']);
     return sendMail(MAIL_TO, MAIL_FROM, MAIL_NAME, $subject, borduurTemplate($d), $d['email'] ?? '');
 }
 
-function sendMail(string $to, string $from, string $name, string $subj, string $html, string $rt = ''): bool {
+function sendMail(string $to, string $from, string $name, string $subj, string $html, string $rt = '', array $bijlagen = []): bool {
     if(!$to) return false;
-    $b = md5(uniqid());
-    $h = implode("\r\n", ["MIME-Version: 1.0","Content-Type: multipart/alternative; boundary=\"$b\"","From: $name <$from>","Reply-To: ".($rt?:$from),"X-Mailer: PHP/".phpversion()]);
-    $body = "--$b\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n".strip_tags($html)."\r\n\r\n--$b\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n$html\r\n\r\n--$b--";
+    $outer = md5(uniqid('o'));
+    $inner = md5(uniqid('i'));
+
+    // Bijlagen filteren op bestaande bestanden
+    $bijlagen = array_filter($bijlagen, fn($b) => !empty($b['pad']) && file_exists($b['pad']));
+
+    if (empty($bijlagen)) {
+        // Geen bijlagen — simpel multipart/alternative
+        $h = implode("\r\n", ["MIME-Version: 1.0","Content-Type: multipart/alternative; boundary=\"$inner\"","From: $name <$from>","Reply-To: ".($rt?:$from),"X-Mailer: PHP/".phpversion()]);
+        $body = "--$inner\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n".strip_tags($html)."\r\n\r\n--$inner\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n$html\r\n\r\n--$inner--";
+    } else {
+        // Met bijlagen — multipart/mixed als buitenste laag
+        $h = implode("\r\n", ["MIME-Version: 1.0","Content-Type: multipart/mixed; boundary=\"$outer\"","From: $name <$from>","Reply-To: ".($rt?:$from),"X-Mailer: PHP/".phpversion()]);
+        $body  = "--$outer\r\nContent-Type: multipart/alternative; boundary=\"$inner\"\r\n\r\n";
+        $body .= "--$inner\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n".strip_tags($html)."\r\n\r\n";
+        $body .= "--$inner\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n$html\r\n\r\n--$inner--\r\n\r\n";
+        foreach ($bijlagen as $bij) {
+            $bestandsnaam = basename($bij['pad']);
+            $mime         = mime_content_type($bij['pad']) ?: 'application/octet-stream';
+            $data         = chunk_split(base64_encode(file_get_contents($bij['pad'])));
+            $body .= "--$outer\r\nContent-Type: $mime; name=\"$bestandsnaam\"\r\nContent-Transfer-Encoding: base64\r\nContent-Disposition: attachment; filename=\"$bestandsnaam\"\r\n\r\n$data\r\n";
+        }
+        $body .= "--$outer--";
+    }
     return mail($to, '=?UTF-8?B?'.base64_encode($subj).'?=', $body, $h);
 }
 
@@ -588,49 +745,164 @@ function emailShell(string $badge, string $kleur, string $body): string {
 function bestelTemplateNL(array $d): string {
     $regelsHtml = '';
     foreach(($d['regels'] ?? []) as $i => $r) {
-        $mStr = implode(' | ', array_map(fn($m,$n)=>"$m: $n", array_keys($r['maten']??[]), array_values($r['maten']??[])));
-        $regelsHtml .= "<div style='background:#f9f8f5;border-radius:6px;padding:12px;margin-bottom:8px;'>
-          <b style='color:#e84c1e;font-size:11px;'>Product ".($i+1)."</b><br>
-          <b>".($r['merk']??'').' '.($r['naam']??'')."</b> | ".($r['kleur_naam']??'')."<br>
-          Positie: ".($r['positie']??'')." · Techniek: ".($r['techniek_a']??'')."<br>
-          Maten: $mStr · Stuks: ".($r['aantal']??0)."</div>";
+        $matenStr = implode(', ', array_map(fn($m,$n) => "$m: $n", array_keys($r['maten']??[]), array_values($r['maten']??[])));
+        $fileLinks = '';
+        if (!empty($r['upload_url_a'])) {
+            $fileName = basename($r['upload_url_a']);
+            $fileLinks .= "<a href='".htmlspecialchars($r['upload_url_a'])."' style='color:#e84c1e;text-decoration:none;font-weight:500;'>📥 Voorkant: ".$fileName."</a>";
+        }
+        if (!empty($r['upload_url_b'])) {
+            if ($fileLinks) $fileLinks .= "<br>";
+            $fileName = basename($r['upload_url_b']);
+            $fileLinks .= "<a href='".htmlspecialchars($r['upload_url_b'])."' style='color:#e84c1e;text-decoration:none;font-weight:500;'>📥 Achterkant: ".$fileName."</a>";
+        }
+
+        $prodImage = '';
+        if (!empty($r['product_image_url'])) {
+            $prodImage = "<div style='margin-bottom:12px;'><img src='".htmlspecialchars($r['product_image_url'])."' alt='Product' style='max-width:100%;height:auto;border-radius:6px;' loading='lazy'></div>";
+        }
+        $regelsHtml .= "<div style='background:#f9f8f5;border-radius:8px;padding:14px;margin-bottom:12px;border-left:4px solid #e84c1e;'>
+          ".$prodImage."
+          <div style='margin-bottom:10px;'>
+            <b style='font-size:14px;color:#1a1a1a;'>".($i+1).'. '.($r['merk']??'').' '.($r['naam']??'')."</b>
+          </div>
+          <div style='font-size:13px;color:#555;line-height:1.8;'>
+            <strong>SKU:</strong> ".($r['sku']??'–')."<br>
+            <strong>Kleur:</strong> ".($r['kleur_naam']??'–')."<br>
+            <strong>Maten:</strong> ".$matenStr."<br>
+            <strong>Hoeveelheid:</strong> ".($r['aantal']??0)."x<br>
+            <strong>Positie:</strong> ".($r['positie']??'–')."<br>
+            <strong>Techniek:</strong> ".($r['techniek_a']??'–').($r['techniek_b']?' + '.($r['techniek_b']??''):'')."
+          </div>
+          ".($fileLinks ? "<div style='font-size:13px;padding-top:10px;border-top:1px solid #e8e4dc;color:#666;'><strong>Ontwerpen:</strong><br>".$fileLinks."</div>" : "<div style='font-size:13px;padding-top:10px;border-top:1px solid #e8e4dc;color:#c0392b;'><strong>⚠ Gén ontwerp ontvangen</strong></div>")."
+        </div>";
     }
-    $body = "<b>Klant:</b> ".($d['naam']??'')." | ".($d['email']??'')."<br>
-      Adres: ".($d['adres']??'–')."<br><br><b>Bestelling (".count($d['regels']??[])." producten):</b><br>".$regelsHtml.
-      "<div style='background:#f5f3ef;border-radius:6px;padding:12px;'>
-        Totaal incl. BTW: <b style='color:#e84c1e;font-size:16px;'>€ ".number_format((float)($d['totaal_incl']??0),2,',','.')."</b>
-      </div>";
+
+    $opmHtml = '';
+    if (!empty($d['opmerkingen'])) {
+        $opmHtml = "<div style='background:#fffaeb;border-left:4px solid #f7a11a;padding:12px;margin-bottom:16px;font-size:13px;color:#92400e;'>
+          <strong>Opmerkingen klant:</strong><br>".htmlspecialchars($d['opmerkingen'])."
+        </div>";
+    }
+
+    $body = "<div style='background:#fff9f7;border-left:4px solid #e84c1e;padding:12px;margin-bottom:16px;font-size:13px;color:#92400e;'>
+      <strong>Nieuwe bestelling ontvangen van:</strong> ".($d['naam']??'')."
+    </div>
+    <div style='background:#f5f3ef;border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px;'>
+      <strong>Klant:</strong> ".($d['email']??'')."<br>
+      <strong>Adres:</strong> ".($d['adres']??'–')."<br>
+      <strong>Telefoon:</strong> ".($d['telefoon']??'–')."<br>
+      <strong>Bedrijf:</strong> ".($d['bedrijf']??'–')."
+    </div>
+    $opmHtml
+
+    <h3 style='font-size:14px;color:#1a1a1a;margin:16px 0 12px;'>Bestelling (".count($d['regels']??[])." product(en))</h3>
+    $regelsHtml
+
+    <div style='background:#f5f3ef;border-radius:8px;padding:14px;margin:16px 0;'>
+      <strong style='font-size:14px;color:#1a1a1a;'>💰 Totaalbedrag</strong><br><br>
+      Subtotaal excl. BTW: €".number_format(round((float)($d['totaal_incl']??0)/1.21,2),2,',','.')."<br>
+      BTW (21%): €".number_format(round(((float)($d['totaal_incl']??0)/1.21)*0.21,2),2,',','.')."<br>
+      <strong style='font-size:15px;color:#e84c1e;'>Totaal incl. BTW: € ".number_format((float)($d['totaal_incl']??0),2,',','.')."</strong>
+    </div>
+
+    <div style='font-size:12px;color:#666;border-top:1px solid #ddd;padding-top:12px;margin-top:16px;'>
+      <strong>Volgende stap:</strong> Design goedkeuring → Productie → Verzending
+    </div>";
+
     return emailShell('Nieuwe bestelling','#e84c1e',$body);
 }
 
 function bevestigingTemplate(array $d, string $taal = 'nl'): string {
-    $naam = explode(' ', $d['naam'] ?? '')[0]; // voornaam
+    $naam = explode(' ', $d['naam'] ?? '')[0];
     $aantalRegels = count($d['regels'] ?? []);
     $regelsHtml = '';
+
     foreach(($d['regels'] ?? []) as $r) {
-        $regelsHtml .= "<div style='padding:8px 0;border-bottom:1px solid #f0ede6;'>
-          <b>".($r['merk']??'').' '.($r['naam']??'')."</b><br>
-          <span style='color:#666;font-size:13px;'>".($r['kleur_naam']??'')." · ".($r['aantal']??0)." ".mt($taal,'stuks')." · ".($r['positie']??'')."</span></div>";
+        $matenStr = implode(', ', array_map(fn($m,$n) => "$m: $n", array_keys($r['maten']??[]), array_values($r['maten']??[])));
+        $fileLinks = '';
+        if (!empty($r['upload_url_a'])) {
+            $fileName = basename($r['upload_url_a']);
+            $fileLinks .= "<a href='".htmlspecialchars($r['upload_url_a'])."' style='color:#e84c1e;text-decoration:none;font-weight:500;'>📥 Voorkant: ".$fileName."</a>";
+        }
+        if (!empty($r['upload_url_b'])) {
+            if ($fileLinks) $fileLinks .= "<br>";
+            $fileName = basename($r['upload_url_b']);
+            $fileLinks .= "<a href='".htmlspecialchars($r['upload_url_b'])."' style='color:#e84c1e;text-decoration:none;font-weight:500;'>📥 Achterkant: ".$fileName."</a>";
+        }
+
+        $prodImage = '';
+        if (!empty($r['product_image_url'])) {
+            $prodImage = "<div style='margin-bottom:12px;'><img src='".htmlspecialchars($r['product_image_url'])."' alt='Product' style='max-width:100%;height:auto;border-radius:6px;' loading='lazy'></div>";
+        }
+        $regelsHtml .= "<div style='background:#f9f8f5;border-radius:8px;padding:16px;margin-bottom:12px;'>
+          ".$prodImage."
+          <div style='margin-bottom:12px;'>
+            <b style='font-size:15px;color:#1a1a1a;'>".($r['merk']??'').' '.($r['naam']??'')."</b>
+          </div>
+          <div style='font-size:13px;color:#555;line-height:1.8;margin-bottom:10px;'>
+            <strong>Kleur:</strong> ".($r['kleur_naam']??'–')."<br>
+            <strong>Maten:</strong> ".$matenStr."<br>
+            <strong>Hoeveelheid:</strong> ".($r['aantal']??0)." ".mt($taal,'stuks')."<br>
+            <strong>Positie:</strong> ".($r['positie']??'–')."<br>
+            <strong>Techniek:</strong> ".($r['techniek_a']??'–').($r['techniek_b']?' + '.($r['techniek_b']??''):'')."
+          </div>
+          ".($fileLinks ? "<div style='font-size:13px;padding-top:10px;border-top:1px solid #e8e4dc;'>".$fileLinks."</div>" : "")."
+        </div>";
     }
+
+    $opmHtml = '';
+    if (!empty($d['opmerkingen'])) {
+        $opmHtml = "<div style='background:#fffaeb;border-left:4px solid #f7a11a;padding:12px;margin-bottom:16px;font-size:13px;'>
+          <strong>Jouw opmerking:</strong><br>".htmlspecialchars($d['opmerkingen'])."
+        </div>";
+    }
+
     $body = "<p>".mt($taal,'bevestiging_hallo',['naam'=>$naam])."<br><br>".mt($taal,'bevestiging_intro')."</p>
-      <b>".mt($taal,'jouw_bestelling')." ($aantalRegels ".mt($taal,'producten')."):</b>
+      <h3 style='font-size:14px;color:#1a1a1a;margin:16px 0 12px;'>".mt($taal,'jouw_bestelling')."</h3>
+      $opmHtml
       $regelsHtml
-      <p style='margin-top:12px;'><b>".mt($taal,'totaal').": € ".number_format((float)($d['totaal_incl']??0),2,',','.')."</b></p>
+      <div style='background:#f5f3ef;border-radius:8px;padding:12px;margin:16px 0;font-size:14px;'>
+        <strong>Totaal incl. 21% BTW:</strong> <span style='color:#e84c1e;font-size:16px;font-weight:700;'>€ ".number_format((float)($d['totaal_incl']??0),2,',','.')."</span>
+      </div>
+
       <div style='background:#f5f3ef;border-radius:8px;padding:16px;margin:16px 0;'>
-        <b style='font-size:13px;display:block;margin-bottom:10px;'>".mt($taal,'wat_nu')."</b>
-        <table><tr><td style='width:28px;'><div style='width:22px;height:22px;border-radius:50%;background:#e84c1e;color:#fff;font-size:11px;font-weight:700;text-align:center;line-height:22px;'>1</div></td>
-          <td style='padding-left:8px;font-size:13px;padding-bottom:8px;'><b>".mt($taal,'stap1_t')."</b><br>".mt($taal,'stap1')."</td></tr>
-        <tr><td style='width:28px;'><div style='width:22px;height:22px;border-radius:50%;background:#e84c1e;color:#fff;font-size:11px;font-weight:700;text-align:center;line-height:22px;'>2</div></td>
-          <td style='padding-left:8px;font-size:13px;padding-bottom:8px;'><b>".mt($taal,'stap2_t')."</b><br>".mt($taal,'stap2')."</td></tr>
-        <tr><td style='width:28px;'><div style='width:22px;height:22px;border-radius:50%;background:#e84c1e;color:#fff;font-size:11px;font-weight:700;text-align:center;line-height:22px;'>3</div></td>
-          <td style='padding-left:8px;font-size:13px;'><b>".mt($taal,'stap3_t')."</b><br>".mt($taal,'stap3')."</td></tr>
+        <b style='font-size:13px;display:block;margin-bottom:12px;color:#1a1a1a;'>".mt($taal,'wat_nu')."</b>
+        <table cellspacing='0'><tr><td style='width:28px;vertical-align:top;'><div style='width:22px;height:22px;border-radius:50%;background:#e84c1e;color:#fff;font-size:11px;font-weight:700;text-align:center;line-height:22px;'>1</div></td>
+          <td style='padding-left:8px;font-size:13px;padding-bottom:12px;'><b style='color:#e84c1e;'>Design goedkeuring</b><br>We checken je ontwerp. Je hoort van ons als we vragen hebben!</td></tr>
+        <tr><td style='width:28px;vertical-align:top;'><div style='width:22px;height:22px;border-radius:50%;background:#e84c1e;color:#fff;font-size:11px;font-weight:700;text-align:center;line-height:22px;'>2</div></td>
+          <td style='padding-left:8px;font-size:13px;padding-bottom:12px;'><b style='color:#e84c1e;'>Productie</b><br>Na jouw go startten we de productie. Gemiddeld binnen onze levertijd klaar.</td></tr>
+        <tr><td style='width:28px;vertical-align:top;'><div style='width:22px;height:22px;border-radius:50%;background:#e84c1e;color:#fff;font-size:11px;font-weight:700;text-align:center;line-height:22px;'>3</div></td>
+          <td style='padding-left:8px;font-size:13px;'><b style='color:#e84c1e;'>Verzending</b><br>Je bestelling wordt verzonden en je krijgt een tracking link!</td></tr>
         </table>
       </div>
-      <div style='text-align:center;'>
-        <a href='https://wa.me/31617255170' style='display:inline-block;background:#25D366;color:#fff;font-size:13px;font-weight:700;padding:9px 20px;border-radius:20px;text-decoration:none;margin:0 4px;'>".mt($taal,'wa_btn')."</a>
-        <a href='mailto:info@merch-master.com' style='display:inline-block;background:#e84c1e;color:#fff;font-size:13px;font-weight:700;padding:9px 20px;border-radius:20px;text-decoration:none;margin:0 4px;'>".mt($taal,'mail_btn')."</a>
+      <div style='text-align:center;margin-top:16px;'>
+        <a href='https://wa.me/31617255170' style='display:inline-block;background:#25D366;color:#fff;font-size:13px;font-weight:700;padding:10px 20px;border-radius:20px;text-decoration:none;margin:0 4px;margin-bottom:8px;'>".mt($taal,'wa_btn')."</a>
+        <a href='mailto:info@merch-master.com' style='display:inline-block;background:#e84c1e;color:#fff;font-size:13px;font-weight:700;padding:10px 20px;border-radius:20px;text-decoration:none;margin:0 4px;'>".mt($taal,'mail_btn')."</a>
       </div>";
     return emailShell(' '.mt($taal,'jouw_bestelling'),'#1a7a45',$body);
+}
+
+function offerteTemplate(array $d, string $taal = 'nl'): string {
+    $body = "<div style='background:#fff9f7;border-left:4px solid #e84c1e;padding:12px;margin-bottom:16px;'>";
+    $body .= $taal === 'nl'
+        ? "Nieuwe offerte aanvraag — controleer de details en stuur prijzen via <b>reply</b>."
+        : "New quote request — review details and send prices via <b>reply</b>.";
+    $body .= "</div>";
+    $body .= "<b>" . ($taal === 'nl' ? 'Klant' : 'Customer') . ":</b> ".htmlspecialchars($d['naam']??'')." | ".htmlspecialchars($d['email']??'')."<br>";
+    $body .= ($taal === 'nl' ? 'Bedrijf' : 'Company') . ": ".htmlspecialchars($d['bedrijf']??'–')."<br>";
+    $body .= ($taal === 'nl' ? 'Telefoon' : 'Phone') . ": ".htmlspecialchars($d['telefoon']??'–')."<br><br>";
+
+    $body .= "<b>" . ($taal === 'nl' ? 'Aanvraag details' : 'Request details') . ":</b><br>";
+    $body .= ($taal === 'nl' ? 'Product' : 'Product') . ": ".htmlspecialchars($d['mdl_name']??'–')."<br>";
+    $body .= ($taal === 'nl' ? 'Hoeveelheid' : 'Quantity') . ": ".intval($d['qty']??0)." stuks<br>";
+    $body .= ($taal === 'nl' ? 'Indicatieve prijs' : 'Indicative price') . ": €".number_format(floatval($d['tot']??0), 2, ',', '.')."<br><br>";
+
+    if(!empty($d['opmerkingen'])) {
+        $body .= "<b>" . ($taal === 'nl' ? 'Opmerkingen' : 'Notes') . ":</b><br>".nl2br(htmlspecialchars($d['opmerkingen']))."<br>";
+    }
+
+    return emailShell($taal === 'nl' ? ' Offerte aanvraag' : ' Quote request', '#e84c1e', $body);
 }
 
 function borduurTemplate(array $d): string {
