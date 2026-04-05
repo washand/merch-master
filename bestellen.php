@@ -842,7 +842,7 @@ $_levertijdenJS = json_encode([
       <div style="font-size:.82rem;font-weight:600;color:var(--ink);">Totaal incl. BTW</div>
       <div id="cart-panel-totaal" style="font-size:1.05rem;font-weight:800;color:var(--accent);"></div>
     </div>
-    <button class="btn btn-p" onclick="window.location.href='/winkelwagen.php';" style="width:100%;font-size:.84rem;">Betalen &#8594;</button>
+    <button class="btn btn-p" onclick="gS(6);" style="width:100%;font-size:.84rem;">Betalen &#8594;</button>
   </div>
 </div>
 
