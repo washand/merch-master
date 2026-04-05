@@ -632,7 +632,7 @@ $_levertijdenJS = json_encode([
 
 <!-- STAP 5: ONTWERP & GEGEVENS -->
 <div id="step5" class="hidden">
-  <div class="s-lbl">Stap 5 van 6</div>
+  <div class="s-lbl">Stap 5 van 5</div>
   <div class="s-ttl">Jouw ontwerp &amp; instructies</div>
 
   <!-- Upload voorkant -->
@@ -668,103 +668,6 @@ $_levertijdenJS = json_encode([
   </div>
 </div>
 
-<!-- STAP 6: BETALING -->
-<div id="step6" class="hidden">
-  <div class="s-lbl">Stap 6 van 6</div>
-  <div class="s-ttl">Controleer &amp; betaal</div>
-
-  <div class="sum-card">
-    <div class="sum-hd">Jouw bestelling</div>
-    <div class="sum-row"><span class="k">Textiel</span><span class="v" id="s-textiel">&ndash;</span></div>
-    <div class="sum-row"><span class="k">Kleur</span><span class="v" id="s-kleur">&ndash;</span></div>
-    <div class="sum-row"><span class="k">Drukpositie</span><span class="v" id="s-positie">&ndash;</span></div>
-    <div class="sum-row"><span class="k">Totaal stuks</span><span class="v" id="s-qty">&ndash;</span></div>
-    <div class="sum-row"><span class="k">Aantallen per maat</span><span class="v" id="s-maten">&ndash;</span></div>
-    <!-- Kant A -->
-    <div class="sum-sep" id="sum-sep-a">Voorkant</div>
-    <div class="sum-row"><span class="k">Techniek</span><span class="v" id="s-tech-a">&ndash;</span></div>
-    <div class="sum-row" id="sum-kleur-a-row"><span class="k">Kleuren</span><span class="v" id="s-kleur-a">&ndash;</span></div>
-    <div class="sum-row"><span class="k">Prijs per stuk</span><span class="v" id="s-up-a">&ndash;</span></div>
-    <div class="sum-row" id="sum-druk-a-row"><span class="k" id="sum-druk-a-lbl">Bedrukking</span><span class="v" id="s-druk-a">&ndash;</span></div>
-    <!-- Kant B (only both) -->
-    <div class="sum-sep hidden" id="sum-sep-b">Achterkant</div>
-    <div class="sum-row hidden" id="sum-tech-b-row"><span class="k">Techniek</span><span class="v" id="s-tech-b">&ndash;</span></div>
-    <div class="sum-row hidden" id="sum-kleur-b-row"><span class="k">Kleuren</span><span class="v" id="s-kleur-b">&ndash;</span></div>
-    <div class="sum-row hidden" id="sum-up-b-row"><span class="k">Prijs per stuk</span><span class="v" id="s-up-b">&ndash;</span></div>
-    <div class="sum-row hidden" id="sum-druk-b-row"><span class="k" id="sum-druk-b-lbl">Bedrukking</span><span class="v" id="s-druk-b">&ndash;</span></div>
-    <!-- Totalen -->
-    <hr style="border:none;border-top:1px solid var(--border)">
-    <div class="sum-row" id="sum-textiel-row"><span class="k" id="sum-textiel-lbl">Textiel</span><span class="v" id="s-textiel-prijs">&ndash;</span></div>
-    <div class="sum-row" id="sum-korting-row" style="display:none"><span class="k">Staffelkorting textiel</span><span class="v" id="s-korting-pct" style="color:#2a9d5c;font-weight:700">&ndash;</span></div>
-    <div class="sum-row"><span class="k">Verzending</span><span class="v" id="s-ship">&ndash;</span></div>
-    <!-- Totaal blok — klasse wisselt per klanttype via JS -->
-    <div id="s-excl-row" class="sum-total-sub"><span class="k">Subtotaal excl. BTW</span><span class="v" id="s-total-excl">&ndash;</span></div>
-    <div id="s-btw-row" class="sum-total-sub"><span class="k">BTW 21%</span><span class="v" id="s-btw">&ndash;</span></div>
-    <div id="s-incl-row" class="sum-total"><span class="lbl">Totaal incl. BTW</span><span class="prc" id="s-total">&ndash;</span></div>
-    <!-- Opmerkingen (tonen als ingevuld in stap 5) -->
-    <div class="sum-row" id="sum-notities-row" style="display:none">
-      <span class="k">Ontwerpopmerkingen</span>
-      <span class="v" id="s-notities" style="font-style:italic;white-space:pre-wrap">&ndash;</span>
-    </div>
-  </div><!-- /sum-card bestelling -->
-
-  <!-- Klanttype toggle (ook in stap 6) -->
-  <div class="klant-type-toggle" style="margin-bottom:1.25rem">
-    <button id="kt-particulier2" onclick="setKlantType('particulier')">&#128100; Particulier &mdash; incl. BTW</button>
-    <button id="kt-bedrijf2" onclick="setKlantType('bedrijf')">&#127970; Bedrijf &mdash; excl. BTW</button>
-  </div>
-
-  <!-- Klantgegevens formulier -->
-  <div class="sum-card" style="margin-bottom:1.25rem">
-    <div class="sum-hd">Jouw gegevens</div>
-    <div style="padding:1rem 1.2rem">
-      <div id="portaal-autofill-note" class="info-note" style="display:none;margin-bottom:.75rem;font-size:.8rem">
-        &#10003; Gegevens ingeladen vanuit je account. Pas ze hieronder aan indien nodig.
-      </div>
-      <div class="field-row">
-        <div class="field"><label>Voornaam *</label><input type="text" id="fname" placeholder="Jan" oninput="chk6()"></div>
-        <div class="field"><label>Achternaam *</label><input type="text" id="lname" placeholder="de Vries" oninput="chk6()"></div>
-      </div>
-      <div class="field"><label>E-mailadres *</label><input type="email" id="email" placeholder="jan@bedrijf.nl" oninput="chk6()"></div>
-      <div class="field"><label>Telefoonnummer</label><input type="tel" id="phone" placeholder="+31 6 12345678"></div>
-      <!-- Bedrijfsvelden: zichtbaar als klanttype = bedrijf -->
-      <div id="bedrijf-velden6" class="hidden">
-        <div class="field"><label>Bedrijfsnaam *</label><input type="text" id="company" placeholder="Bedrijf BV" oninput="chk6()"></div>
-        <div class="field"><label>KVK-nummer (optioneel)</label><input type="text" id="kvk" placeholder="12345678"></div>
-      </div>
-      <hr class="divider">
-      <div class="field-row">
-        <div class="field"><label>Straat + huisnummer *</label><input type="text" id="street" placeholder="Hoofdstraat 1" oninput="chk6()"></div>
-        <div class="field"><label>Postcode *</label><input type="text" id="zip" placeholder="1234 AB" oninput="chk6()"></div>
-      </div>
-      <div class="field-row">
-        <div class="field"><label>Plaats *</label><input type="text" id="city" placeholder="Amsterdam" oninput="chk6()"></div>
-        <div class="field"><label>Land</label><select id="country" onchange="chk6()"><option value="NL" selected>Nederland</option><option value="BE">Belgi&euml;</option><option value="DE">Duitsland</option><option value="other">Anders</option></select></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Offerte toggle -->
-  <div class="info-note" style="margin-bottom:.75rem">
-    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82rem;">
-      <input type="checkbox" id="offerte-toggle" onchange="toggleOfferte()" style="width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;">
-      <span>Ik wil eerst een <strong>offerte aanvragen</strong> &mdash; handig voor bedrijven &amp; grote orders</span>
-    </label>
-  </div>
-
-  <div class="info-note" id="betaling-note">Na betaling ontvang je een orderbevestiging per e-mail. We nemen contact op als we vragen hebben over je ontwerp.</div>
-  <div class="info-note blue hidden" id="offerte-note">Na je aanvraag nemen we binnen 1&ndash;2 werkdagen contact op met een offerte op maat.</div>
-  <div id="pp-container" style="margin-bottom:1rem"></div>
-  <button class="btn btn-pp" id="fallback-pay" onclick="simPay()" style="background:#6c5ce7;border:none;">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-    &#129514; Test Bestelling
-  </button>
-  <div style="text-align:center;margin-top:.65rem;font-size:.72rem;color:var(--ink3)" id="paypal-note">&#128274; Beveiligde betaling via PayPal &middot; 21% BTW inbegrepen</div>
-  <button class="btn btn-aanvraag hidden" id="btn-offerte-submit" onclick="sendOfferte()" style="width:100%;justify-content:center;margin-bottom:1rem">
-    Offerte aanvragen &#8594;
-  </button>
-  <div class="btn-row" style="margin-top:1rem"><button class="btn btn-s" onclick="gS(5)">&#8592; Terug</button></div>
-</div>
 
 <!-- BORDUREN AANVRAAG -->
 <div id="step-bord" class="hidden">
@@ -842,7 +745,7 @@ $_levertijdenJS = json_encode([
       <div style="font-size:.82rem;font-weight:600;color:var(--ink);">Totaal incl. BTW</div>
       <div id="cart-panel-totaal" style="font-size:1.05rem;font-weight:800;color:var(--accent);"></div>
     </div>
-    <button class="btn btn-p" onclick="gS(6);" style="width:100%;font-size:.84rem;">Betalen &#8594;</button>
+    <button class="btn btn-p" onclick="window.location.href='/bestellen/checkout.php';" style="width:100%;font-size:.84rem;">Betalen &#8594;</button>
   </div>
 </div>
 
@@ -979,51 +882,6 @@ function setKlantType(type) {
   if(step6Active) fillSum();
 }
 
-function updBtwDisplay() {
-  const isBedrijf = S.klantType === 'bedrijf';
-
-  function applyBtwStyle(exclId, btwId, inclId, exclValId) {
-    const exclEl=e(exclId), btwEl=e(btwId), inclEl=e(inclId);
-    if(!exclEl) return;
-
-    if(isBedrijf) {
-      // Excl. BTW = hero (donkerblauw groot blok)
-      exclEl.className = 'sum-excl-hero';
-      // Label aanpassen naar "bedrijfsstijl" met subtitel
-      exclEl.innerHTML =
-        '<span class="lbl">Totaal excl. BTW<small>Uw prijs als bedrijf</small></span>' +
-        '<span class="prc" id="'+exclValId+'">'+e(exclValId).textContent+'</span>';
-      // BTW rij — normaal zichtbaar
-      btwEl.className = 'sum-total-sub';
-      btwEl.querySelector('.k').style.color = '';
-      // Incl. BTW — voetnoot
-      inclEl.className = 'sum-total-footnote';
-      const lbl=inclEl.querySelector('.lbl,.k');
-      if(lbl) lbl.textContent='Totaal incl. 21% BTW';
-    } else {
-      // Incl. BTW = hero (oranje)
-      exclEl.className = 'sum-total-sub';
-      exclEl.innerHTML =
-        '<span class="k">Subtotaal excl. BTW</span>' +
-        '<span class="v" id="'+exclValId+'">'+e(exclValId).textContent+'</span>';
-      btwEl.className = 'sum-total-sub';
-      inclEl.className = 'sum-total';
-      const lbl2=inclEl.querySelector('.lbl,.k');
-      if(lbl2) lbl2.textContent='Totaal incl. BTW';
-    }
-  }
-
-  applyBtwStyle('q-excl-row','q-btw-row','q-incl-row','q-total-excl');
-  applyBtwStyle('s-excl-row','s-btw-row','s-incl-row','s-total-excl');
-
-  // BTW-nummer veld benadrukken bij bedrijf
-  const btwVeld = e('bbtw')?.closest('.field');
-  if(btwVeld) {
-    btwVeld.style.outline = isBedrijf ? '2px solid var(--accent2)' : '';
-    btwVeld.style.borderRadius = isBedrijf ? '6px' : '';
-    btwVeld.style.padding = isBedrijf ? '4px' : '';
-  }
-}
 
 // ── State ──────────────────────────────────────────────────────────────────────
 const S = {
@@ -1043,7 +901,7 @@ const S = {
 // ── Helpers ────────────────────────────────────────────────────────────────────
 const fmt = n => '\u20AC'+n.toFixed(2).replace('.',',');
 function e(id){return document.getElementById(id);}
-function allSteps(){return ['step1','step2','step3','step4','step5','step6','step-bord','success'];}
+function allSteps(){return ['step1','step2','step3','step4','step5','step-bord','success'];}
 
 // ── Navigation ─────────────────────────────────────────────────────────────────
 function gS(n){
@@ -1059,13 +917,12 @@ function gS(n){
     updProg(n);
     if(n===4) setupStep4();
     if(n===5) setupStep5();
-    if(n===6){ tryAutoFill(); fillSum(); }
   }
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function updProg(n){
-  for(let i=1;i<=6;i++){
+  for(let i=1;i<=5;i++){
     const el=e('pb'+i);if(!el)continue;
     el.classList.remove('done','active');
     if(i<n) el.classList.add('done');
@@ -1550,164 +1407,6 @@ function chk5(){
   // Knop altijd enabled
 }
 
-function chk6(){
-  const isBedrijf = S.klantType === 'bedrijf';
-  const baseFields = ['fname','lname','email','street','city'].every(id=>e(id).value.trim().length>0);
-  const companyOk = !isBedrijf || (e('company').value.trim().length>0);
-  const zip = e('zip').value.trim();
-  const country = e('country').value;
-  const zipOk = country!=='NL' ? zip.length>0 : /^\d{4}\s?[A-Z]{2}$/i.test(zip);
-  e('zip').style.borderColor = zip.length>0 && !zipOk ? 'var(--acc-warn,#e74c3c)' : '';
-  const isEnabled = baseFields && companyOk && zipOk;
-  const isOff = e('offerte-toggle')?.checked;
-  if(e('fallback-pay')) e('fallback-pay').style.opacity = isEnabled ? '1' : '.5';
-  if(e('btn-offerte-submit')) e('btn-offerte-submit').disabled = !isEnabled;
-  // PayPal container zichtbaar maken als geldig
-  if(e('pp-container')) e('pp-container').style.pointerEvents = isEnabled ? 'auto' : 'none';
-}
-
-function toggleOfferte(){
-  const isOff = e('offerte-toggle')?.checked;
-  initPP();
-}
-
-// ── STAP 6: Samenvatting ───────────────────────────────────────────────────────
-function fillSum(){
-  const cat=CATS.find(c=>c.id===S.cat);
-  const isBoth=S.pos==='both';
-  const posNm={front:'Voorkant',back:'Achterkant',both:'Beide kanten'};
-  const kantNmA=S.pos==='back'?'Achterkant':'Voorkant';
-
-  e('s-textiel').textContent=(S.mdl?S.mdl.brand+' '+S.mdl.name:cat?.name||'\u2013');
-  e('s-kleur').textContent=S.clrName||'\u2013';
-  e('s-positie').textContent=posNm[S.pos]||'\u2013';
-  e('s-qty').textContent=S.qty+' stuks';
-  const sz={};document.querySelectorAll('.sz-inp').forEach(i=>{if(parseInt(i.value)>0)sz[i.dataset.size]=i.value;});
-  e('s-maten').textContent=Object.entries(sz).map(([k,v])=>k+': '+v).join(', ')||'\u2013';
-
-  e('sum-sep-a').textContent=isBoth?kantNmA:'Bedrukking';
-  e('s-tech-a').textContent=techName(S.techA);
-  if(S.techA==='zeef'){e('sum-kleur-a-row').classList.remove('hidden');e('s-kleur-a').textContent=S.zcA+' kleur'+(S.zcA>1?'en':'');}
-  else e('sum-kleur-a-row').classList.add('hidden');
-  e('s-up-a').textContent=fmt(S.upA)+' per stuk';
-  const drukA_tot=parseFloat((S.upA*S.qty).toFixed(2));
-  e('sum-druk-a-lbl').textContent='Bedrukking ('+S.qty+'\u00d7 '+fmt(S.upA)+')';
-  e('s-druk-a').textContent=fmt(drukA_tot);
-
-  ['sum-sep-b','sum-tech-b-row','sum-up-b-row','sum-druk-b-row'].forEach(id=>e(id).classList.toggle('hidden',!isBoth));
-  if(isBoth){
-    e('s-tech-b').textContent=techName(S.techB);
-    if(S.techB==='zeef'){e('sum-kleur-b-row').classList.remove('hidden');e('s-kleur-b').textContent=S.zcB+' kleur'+(S.zcB>1?'en':'');}
-    else e('sum-kleur-b-row').classList.add('hidden');
-    e('s-up-b').textContent=fmt(S.upB)+' per stuk';
-    const drukB_tot=parseFloat((S.upB*S.qty).toFixed(2));
-    e('sum-druk-b-lbl').textContent='Bedrukking ('+S.qty+'\u00d7 '+fmt(S.upB)+')';
-    e('s-druk-b').textContent=fmt(drukB_tot);
-  }
-  e('s-ship').textContent=fmt(S.ship)+(S.qty>=12?' (12+ stuks)':' (1\u201311 stuks)');
-  // BTW uitsplitsing stap 6
-  const sTotExcl=parseFloat((S.tot/1.21).toFixed(2));
-  const sBtwBedrag=parseFloat((S.tot-sTotExcl).toFixed(2));
-  e('s-total-excl').textContent=fmt(sTotExcl);
-  e('s-btw').textContent=fmt(sBtwBedrag);
-  e('s-total').textContent=fmt(S.tot);
-  // BTW weergave via updBtwDisplay (klasse-gebaseerd)
-  updBtwDisplay();
-  if(S.mdl&&S.qty>0){
-    e('s-textiel-prijs').textContent=fmt(S.textielTot);
-    e('sum-textiel-lbl').textContent='Textiel ('+S.qty+'\u00d7 '+fmt(S.textielInclBtw)+')';
-    const isOfferte=e('offerte-toggle')?.checked;
-    const effectiefKortingPct=isOfferte?0:(S.kortingPct||0);
-    if(effectiefKortingPct>0){
-      const origTextielTot=parseFloat((S.textielInclBtwOrigineel*S.qty).toFixed(2));
-      const bespaard=parseFloat((origTextielTot-S.textielTot).toFixed(2));
-      e('s-korting-pct').textContent='\u2212'+(effectiefKortingPct*100)+'% (\u2212'+fmt(bespaard)+')';
-      e('sum-korting-row').style.display='flex';
-    } else {
-      e('sum-korting-row').style.display='none';
-    }
-  }
-
-  // Opmerkingen tonen als aanwezig
-  const notities = e('notes')?.value.trim();
-  if(notities){
-    e('s-notities').textContent = notities;
-    e('sum-notities-row').style.display = 'flex';
-  } else {
-    e('sum-notities-row').style.display = 'none';
-  }
-
-  // Bedrijfsvelden tonen/verbergen op basis van klanttype
-  const isBedrijf = S.klantType === 'bedrijf';
-  e('bedrijf-velden6')?.classList.toggle('hidden', !isBedrijf);
-
-  // Klanttype toggles synchroniseren
-  e('kt-particulier2')?.classList.toggle('act', !isBedrijf);
-  e('kt-bedrijf2')?.classList.toggle('act', isBedrijf);
-
-  chk6();
-  initPP();
-}
-
-// ── Portaal auto-invullen ──────────────────────────────────────────────────────
-async function tryAutoFill(){
-  // Alleen invullen als velden nog leeg zijn
-  if(e('fname').value.trim()) return;
-  try {
-    const r = await fetch('/bestellen/handler.php', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({actie:'klant'})
-    });
-    const d = await r.json();
-    if(!d.ok || !d.klant) return;
-    const k = d.klant;
-    if(k.voornaam)  e('fname').value   = k.voornaam;
-    if(k.achternaam) e('lname').value  = k.achternaam;
-    if(k.email)     e('email').value   = k.email;
-    if(k.telefoon)  e('phone').value   = k.telefoon;
-    if(k.bedrijf)   e('company').value = k.bedrijf;
-    if(k.straat)    e('street').value  = k.straat;
-    if(k.postcode)  e('zip').value     = k.postcode;
-    if(k.stad)      e('city').value    = k.stad;
-    if(k.land && e('country').querySelector('option[value="'+k.land+'"]')){
-      e('country').value = k.land;
-    }
-    if(k.bedrijf){ setKlantType('bedrijf'); }
-    e('portaal-autofill-note').style.display = 'block';
-    chk6();
-  } catch(err){ /* niet ingelogd of fout — stil negeren */ }
-}
-
-// ── PayPal ─────────────────────────────────────────────────────────────────────
-function initPP(){
-  const isOff = e('offerte-toggle')?.checked;
-  e('betaling-note').classList.toggle('hidden', isOff);
-  e('offerte-note').classList.toggle('hidden', !isOff);
-  e('btn-offerte-submit').classList.toggle('hidden', !isOff);
-  e('paypal-note').classList.toggle('hidden', isOff);
-
-  const c=e('pp-container');c.innerHTML='';
-  if(isOff){ e('fallback-pay').style.display='none'; return; }
-  if(typeof paypal==='undefined')return;
-  // Test knop blijft zichtbaar voor testing
-  // e('fallback-pay').style.display='none';
-  paypal.Buttons({
-    style:{layout:'vertical',color:'blue',shape:'rect',label:'pay',height:46},
-    createOrder:(d,a)=>a.order.create({
-      purchase_units:[{
-        description:'Merch Master \u2013 '+S.qty+' stuks',
-        amount:{currency_code:'EUR',value:S.tot.toFixed(2),
-          breakdown:{item_total:{currency_code:'EUR',value:(S.tot-S.ship).toFixed(2)},
-            shipping:{currency_code:'EUR',value:S.ship.toFixed(2)},
-            tax_total:{currency_code:'EUR',value:'0.00'}}}
-      }],
-      application_context:{shipping_preference:'NO_SHIPPING'}
-    }),
-    onApprove:(d,a)=>a.order.capture().then(details=>sendOrderEmail(details)),
-    onError:err=>{alert('Betaling mislukt. Probeer opnieuw of neem contact op.');console.error(err);}
-  }).render('#pp-container');
-}
 
 // ── WINKELWAGEN INTEGRATIE ──────────────────────────────────────────────────
 async function toevoegenAanWagen(){
@@ -1953,149 +1652,6 @@ function showNotif(msg) {
   setTimeout(() => notif.style.display = 'none', 3000);
 }
 
-async function simPay(){
-  try {
-    // Zorg dat alle prijsberekeningen actueel zijn
-    calcQ();
-
-    const isBoth=S.pos==='both';
-    const posNm={front:'Voorkant',back:'Achterkant',both:'Beide kanten'};
-    const sz={};
-    document.querySelectorAll('.sz-inp').forEach(i=>{if(parseInt(i.value)>0)sz[i.dataset.size]=i.value;});
-
-    // Upload files als ze beschikbaar zijn
-    let uploadUrlA = null, uploadUrlB = null;
-    const fileA = e('file-front')?.files[0];
-    const fileB = e('file-back')?.files[0];
-
-    if(fileA){
-      console.log('simPay - Uploading file A:', fileA.name);
-      const fd=new FormData();
-      fd.append('action','upload');
-      fd.append('bestand',fileA);
-      fd.append('folder','bestellingen');
-      try{
-        const r=await fetch(HANDLER_URL,{method:'POST',body:fd});
-        const d=await r.json();
-        if(d.success){
-          uploadUrlA=d.url;
-          console.log('simPay - Upload A success:', uploadUrlA);
-        } else {
-          console.warn('Upload A failed:', d);
-        }
-      } catch(err){
-        console.warn('Upload A error:',err);
-      }
-    }
-
-    if(isBoth&&fileB){
-      console.log('simPay - Uploading file B:', fileB.name);
-      const fd=new FormData();
-      fd.append('action','upload');
-      fd.append('bestand',fileB);
-      fd.append('folder','bestellingen');
-      try{
-        const r=await fetch(HANDLER_URL,{method:'POST',body:fd});
-        const d=await r.json();
-        if(d.success){
-          uploadUrlB=d.url;
-          console.log('simPay - Upload B success:', uploadUrlB);
-        } else {
-          console.warn('Upload B failed:', d);
-        }
-      } catch(err){
-        console.warn('Upload B error:',err);
-      }
-    }
-
-    const verzendingEx = parseFloat((S.ship/1.21).toFixed(4));
-    const drukExA = parseFloat((S.upA/1.21).toFixed(4));
-    const drukExB = isBoth ? parseFloat((S.upB/1.21).toFixed(4)) : 0;
-
-    // Volledige payload MET uploads + product afbeelding
-    const productImageUrl = S.clrImageUrl || S.mdl?.image_url || null;
-
-    // Bereken totaal ex BTW correct
-    const regelSubtotaal = (S.prijsEx * S.qty) + ((drukExA + (isBoth?drukExB:0)) * S.qty);
-    const totaalEx = regelSubtotaal + verzendingEx;
-    const totaalIncl = parseFloat(S.tot.toFixed(2));
-    const btwBedrag = Math.round((totaalIncl - totaalEx) * 100) / 100;
-
-    const payload = {
-      action: 'bestelling',
-      order_id: 'SIM-'+Date.now(),
-      naam: e('fname').value.trim()+' '+e('lname').value.trim(),
-      email: e('email').value.trim(),
-      telefoon: e('phone').value.trim()||'',
-      bedrijf: e('company').value.trim()||'',
-      adres: e('street').value.trim()+', '+e('zip').value.trim()+' '+e('city').value.trim()+', '+e('country').value,
-      straat: e('street').value.trim(),
-      postcode: e('zip').value.trim(),
-      stad: e('city').value.trim(),
-      land: e('country').value,
-      opmerkingen: e('notes')?.value.trim()||'',
-      taal: 'nl',
-      regels: [{
-        sku: S.mdl?.sku||'–',
-        naam: S.mdl?.name||'–',
-        merk: S.mdl?.brand||'–',
-        kleur_naam: S.clrName||'–',
-        positie: posNm[S.pos]||'–',
-        is_dual: isBoth,
-        techniek_a: techName(S.techA),
-        techniek_b: isBoth?techName(S.techB):null,
-        maten: sz,
-        aantal: S.qty,
-        prijs_ex: S.prijsEx,
-        druk_ex: drukExA + (isBoth?drukExB:0),
-        regel_ex: regelSubtotaal,
-        korting_pct: S.kortingPct || 0,
-        upload_url_a: uploadUrlA,
-        upload_url_b: uploadUrlB,
-        product_image_url: productImageUrl
-      }],
-      verzending_ex: verzendingEx,
-      totaal_ex: totaalEx,
-      btw: btwBedrag,
-      totaal_incl: totaalIncl
-    };
-
-    console.log('simPay - Final Payload:', JSON.stringify(payload, null, 2));
-
-    const r = await fetch(HANDLER_URL, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(payload)
-    });
-
-    console.log('simPay - Response status:', r.status);
-    const responseText = await r.text();
-    console.log('simPay - Response text:', responseText);
-
-    let d = {};
-    try {
-      d = JSON.parse(responseText);
-    } catch(e) {
-      console.error('Response is geen JSON:', responseText);
-      alert('Server error: Response is geen geldige JSON.\n\nResponse: '+responseText.substring(0, 200));
-      return;
-    }
-
-    if(!d.success){
-      alert('Bestelling mislukt:\n'+(d.error||'Onbekende error'));
-      return;
-    }
-
-    // Succes! Toon success screen
-    console.log('simPay - Bestelling succesvol! ID:', d.bestelling_id);
-    gS('success');
-
-  } catch(err) {
-    console.error('simPay error:', err);
-    alert('Fout:\n'+err.message+'\n\nCheck console (F12) voor details!');
-  }
-}
-
 async function sendOfferte(){
   const btn=e('btn-offerte-submit');
   btn.disabled=true;btn.textContent='Bezig...';
@@ -2134,81 +1690,6 @@ async function sendOfferte(){
 }
 
 // ── Order handler ──────────────────────────────────────────────────────────────
-async function sendOrderEmail(paypalDetails){
-  const isBoth=S.pos==='both';
-  const posNm={front:'Voorkant',back:'Achterkant',both:'Beide kanten'};
-  const sz={};
-  document.querySelectorAll('.sz-inp').forEach(i=>{if(parseInt(i.value)>0)sz[i.dataset.size]=i.value;});
-
-  let uploadUrlA = null, uploadUrlB = null;
-  const fileA = e('file-front')?.files[0];
-  const fileB = e('file-back')?.files[0];
-
-  if(fileA){
-    const fd=new FormData();fd.append('action','upload');fd.append('bestand',fileA);fd.append('folder','bestellingen');
-    try{const r=await fetch(HANDLER_URL,{method:'POST',body:fd});const d=await r.json();if(d.success)uploadUrlA=d.url;}
-    catch(err){console.warn('Upload A mislukt:',err);}
-  }
-  if(isBoth&&fileB){
-    const fd=new FormData();fd.append('action','upload');fd.append('bestand',fileB);fd.append('folder','bestellingen');
-    try{const r=await fetch(HANDLER_URL,{method:'POST',body:fd});const d=await r.json();if(d.success)uploadUrlB=d.url;}
-    catch(err){console.warn('Upload B mislukt:',err);}
-  }
-
-  const verzendingEx = parseFloat((S.ship/1.21).toFixed(4));
-  const drukExA = parseFloat((S.upA/1.21).toFixed(4));
-  const drukExB = isBoth ? parseFloat((S.upB/1.21).toFixed(4)) : 0;
-
-  const payload = {
-    action: 'bestelling',
-    order_id: paypalDetails.id || 'SIM-'+Date.now(),
-    naam: e('fname').value.trim()+' '+e('lname').value.trim(),
-    email: e('email').value.trim(),
-    telefoon: e('phone').value.trim()||'\u2013',
-    bedrijf: e('company').value.trim()||'\u2013',
-    kvk: e('kvk').value.trim()||'\u2013',
-    adres: e('street').value.trim()+', '+e('zip').value.trim()+' '+e('city').value.trim()+', '+e('country').value,
-    opmerkingen: e('notes').value.trim()||'\u2013',
-    taal: 'nl',
-    regels: [{
-      sku: S.mdl?.sku||'\u2013',
-      naam: S.mdl?.name||'\u2013',
-      merk: S.mdl?.brand||'\u2013',
-      kleur_naam: S.clrName||'\u2013',
-      positie: posNm[S.pos]||'\u2013',
-      techniek_a: techName(S.techA),
-      techniek_b: isBoth?techName(S.techB):null,
-      maten: sz,
-      aantal: S.qty,
-      prijs_ex: S.prijsEx,
-      druk_ex: drukExA + (isBoth?drukExB:0),
-      upload_url_a: uploadUrlA,
-      upload_url_b: uploadUrlB||null
-    }],
-    verzending_ex: verzendingEx,
-    totaal_incl: parseFloat(S.tot.toFixed(2))
-  };
-
-  try {
-    const r = await fetch(HANDLER_URL, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(payload)
-    });
-    const d = await r.json();
-    if(!d.success){
-      alert('Bestelling verwerken mislukt: '+(d.error||'Probeer opnieuw'));
-      return;
-    }
-  } catch(err){
-    console.error('Handler fout:', err);
-  }
-
-  e('confirm-email').textContent=e('email').value.trim();
-  e('ok-title').textContent='Bestelling ontvangen!';
-  e('ok-msg').innerHTML='Bedankt voor je bestelling bij Merch Master. Je ontvangt een bevestiging op <strong>'+e('email').value.trim()+'</strong>.<br><br>Vragen? WhatsApp: <a href="https://wa.me/31617255170" style="color:var(--accent)">+31 6 17 25 51 70</a>';
-  gS('success');
-}
 
 // ── Borduren aanvraag ──────────────────────────────────────────────────────────
 function chkBord(){
