@@ -129,7 +129,8 @@ merch-master/
 ├── includes/
 │   ├── vertalingen.json
 │   └── header.php / footer.php
-├── wagen.php / wagen.js          (winkelwagen)
+├── winkelwagen.php               (DEPRECATED — checkout moved to bestellen.php stap 6)
+├── wagen.php / wagen.js          (winkelwagen API/JS — basis winkelwagen functies)
 ├── mail.php                      (bevestigingsmails)
 └── admin.php                     (hoofd admin)
 ```
@@ -137,6 +138,49 @@ merch-master/
 ---
 
 ## 📋 Todo
+
+### 🟢 Afgerond — Consolidatie winkelwagen → bestellen.php stap 6
+**Done:**
+- [x] Cart panel "Betalen →" button nu navigeert naar stap 6 via `gS(6);` (ipv `/winkelwagen.php`)
+- [x] stap 6 initialiseert volledig: `tryAutoFill()` + `fillSum()`
+- [x] `/winkelwagen.php` verdwijnt — alle checkout flow nu in `bestellen.php`
+
+### 🔴 In uitvoering — Cart Panel Redesign (Modern CSS)
+Cart panel styling moderniseren met minimalistisch design (meer whitespace, clean borders), behoud Merch Master oranje (#e84c1e). Plan: zie `C:\Users\leonn\.claude\plans\foamy-doodling-piglet.md`
+
+**Wat er moet gebeuren:**
+- [ ] Fase 1: CSS architecture — increase whitespace, simplify borders (1px), add hover states, softer shadows
+- [ ] Fase 2: Cart panel HTML styling — increase padding, better item spacing
+- [ ] Fase 3: Cart item hover effects — light background, shadow lift
+- [ ] Fase 4: Button styling enhancements — smooth transitions, scale effects
+- [ ] Testing: Hover states, item removal, payment button, mobile responsive
+
+**Constraints:**
+- Behoud bestaande functionaliteit (delete items, add to cart, totals)
+- Merch Master accent (#e84c1e) behouden
+- Geen Tailwind (PHP/HTML, geen webpack setup) — enhance existing CSS instead
+- Mobile responsive layout maintained
+
+### 🔴 In uitvoering — Checkout herstructurering (bestellen.php) — STAP 6
+Stap 6 ombouwen tot gecombineerde winkelwagen-review + klantgegevens + betaling.
+
+**Wat er moet gebeuren:**
+- [ ] Uitzoeken: klantenportaal tabel + sessie-structuur (welke $_SESSION variabelen bij inloggen?)
+- [ ] Uitzoeken: waar PayPal nu exact zit (handler.php? wagen.php? wagen.js?)
+- [ ] Stap 6 herstructureren: review (readonly) + klantgegevens + PayPal
+- [ ] Klantgegevens velden: voornaam, achternaam, straat+nr, postcode, plaats, email, telefoon + KVK (als bedrijf)
+- [ ] Bedrijf/Particulier toggle: blijft in stap 4 én zichtbaar in stap 6 review
+- [ ] Auto-invullen vanuit klantenportaal als ingelogd
+- [ ] Guest checkout ook mogelijk (gegevens in $_SESSION)
+- [ ] Opmerkingen veld: blijft in stap 5, WEL zichtbaar in stap 6 review
+- [ ] Bevestigingspagina + mail na betaling: bestaande flow behouden, niets nieuw toevoegen
+- [ ] Alles naar bestaande bestellingen tabel + admin + mail (geen wijzigingen in die flow)
+
+**Constraints:**
+- Stappen 1–5 blijven ongewijzigd
+- Opmerkingen + file upload blijft in stap 5
+- Geen nieuwe betaalmethodes, geen extra features
+- PayPal exact zoals nu ingebouwd
 
 ### Kritiek
 - [ ] Test bevestigingsmails op live server
