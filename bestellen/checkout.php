@@ -621,8 +621,8 @@ function fmt($val) {
           console.log('✓ Order success! Redirecting...');
           window.location.href = '/bestellen.php?success=' + (paypalDetails?.id || 'test');
         } else {
-          const errorMsg = result.error || 'Onbekende fout';
-          console.error('✗ Handler error:', errorMsg);
+          const errorMsg = result.error || result.fout || JSON.stringify(result);
+          console.error('✗ Handler error:', errorMsg, result);
           alert('Bestelling mislukt: ' + errorMsg);
         }
       } catch(err) {

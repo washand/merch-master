@@ -17,12 +17,12 @@ require_once __DIR__ . '/includes/concepten.php';
 // Vang PHP errors op en stuur als JSON terug
 set_error_handler(function($errno, $errstr) {
     header('Content-Type: application/json');
-    echo json_encode(['ok'=>false,'fout'=>'PHP fout: '.$errstr]);
+    echo json_encode(['success'=>false,'error'=>'PHP fout: '.$errstr]);
     exit;
 });
 set_exception_handler(function($e) {
     header('Content-Type: application/json');
-    echo json_encode(['ok'=>false,'fout'=>'Fout: '.$e->getMessage()]);
+    echo json_encode(['success'=>false,'error'=>'Fout: '.$e->getMessage()]);
     exit;
 });
 
@@ -161,9 +161,9 @@ function handleBestelling(array $d): void {
     $taal = $d['taal'] ?? 'nl';
     $bestelId = Bestellingen::opslaan($d, $klantId);
     $errors = [];
-    if(!sendBestelmail($d)) $errors[] = 'Bestelmail mislukt';
-    if(!sendBevestiging($d, $taal)) $errors[] = 'Bevestigingsmail mislukt';
-    if(!createJorttInvoice($d)) $errors[] = 'Jortt mislukt';
+    try { if(!sendBestelmail($d))      $errors[] = 'Bestelmail mislukt'; }     catch(\Throwable $e) { $errors[] = 'Bestelmail: '.$e->getMessage(); }
+    try { if(!sendBevestiging($d, $taal)) $errors[] = 'Bevestigingsmail mislukt'; } catch(\Throwable $e) { $errors[] = 'Bevestigingsmail: '.$e->getMessage(); }
+    try { if(!createJorttInvoice($d))  $errors[] = 'Jortt mislukt'; }          catch(\Throwable $e) { $errors[] = 'Jortt: '.$e->getMessage(); }
     jsonResponse(['success'=>true,'bestelling_id'=>$bestelId,'warnings'=>$errors]);
 }
 
