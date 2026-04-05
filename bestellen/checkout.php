@@ -28,8 +28,8 @@ function fmt($val) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?php echo t('checkout'); ?> - Merch Master</title>
-  <link rel="stylesheet" href="/includes/style.css">
+  <title>Afrekenen - Merch Master</title>
+  <link rel="stylesheet" href="../includes/style.css">
   <style>
     .checkout-main {
       max-width: 900px;
@@ -318,10 +318,11 @@ function fmt($val) {
   <?php include '../includes/footer.php'; ?>
 
   <!-- PayPal SDK -->
-  <script src="https://www.paypal.com/sdk/js?client-id=<?php echo getenv('PAYPAL_CLIENT_ID') ?: 'sb-nxgbn28402656@personal.example.com'; ?>&currency=EUR"></script>
+  <script src="https://www.paypal.com/sdk/js?client-id=ASLap52V7_VjYsq3D5k1W9a9RLG7854wBRs9TQ0m0PHhLXALJwrG3i-r4nrQOMuUr0d_Dqr5BSMv4ebk&currency=EUR"></script>
 
   <script>
     let CART = [];
+    let TOTALEN = null;
     const WAGEN_TOKEN = '<?php echo htmlspecialchars($wagen_token); ?>';
     const KLANT_TYPE = '<?php echo $klantType; ?>';
 
@@ -333,7 +334,7 @@ function fmt($val) {
     // Load cart from wagen.php
     async function loadCart() {
       try {
-        const response = await fetch('/bestellen/wagen.php', {
+        const response = await fetch('../wagen.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ actie: 'laden', wagen_token: WAGEN_TOKEN })
@@ -341,6 +342,7 @@ function fmt($val) {
         const data = await response.json();
         if(data.ok && data.regels) {
           CART = data.regels;
+          TOTALEN = data.totalen; // Store totals from server for exact prices
           updateSummary();
           calcTotals();
         } else {
@@ -391,41 +393,40 @@ function fmt($val) {
       summarySection.innerHTML = '<h2>Jouw bestelling</h2>' + itemsHtml + priceHtml;
     }
 
-    // Calculate and display totals
+    // Calculate and display totals - use exact values from wagen.php
     function calcTotals() {
-      let totalEx = 0;
-      let totalQty = 0;
+      if(!TOTALEN) {
+        return { totalEx: 0, btw: 0, totalIncl: 0, ship: 0 };
+      }
 
-      CART.forEach(item => {
-        // Get pricing from nested prijs object (from wagen.php)
-        const prijs_obj = item.prijs || {};
-        const prijs_excl = prijs_obj.prijs_excl || 0; // price per unit ex tax
-        const druk_excl = prijs_obj.druk_excl || 0;  // print costs ex tax
-        const aantal = item.aantal || 1;
+      // Use exact totals from wagen.php (matches winkelwagen display)
+      const totalEx = TOTALEN.totaal_excl || 0;
+      const btw = TOTALEN.btw || 0;
+      const totalIncl = TOTALEN.totaal_incl || 0;
 
-        // Total per item (textile + print) * quantity
-        const itemTotalEx = (prijs_excl + druk_excl) * aantal;
-        totalEx += itemTotalEx;
-        totalQty += aantal;
-      });
+      // Shipping: use server value or calculate
+      let ship = 0;
+      if(TOTALEN.verzend_achteraf) {
+        ship = 0; // Will be charged after
+      } else {
+        ship = TOTALEN.verzend_excl ? TOTALEN.verzend_excl * 1.21 : 0;
+      }
 
-      // Calculate shipping based on total quantity
-      const ship = totalQty >= 12 ? 13.95 : 6.95;
-      const shipEx = ship / 1.21;
-
-      totalEx += shipEx;
-      const btw = totalEx * 0.21 / 1.21;
-      const totalIncl = totalEx + btw;
+      // Add shipping to totals if not achteraf
+      let totalWithShip = totalIncl;
+      if(!TOTALEN.verzend_achteraf && TOTALEN.verzend_excl) {
+        totalWithShip = TOTALEN.totaal_met_verzend || (totalIncl + ship);
+      }
 
       document.getElementById('total-ex').textContent = formatPrice(totalEx);
       document.getElementById('total-btw').textContent = formatPrice(btw);
-      document.getElementById('total-incl').textContent = formatPrice(totalIncl);
+      document.getElementById('total-incl').textContent = formatPrice(totalWithShip);
 
       return {
-        totalEx: Math.round(totalEx * 100) / 100,
-        btw: Math.round(btw * 100) / 100,
-        totalIncl: Math.round(totalIncl * 100) / 100,
-        ship
+        totalEx: totalEx,
+        btw: btw,
+        totalIncl: totalWithShip,
+        ship: TOTALEN.verzend_excl || 0
       };
     }
 
@@ -489,10 +490,13 @@ function fmt($val) {
         };
       });
 
-      // Add handler-required fields
+      // Add handler-required fields using exact values from server
       formData.set('regels', JSON.stringify(regels));
-      formData.set('verzending_ex', (totals.ship / 1.21).toFixed(2));
-      formData.set('totaal_incl', totals.totalIncl.toFixed(2));
+      formData.set('verzending_ex', TOTALEN ? (TOTALEN.verzend_excl || 0).toFixed(2) : '0.00');
+
+      // Use totaal_met_verzend if available (includes shipping), otherwise use totaal_incl
+      const finalTotal = TOTALEN ? (TOTALEN.totaal_met_verzend || TOTALEN.totaal_incl || 0) : 0;
+      formData.set('totaal_incl', Number(finalTotal).toFixed(2));
       formData.set('taal', 'nl');
 
       if(paypalDetails) {
