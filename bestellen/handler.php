@@ -95,8 +95,14 @@ function handleBestelling(array $d): void {
     // Herbereken het totaal server-side op basis van ingediende regels
     // en vergelijk met het totaal dat de client claimt te betalen.
     // Als het verschil groter is dan 0.05 euro: weiger de bestelling.
-    
-    $regels        = $d['regels'] ?? [];
+
+    // Parse regels (may come as JSON string from FormData)
+    $regels = $d['regels'] ?? [];
+    if(is_string($regels)) {
+        $regels = json_decode($regels, true) ?? [];
+    }
+    $d['regels'] = $regels; // Update in $d for other functions
+
     $verzending_ex = (float)($d['verzending_ex'] ?? 0);
     $totaal_incl   = (float)($d['totaal_incl']   ?? 0);
     
