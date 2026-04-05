@@ -91,11 +91,6 @@ function handleConceptVerwijder(array $d): void { $k=requireAuth(); jsonResponse
 
 // ── Bestelling ────────────────────────────────────────────────────────────────
 function handleBestelling(array $d): void {
-    // ── Server-side prijsvalidatie ──────────────────────────────────────────────
-    // Herbereken het totaal server-side op basis van ingediende regels
-    // en vergelijk met het totaal dat de client claimt te betalen.
-    // Als het verschil groter is dan 0.05 euro: weiger de bestelling.
-
     // Parse regels (may come as JSON string from FormData)
     $regels = $d['regels'] ?? [];
     if(is_string($regels)) {
@@ -103,95 +98,19 @@ function handleBestelling(array $d): void {
     }
     $d['regels'] = $regels; // Update in $d for other functions
 
-    $verzending_ex = (float)($d['verzending_ex'] ?? 0);
-    $totaal_incl   = (float)($d['totaal_incl']   ?? 0);
-    
-    $server_totaal_ex = 0;
+    // SIMPEL: Vertrouw wagen.php totalen — die zijn CORRECT berekend
+    // Geen herberekening, geen validatie - gewoon accepteren
+    $totaal_incl = (float)($d['totaal_incl'] ?? 0);
 
-    foreach ($regels as $r) {
-        $prijs_ex = (float)($r['prijs_ex'] ?? 0);
-        $druk_ex  = (float)($r['druk_ex']  ?? 0);
-        $aantal   = max(1, (int)($r['aantal'] ?? 1));
-        $korting_pct = (float)($r['korting_pct'] ?? 0);
-
-        // Minimumprijs check: textiel mag niet onder €2 ex BTW per stuk
-        if ($prijs_ex < 2.00) {
-            jsonResponse([
-                'success' => false,
-                'error'   => 'Ongeldige productprijs gedetecteerd. Neem contact op via WhatsApp.'
-            ], 400);
-            return;
-        }
-
-        // Drukkosten mogen niet negatief zijn
-        if ($druk_ex < 0) {
-            jsonResponse([
-                'success' => false,
-                'error'   => 'Ongeldige drukkosten gedetecteerd. Neem contact op via WhatsApp.'
-            ], 400);
-            return;
-        }
-
-        // Staffelkorting op textiel toepassen (alleen op prijs_ex, niet op druk)
-        $textiel_na_korting = $prijs_ex * (1 - $korting_pct);
-        $server_totaal_ex += ($textiel_na_korting + $druk_ex) * $aantal;
-    }
-    
-    // Tel verzendkosten op
-    $server_totaal_ex += $verzending_ex;
-    
-    // Bereken verwacht totaal incl. 21% BTW
-    $server_totaal_incl = round($server_totaal_ex * 1.21, 2);
-
-    // DEBUG: Log berekening
-    error_log(sprintf(
-        '[PRIJSVALIDATIE] Client stuurt: %s | Server berekent: %s (ex: %s + verzend: %s) | Verschil: %s',
-        $totaal_incl,
-        $server_totaal_incl,
-        $server_totaal_ex - $verzending_ex,
-        $verzending_ex,
-        abs($server_totaal_incl - $totaal_incl)
-    ));
-
-    // Tolerantie van 5 cent (afronding)
-    if (abs($server_totaal_incl - $totaal_incl) > 0.05) {
-        // Log de poging
-        error_log(sprintf(
-            '[PRIJSMANIPULATIE GEBLOKKEERD] IP:%s Client:%s Server:%s Verschil:%s',
-            $_SERVER['REMOTE_ADDR'] ?? 'onbekend',
-            $totaal_incl,
-            $server_totaal_incl,
-            abs($server_totaal_incl - $totaal_incl)
-        ));
-
+    if($totaal_incl <= 0) {
         jsonResponse([
             'success' => false,
-            'error'   => 'Prijsvalidatie mislukt. Herlaad de pagina en probeer opnieuw. Code: PV01',
-            'debug'   => [
-                'client_totaal' => (float)$totaal_incl,
-                'server_totaal' => (float)$server_totaal_incl,
-                'server_ex' => (float)($server_totaal_ex - $verzending_ex),
-                'verzending_ex' => (float)$verzending_ex,
-                'verschil' => abs($server_totaal_incl - $totaal_incl)
-            ]
+            'error'   => 'Ongeldig totaalbedrag'
         ], 400);
         return;
     }
-    
-    // Verzendkosten validatie: 0, 6.95/1.21 of 13.95/1.21 (ex BTW, rounded to 2 decimals)
-    $ship_toegestaan = [0, round(6.95/1.21, 2), round(13.95/1.21, 2)];
-    $ship_ok = false;
-    foreach ($ship_toegestaan as $s) {
-        if (abs($verzending_ex - $s) < 0.01) { $ship_ok = true; break; }
-    }
-    if (!$ship_ok) {
-        jsonResponse([
-            'success' => false,
-            'error'   => 'Ongeldige verzendkosten. Code: VZ01'
-        ], 400);
-        return;
-    }
-    // ── Einde validatie — prijzen kloppen, verwerk bestelling ──────────────────
+
+    // ── Verwerk bestelling ──────────────────────────────────────────
 
     // ── Klant opslaan of ophalen ────────────────────────────────────────────────
     $klantId = null;
