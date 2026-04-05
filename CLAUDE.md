@@ -140,6 +140,20 @@ merch-master/
 
 ## 📋 Todo
 
+### 🟢 Afgerond — Checkout Bug Fixes (CSS, PayPal, Prijzen)
+**Fixed:**
+- [x] CSS MIME type error: `/includes/style.css` niet op server → inline styles gebruikt
+- [x] PayPal SDK niet laden: sandbox client-id → real client-id ingesteld
+- [x] Prijzen mismatch winkelwagen ≠ checkout: herberekening → server totals gebruiken
+- [x] Error handling voor PayPal SDK fallback
+- [x] Fetch paths absolute gemaakt voor consistency
+
+**Implementation:**
+- checkout.php geen externe CSS meer (alles inline)
+- PayPal client-id = `ASLap52V7_VjYsq3D5k1W9a9RLG7854wBRs9TQ0m0PHhLXALJwrG3i-r4nrQOMuUr0d_Dqr5BSMv4ebk`
+- TOTALEN object van wagen.php gebruikt voor exacte prijzen
+- PayPal button graceful fallback bij load failure
+
 ### 🟢 Afgerond — Consolidatie winkelwagen → bestellen.php stap 6
 **Done:**
 - [x] Cart panel "Betalen →" button nu navigeert naar stap 6 via `gS(6);` (ipv `/winkelwagen.php`)
@@ -188,7 +202,7 @@ Stap 6 uit bestellen.php verwijderd. Nieuwe standalone bestellen/checkout.php pa
 
 ### Kritiek
 - [ ] Test bevestigingsmails op live server
-- [ ] PayPal live client-id (nu sandbox `sb`)
+- [x] PayPal live client-id (nu ingesteld: `ASLap52V7_VjYsq3D5k1W9a9RLG7854wBRs9TQ0m0PHhLXALJwrG3i-r4nrQOMuUr0d_Dqr5BSMv4ebk`)
 
 ### Belangrijk
 - [ ] Jortt server-side facturering
