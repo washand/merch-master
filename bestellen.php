@@ -1760,5 +1760,11 @@ async function init(){
   verversCartPanel(); // laad bestaande winkelwagen bij pagina-open
 }
 init();
+
+// Check if returning from checkout with success parameter
+const urlParams = new URLSearchParams(window.location.search);
+if(urlParams.has('success')){
+  gS('success');
+}
 </script>
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
