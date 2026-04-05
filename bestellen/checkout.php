@@ -265,7 +265,8 @@ function fmt($val) {
           <label>Telefoon</label>
           <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
             <div style="flex: 0 0 160px;">
-              <select name="telefoon_landcode" id="telefoon_landcode"></select>
+              <select id="dial_ts"></select>
+              <input type="hidden" name="telefoon_landcode" id="telefoon_landcode" value="+31">
             </div>
             <input type="tel" name="telefoon" id="telefoon" placeholder="6 12345678" value="<?php echo htmlspecialchars(preg_replace('/^\+\d+/', '', $klant['telefoon'] ?? '')); ?>" style="flex: 1; padding: 0.6rem 0.8rem; border: 1px solid var(--border); border-radius: 3px; font-size: 0.9rem; font-family: inherit;">
           </div>
@@ -790,20 +791,42 @@ function fmt($val) {
     });
     new TomSelect('#land', { maxOptions: 300, placeholder: 'Zoek land…' });
 
-    // Landcode telefoon
-    const dialSel = document.getElementById('telefoon_landcode');
-    LANDEN.forEach(l => {
-      const o = document.createElement('option');
-      o.value = l.t; o.textContent = l.t + ' ' + l.n;
-      if(l.t === (savedDial || '+31') && l.v === (savedLand || 'NL')) o.selected = true;
-      dialSel.appendChild(o);
-    });
-    new TomSelect('#telefoon_landcode', {
-      maxOptions: 300,
+    // Vlaggen: genereer emoji uit ISO-code (Regional Indicator letters)
+    function isoToFlag(iso) {
+      return [...iso.toUpperCase()].map(c => String.fromCodePoint(c.charCodeAt(0) + 127397)).join('');
+    }
+    // Europese landen + VS + Canada
+    const MET_VLAG = new Set([
+      'AL','AD','AM','AT','AZ','BY','BE','BA','BG','HR','CY','CZ','DK','EE',
+      'FI','FR','GE','DE','GR','HU','IS','IE','IT','LV','LI','LT','LU','MT',
+      'MD','MC','ME','NL','MK','NO','PL','PT','RO','RU','SM','RS','SK','SI',
+      'ES','SE','CH','TR','UA','GB','VA','US','CA'
+    ]);
+
+    // Landcode telefoon — ISO als interne waarde (uniek, geen +1 conflict US/CA)
+    const dialHidden = document.getElementById('telefoon_landcode');
+    const savedIso   = LANDEN.find(l => l.t === (savedDial||'+31'))?.v || 'NL';
+    new TomSelect('#dial_ts', {
+      options:     LANDEN.map(l => ({ value: l.v, dial: l.t, name: l.n })),
+      valueField:  'value',
+      labelField:  'name',
+      searchField: ['name', 'dial'],
+      maxOptions:  300,
       placeholder: 'Zoek…',
+      items:       [savedIso],
+      onChange: (iso) => {
+        const l = LANDEN.find(x => x.v === iso);
+        if(l) dialHidden.value = l.t;
+      },
       render: {
-        option: (d) => `<div><strong>${d.value.split(' ')[0]}</strong> ${d.text.substring(d.text.indexOf(' ')+1)}</div>`,
-        item:   (d) => `<div>${d.value.split(' ')[0]}</div>`,
+        option: (d) => {
+          const f = MET_VLAG.has(d.value) ? isoToFlag(d.value) + ' ' : '';
+          return `<div>${f}<strong>${d.dial}</strong> ${d.name}</div>`;
+        },
+        item: (d) => {
+          const f = MET_VLAG.has(d.value) ? isoToFlag(d.value) + ' ' : '';
+          return `<div>${f}${d.dial}</div>`;
+        }
       }
     });
 
