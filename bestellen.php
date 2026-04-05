@@ -27,6 +27,60 @@ try {
     }
     if ($dk) $_drukkostenJS = json_encode($dk, JSON_UNESCAPED_UNICODE);
 } catch (Exception $e) { /* gebruik JS fallback */ }
+
+// ── Levertijden uit database laden ───────────────────────────────────────────
+$lt_dtf = '5-8';
+$lt_zeef = '6-10';
+$lt_bord = '7-12';
+
+try {
+    require_once __DIR__ . '/bestellen/includes/db-config.php';
+
+    // Probeer mm_instellingen (nieuw systeem) — als JSON object
+    try {
+        $st = getDB()->prepare("SELECT waarde FROM mm_instellingen WHERE sleutel = 'levertijden' LIMIT 1");
+        $st->execute();
+        $row = $st->fetch();
+        if ($row && !empty($row['waarde'])) {
+            $decoded = json_decode($row['waarde'], true);
+            if (is_array($decoded)) {
+                $v = $decoded['dtf'] ?? $lt_dtf;
+                $lt_dtf = is_array($v) ? (string)reset($v) : (string)$v;
+                $v = $decoded['zeefdruk'] ?? $lt_zeef;
+                $lt_zeef = is_array($v) ? (string)reset($v) : (string)$v;
+                $v = $decoded['borduren'] ?? $lt_bord;
+                $lt_bord = is_array($v) ? (string)reset($v) : (string)$v;
+            }
+        }
+    } catch (Exception $e) {}
+
+    // Fallback: instellingen (oud systeem) — individuele string keys
+    try {
+        $st = getDB()->prepare("SELECT sleutel, waarde FROM instellingen WHERE sleutel IN ('levertijd_dtf', 'levertijd_zeefdruk', 'levertijd_borduren')");
+        $st->execute();
+        $rows = $st->fetchAll(PDO::FETCH_KEY_PAIR);
+        if (!empty($rows['levertijd_dtf'])) $lt_dtf = (string)$rows['levertijd_dtf'];
+        if (!empty($rows['levertijd_zeefdruk'])) $lt_zeef = (string)$rows['levertijd_zeefdruk'];
+        if (!empty($rows['levertijd_borduren'])) $lt_bord = (string)$rows['levertijd_borduren'];
+    } catch (Exception $e) {}
+
+} catch (Exception $e) {}
+
+// Zorg dat waarden STRINGS zijn, niet arrays/objects
+if (!is_string($lt_dtf)) $lt_dtf = '5-8';
+if (!is_string($lt_zeef)) $lt_zeef = '6-10';
+if (!is_string($lt_bord)) $lt_bord = '7-12';
+
+// Clip "werkdagen" suffix (als die er in staat)
+$lt_dtf = preg_replace('/\s+werkdagen\s*$/i', '', trim($lt_dtf));
+$lt_zeef = preg_replace('/\s+werkdagen\s*$/i', '', trim($lt_zeef));
+$lt_bord = preg_replace('/\s+werkdagen\s*$/i', '', trim($lt_bord));
+
+$_levertijdenJS = json_encode([
+    'dtf' => $lt_dtf,
+    'zeefdruk' => $lt_zeef,
+    'borduren' => $lt_bord
+], JSON_UNESCAPED_UNICODE);
 ?>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -37,7 +91,12 @@ try {
   --r:10px;--shadow:0 2px 12px rgba(0,0,0,.07);
 }
 .besteltool-wrap{padding:1.5rem 0.85rem 4rem;}
-.besteltool-wrap .shell{max-width:780px;margin:0 auto;}
+.besteltool-cols{display:flex;gap:2rem;align-items:flex-start;max-width:1220px;margin:0 auto;}
+.besteltool-cols .shell{flex:1;min-width:0;max-width:780px;}
+.cart-panel{width:320px;flex-shrink:0;position:sticky;top:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);display:flex;flex-direction:column;max-height:calc(100vh - 3rem);overflow:hidden;transition:box-shadow .2s;}
+.cart-panel:hover{box-shadow:0 2px 8px rgba(0,0,0,.12);}
+.cart-panel-hd{padding:1.25rem 1.25rem 1rem;border-bottom:1px solid var(--border);flex-shrink:0;}
+@media(max-width:960px){.besteltool-cols{flex-direction:column;}.cart-panel{width:100%;position:static;max-height:none;}}
 
 /* Progress */
 .prog{display:flex;gap:5px;margin-bottom:2.5rem;}
@@ -163,10 +222,12 @@ try {
 .upload-lbl{font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;margin-bottom:.4rem;color:var(--ink2);}
 
 /* Buttons */
-.btn{display:inline-flex;align-items:center;gap:.45rem;padding:.75rem 1.4rem;border-radius:var(--r);font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;border:none;transition:transform .15s,box-shadow .2s,background .2s;letter-spacing:.01em;}
-.btn:hover:not(:disabled){transform:translateY(-1px);}
+.btn{display:inline-flex;align-items:center;gap:.45rem;padding:.75rem 1.4rem;border-radius:var(--r);font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;border:none;transition:transform .2s cubic-bezier(.4,0,.2,1),box-shadow .2s cubic-bezier(.4,0,.2,1),background .2s;letter-spacing:.01em;}
+.btn:hover:not(:disabled){transform:translateY(-2px);}
+.btn:active:not(:disabled){transform:translateY(-1px) scale(.98);}
 .btn-p{background:var(--accent);color:#fff;box-shadow:0 3px 12px rgba(232,76,30,.28);}
-.btn-p:hover:not(:disabled){background:#d03d10;}
+.btn-p:hover:not(:disabled){background:#d03d10;box-shadow:0 6px 20px rgba(232,76,30,.35);}
+.btn-p:active:not(:disabled){box-shadow:0 2px 8px rgba(232,76,30,.25);}
 .btn-p:disabled{background:#d8d4cc;color:#a09c94;box-shadow:none;cursor:not-allowed;transform:none;}
 .btn-s{background:transparent;color:var(--ink2);border:2px solid var(--border);}
 .btn-s:hover{border-color:#bbb;}
@@ -175,6 +236,7 @@ try {
 .btn-aanvraag{background:var(--ink2);color:#fff;box-shadow:0 3px 12px rgba(0,0,0,.15);font-size:.95rem;padding:.88rem 1.8rem;width:100%;justify-content:center;}
 .btn-aanvraag:hover{background:var(--ink);}
 .btn-row{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;}
+/* sidebar CSS verwijderd — vervangen door persistent cart-panel */
 
 /* Summary */
 .sum-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:1.35rem;}
@@ -205,8 +267,8 @@ try {
 /* Klanttype toggle */
 .klant-toggle{display:flex;background:var(--border);border-radius:8px;padding:3px;gap:3px;margin-bottom:.9rem;}
 .klant-toggle button{flex:1;border:none;background:transparent;border-radius:6px;padding:.52rem .7rem;font-size:.78rem;font-weight:600;font-family:'Syne',sans-serif;cursor:pointer;color:var(--ink3);transition:background .2s,color .2s,box-shadow .2s;}
-#kt-particulier.act{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.1);}
-#kt-bedrijf.act{background:#1a3a5c;color:#fff;box-shadow:0 1px 6px rgba(26,58,92,.4);}
+#kt-particulier.act,#kt-particulier2.act{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.1);}
+#kt-bedrijf.act,#kt-bedrijf2.act{background:#1a3a5c;color:#fff;box-shadow:0 1px 6px rgba(26,58,92,.4);}
 
 /* Product filter layout */
 .mdl-layout{display:flex;gap:1.25rem;align-items:flex-start;}
@@ -256,6 +318,7 @@ try {
 </style>
 
 <div class="besteltool-wrap">
+<div class="besteltool-cols">
 <div class="shell">
 
 <!-- Progress (6 stappen) -->
@@ -273,6 +336,28 @@ try {
   <div class="s-lbl">Stap 1 van 6</div>
   <div class="s-ttl" id="s1-ttl">Kies een categorie</div>
   <div class="trail" id="s1-trail"></div>
+
+  <!-- Staffelkorting info -->
+  <div class="info-note" style="background:#f0fdf4;border:2px solid #22c55e;border-left:none;margin-bottom:1.25rem;padding:1.5rem 1.25rem;">
+    <div style="text-align:center;margin-bottom:1rem;">
+      <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:#166534;letter-spacing:-.5px;">Staffelkorting textiel</div>
+      <div style="font-size:.78rem;color:#15803d;margin-top:.35rem;">Hoe meer stuks, hoe groter uw voordeel</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;text-align:center;">
+      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
+        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">50 – 99</div>
+        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">5% korting</div>
+      </div>
+      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
+        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">100 – 199</div>
+        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">10% korting</div>
+      </div>
+      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
+        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">200+</div>
+        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">20% korting</div>
+      </div>
+    </div>
+  </div>
 
   <!-- sub: categorie -->
   <div id="s1-cat">
@@ -331,22 +416,42 @@ try {
 <div id="step2" class="hidden">
   <div class="s-lbl">Stap 2 van 6</div>
   <div class="s-ttl">Kies een drukpositie</div>
+
+  <!-- Staffelkorting info -->
+  <div class="info-note" style="background:#f0fdf4;border:2px solid #22c55e;border-left:none;margin-bottom:1.25rem;padding:1.5rem 1.25rem;">
+    <div style="text-align:center;margin-bottom:1rem;">
+      <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:#166534;letter-spacing:-.5px;">Staffelkorting textiel</div>
+      <div style="font-size:.78rem;color:#15803d;margin-top:.35rem;">Hoe meer stuks, hoe groter uw voordeel</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;text-align:center;">
+      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
+        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">50 – 99</div>
+        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">5% korting</div>
+      </div>
+      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
+        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">100 – 199</div>
+        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">10% korting</div>
+      </div>
+      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
+        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">200+</div>
+        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">20% korting</div>
+      </div>
+    </div>
+  </div>
+
   <div class="opt-grid g3">
     <div class="opt" id="pos-front" onclick="selPos('front')">
       <div class="chk"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
-      <div class="pos-icon">&#128085;</div>
       <div class="pos-name">Voorkant</div>
       <div class="pos-desc">Bedrukking op de voorzijde van het textiel</div>
     </div>
     <div class="opt" id="pos-back" onclick="selPos('back')">
       <div class="chk"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
-      <div class="pos-icon">&#128260;</div>
       <div class="pos-name">Achterkant</div>
       <div class="pos-desc">Bedrukking op de achterzijde van het textiel</div>
     </div>
     <div class="opt" id="pos-both" onclick="selPos('both')">
       <div class="chk"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
-      <div class="pos-icon">&#10024;</div>
       <div class="pos-name">Beide kanten</div>
       <div class="pos-desc">Voor- &eacute;n achterkant bedrukt. Per kant eigen techniek en ontwerp.</div>
       <div class="pos-note">= 2&times; bedrukking</div>
@@ -363,6 +468,28 @@ try {
   <div class="s-lbl">Stap 3 van 6</div>
   <div class="s-ttl" id="s3-ttl">Kies een druktechniek</div>
 
+  <!-- Staffelkorting info -->
+  <div class="info-note" style="background:#f0fdf4;border:2px solid #22c55e;border-left:none;margin-bottom:1.25rem;padding:1.5rem 1.25rem;">
+    <div style="text-align:center;margin-bottom:1rem;">
+      <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:#166534;letter-spacing:-.5px;">Staffelkorting textiel</div>
+      <div style="font-size:.78rem;color:#15803d;margin-top:.35rem;">Hoe meer stuks, hoe groter uw voordeel</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;text-align:center;">
+      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
+        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">50 – 99</div>
+        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">5% korting</div>
+      </div>
+      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
+        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">100 – 199</div>
+        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">10% korting</div>
+      </div>
+      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
+        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">200+</div>
+        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">20% korting</div>
+      </div>
+    </div>
+  </div>
+
   <!-- kant indicator (alleen bij 'both') -->
   <div id="kant-ind" class="hidden">
     <div class="kant-hdr">
@@ -375,29 +502,29 @@ try {
   <div class="opt-grid g3" id="tech-grid">
     <div class="opt" id="tc-dtf" onclick="selTech('dtf')">
       <div class="chk"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
-      <div class="tc-icon">&#127912;</div>
+      <img src="/img/dtf_machine.jpg" alt="DTF druk" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:.5rem;">
       <div class="tc-name">DTF druk</div>
       <div class="tc-desc">Full colour, scherpe details. Foto's en complexe ontwerpen.</div>
       <span class="tc-badge green">Vanaf 1 stuk</span>
     </div>
     <div class="opt" id="tc-zeef" onclick="selTech('zeef')">
       <div class="chk"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
-      <div class="tc-icon">&#128424;&#65039;</div>
+      <img src="/img/zeefdruk.jpg" alt="Zeefdruk" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:.5rem;">
       <div class="tc-name">Zeefdruk</div>
       <div class="tc-desc">Traditionele techniek, levendig en duurzaam. Grote oplages.</div>
       <span class="tc-badge orange">Vanaf 25 stuks</span>
     </div>
     <div class="opt" id="tc-bord" onclick="selTech('bord')">
       <div class="chk"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
-      <div class="tc-icon">&#129521;</div>
+      <img src="/img/borduren.jpg" alt="Borduren" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:.5rem;">
       <div class="tc-name">Borduren</div>
       <div class="tc-desc">Premium uitstraling op polo's, caps en jassen.</div>
       <div style="margin-top:.5rem"><span class="badge" style="background:#f3ede3;color:#7a5c3a;font-size:.68rem;padding:.25rem .55rem;border-radius:20px;font-weight:600">Op aanvraag</span></div>
     </div>
   </div>
 
-  <div id="ti-dtf" class="info-note hidden"><strong>DTF:</strong> Geen minimale oplage, full colour. Geschikt voor katoen, polyester en nylon. Levertijd 3&ndash;5 werkdagen.</div>
-  <div id="ti-zeef" class="info-note hidden"><strong>Zeefdruk:</strong> Maximaal 4 kleuren per ontwerp. Voordeligst bij 25+ stuks. Levertijd 5&ndash;8 werkdagen.</div>
+  <div id="ti-dtf" class="info-note hidden"><strong>DTF:</strong> Geen minimale oplage, full colour. Geschikt voor katoen, polyester en nylon. Levertijd 5&ndash;8 werkdagen.</div>
+  <div id="ti-zeef" class="info-note hidden"><strong>Zeefdruk:</strong> Maximaal 4 kleuren per ontwerp. Voordeligst bij 25+ stuks. Levertijd 6&ndash;10 werkdagen.</div>
 
 
   <div class="btn-row">
@@ -410,6 +537,28 @@ try {
 <div id="step4" class="hidden">
   <div class="s-lbl">Stap 4 van 6</div>
   <div class="s-ttl">Maten &amp; aantallen</div>
+
+  <!-- Staffelkorting info -->
+  <div class="info-note" style="background:#f0fdf4;border:2px solid #22c55e;border-left:none;margin-bottom:1.25rem;padding:1.5rem 1.25rem;">
+    <div style="text-align:center;margin-bottom:1rem;">
+      <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:#166534;letter-spacing:-.5px;">Staffelkorting textiel</div>
+      <div style="font-size:.78rem;color:#15803d;margin-top:.35rem;">Hoe meer stuks, hoe groter uw voordeel</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;text-align:center;">
+      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
+        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">50 – 99</div>
+        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">5% korting</div>
+      </div>
+      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
+        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">100 – 199</div>
+        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">10% korting</div>
+      </div>
+      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
+        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">200+</div>
+        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">20% korting</div>
+      </div>
+    </div>
+  </div>
 
   <!-- Zeef: kleuren per kant -->
   <div id="zeef-front-col" class="hidden">
@@ -484,7 +633,7 @@ try {
 <!-- STAP 5: ONTWERP & GEGEVENS -->
 <div id="step5" class="hidden">
   <div class="s-lbl">Stap 5 van 6</div>
-  <div class="s-ttl">Jouw ontwerp &amp; gegevens</div>
+  <div class="s-ttl">Jouw ontwerp &amp; instructies</div>
 
   <!-- Upload voorkant -->
   <div id="upload-front-wrap">
@@ -512,32 +661,10 @@ try {
 
   <div class="info-note" style="margin-top:.75rem"><strong>Geen ontwerp klaar?</strong> Geen probleem &mdash; beschrijf je wens hieronder, dan nemen we contact op.</div>
   <div class="field"><label>Omschrijving / bijzonderheden</label><textarea id="notes" placeholder="Bijv: logo op borst links, witte tekst op zwarte achtergrond..."></textarea></div>
-  <hr class="divider">
-  <div class="field-row">
-    <div class="field"><label>Voornaam *</label><input type="text" id="fname" placeholder="Jan" oninput="chk5()"></div>
-    <div class="field"><label>Achternaam *</label><input type="text" id="lname" placeholder="de Vries" oninput="chk5()"></div>
-  </div>
-  <div class="field"><label>E-mailadres *</label><input type="email" id="email" placeholder="jan@bedrijf.nl" oninput="chk5()"></div>
-  <div class="field"><label>Telefoonnummer</label><input type="tel" id="phone" placeholder="+31 6 12345678"></div>
-  <div class="field"><label>Bedrijfsnaam (optioneel)</label><input type="text" id="company" placeholder="Bedrijf BV"></div>
-  <hr class="divider">
-  <div class="field-row">
-    <div class="field"><label>Straat + huisnummer *</label><input type="text" id="street" placeholder="Hoofdstraat 1" oninput="chk5()"></div>
-    <div class="field"><label>Postcode *</label><input type="text" id="zip" placeholder="1234 AB" oninput="chk5()"></div>
-  </div>
-  <div class="field-row">
-    <div class="field"><label>Plaats *</label><input type="text" id="city" placeholder="Amsterdam" oninput="chk5()"></div>
-    <div class="field"><label>Land</label><select id="country"><option value="NL" selected>Nederland</option><option value="BE">Belgi&euml;</option><option value="DE">Duitsland</option><option value="other">Anders</option></select></div>
-  </div>
-  <div class="info-note" style="margin-bottom:.75rem">
-    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82rem;">
-      <input type="checkbox" id="offerte-toggle" onchange="toggleOfferte()" style="width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;">
-      <span>Ik wil eerst een <strong>offerte aanvragen</strong> &mdash; handig voor bedrijven &amp; grote orders</span>
-    </label>
-  </div>
+
   <div class="btn-row">
     <button class="btn btn-s" onclick="gS(4)">&#8592; Terug</button>
-    <button class="btn btn-p" id="btn5" onclick="gS(6)" disabled>Naar betaling &#8594;</button>
+    <button class="btn btn-p" id="btn5-wagen" onclick="toevoegenAanWagen()">Toevoegen aan winkelwagen &#8594;</button>
   </div>
 </div>
 
@@ -574,21 +701,63 @@ try {
     <div id="s-excl-row" class="sum-total-sub"><span class="k">Subtotaal excl. BTW</span><span class="v" id="s-total-excl">&ndash;</span></div>
     <div id="s-btw-row" class="sum-total-sub"><span class="k">BTW 21%</span><span class="v" id="s-btw">&ndash;</span></div>
     <div id="s-incl-row" class="sum-total"><span class="lbl">Totaal incl. BTW</span><span class="prc" id="s-total">&ndash;</span></div>
+    <!-- Opmerkingen (tonen als ingevuld in stap 5) -->
+    <div class="sum-row" id="sum-notities-row" style="display:none">
+      <span class="k">Ontwerpopmerkingen</span>
+      <span class="v" id="s-notities" style="font-style:italic;white-space:pre-wrap">&ndash;</span>
+    </div>
+  </div><!-- /sum-card bestelling -->
+
+  <!-- Klanttype toggle (ook in stap 6) -->
+  <div class="klant-type-toggle" style="margin-bottom:1.25rem">
+    <button id="kt-particulier2" onclick="setKlantType('particulier')">&#128100; Particulier &mdash; incl. BTW</button>
+    <button id="kt-bedrijf2" onclick="setKlantType('bedrijf')">&#127970; Bedrijf &mdash; excl. BTW</button>
   </div>
 
-  <div class="sum-card" style="margin-bottom:1.35rem">
-    <div class="sum-hd">Bezorgadres</div>
-    <div class="sum-row"><span class="k">Naam</span><span class="v" id="s-naam">&ndash;</span></div>
-    <div class="sum-row"><span class="k">Adres</span><span class="v" id="s-adres">&ndash;</span></div>
-    <div class="sum-row"><span class="k">E-mail</span><span class="v" id="s-email-sum">&ndash;</span></div>
+  <!-- Klantgegevens formulier -->
+  <div class="sum-card" style="margin-bottom:1.25rem">
+    <div class="sum-hd">Jouw gegevens</div>
+    <div style="padding:1rem 1.2rem">
+      <div id="portaal-autofill-note" class="info-note" style="display:none;margin-bottom:.75rem;font-size:.8rem">
+        &#10003; Gegevens ingeladen vanuit je account. Pas ze hieronder aan indien nodig.
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Voornaam *</label><input type="text" id="fname" placeholder="Jan" oninput="chk6()"></div>
+        <div class="field"><label>Achternaam *</label><input type="text" id="lname" placeholder="de Vries" oninput="chk6()"></div>
+      </div>
+      <div class="field"><label>E-mailadres *</label><input type="email" id="email" placeholder="jan@bedrijf.nl" oninput="chk6()"></div>
+      <div class="field"><label>Telefoonnummer</label><input type="tel" id="phone" placeholder="+31 6 12345678"></div>
+      <!-- Bedrijfsvelden: zichtbaar als klanttype = bedrijf -->
+      <div id="bedrijf-velden6" class="hidden">
+        <div class="field"><label>Bedrijfsnaam *</label><input type="text" id="company" placeholder="Bedrijf BV" oninput="chk6()"></div>
+        <div class="field"><label>KVK-nummer (optioneel)</label><input type="text" id="kvk" placeholder="12345678"></div>
+      </div>
+      <hr class="divider">
+      <div class="field-row">
+        <div class="field"><label>Straat + huisnummer *</label><input type="text" id="street" placeholder="Hoofdstraat 1" oninput="chk6()"></div>
+        <div class="field"><label>Postcode *</label><input type="text" id="zip" placeholder="1234 AB" oninput="chk6()"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Plaats *</label><input type="text" id="city" placeholder="Amsterdam" oninput="chk6()"></div>
+        <div class="field"><label>Land</label><select id="country" onchange="chk6()"><option value="NL" selected>Nederland</option><option value="BE">Belgi&euml;</option><option value="DE">Duitsland</option><option value="other">Anders</option></select></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Offerte toggle -->
+  <div class="info-note" style="margin-bottom:.75rem">
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82rem;">
+      <input type="checkbox" id="offerte-toggle" onchange="toggleOfferte()" style="width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;">
+      <span>Ik wil eerst een <strong>offerte aanvragen</strong> &mdash; handig voor bedrijven &amp; grote orders</span>
+    </label>
   </div>
 
   <div class="info-note" id="betaling-note">Na betaling ontvang je een orderbevestiging per e-mail. We nemen contact op als we vragen hebben over je ontwerp.</div>
   <div class="info-note blue hidden" id="offerte-note">Na je aanvraag nemen we binnen 1&ndash;2 werkdagen contact op met een offerte op maat.</div>
   <div id="pp-container" style="margin-bottom:1rem"></div>
-  <button class="btn btn-pp" id="fallback-pay" onclick="simPay()">
+  <button class="btn btn-pp" id="fallback-pay" onclick="simPay()" style="background:#6c5ce7;border:none;">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-    Betalen met PayPal
+    &#129514; Test Bestelling
   </button>
   <div style="text-align:center;margin-top:.65rem;font-size:.72rem;color:var(--ink3)" id="paypal-note">&#128274; Beveiligde betaling via PayPal &middot; 21% BTW inbegrepen</div>
   <button class="btn btn-aanvraag hidden" id="btn-offerte-submit" onclick="sendOfferte()" style="width:100%;justify-content:center;margin-bottom:1rem">
@@ -648,6 +817,36 @@ try {
 </div>
 
 </div><!-- /shell -->
+
+<!-- ── WINKELWAGEN PANEEL (rechts, altijd zichtbaar) ── -->
+<div class="cart-panel">
+  <div class="cart-panel-hd">
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:.95rem;color:var(--ink);display:flex;align-items:center;gap:.5rem;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      Winkelwagen
+    </div>
+    <div id="cart-panel-count" style="font-size:.75rem;color:var(--ink3);margin-top:.2rem;"></div>
+  </div>
+  <div id="cart-panel-items" style="flex:1;overflow-y:auto;padding:1rem 1.1rem;">
+    <div style="text-align:center;padding:2rem 1rem;color:var(--ink3);">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:.35;margin-bottom:.6rem;display:block;margin-left:auto;margin-right:auto;"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      <div style="font-size:.82rem;line-height:1.5;">Nog geen producten.<br>Doorloop de stappen<br>om te beginnen.</div>
+    </div>
+  </div>
+  <div id="cart-panel-footer" style="display:none;padding:1rem 1.1rem;border-top:1px solid var(--border);flex-shrink:0;">
+    <div style="font-size:.77rem;color:var(--ink3);margin-bottom:.5rem;">
+      <div style="display:flex;justify-content:space-between;padding:.15rem 0;"><span>Excl. BTW</span><span id="cart-panel-excl" style="font-weight:600;"></span></div>
+      <div style="display:flex;justify-content:space-between;padding:.15rem 0;"><span>BTW 21%</span><span id="cart-panel-btw" style="font-weight:600;"></span></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;padding-top:.4rem;border-top:1px solid var(--border);">
+      <div style="font-size:.82rem;font-weight:600;color:var(--ink);">Totaal incl. BTW</div>
+      <div id="cart-panel-totaal" style="font-size:1.05rem;font-weight:800;color:var(--accent);"></div>
+    </div>
+    <button class="btn btn-p" onclick="window.location.href='/winkelwagen.php';" style="width:100%;font-size:.84rem;">Betalen &#8594;</button>
+  </div>
+</div>
+
+</div><!-- /besteltool-cols -->
 </div><!-- /besteltool-wrap -->
 
 <script src="https://www.paypal.com/sdk/js?client-id=ASLap52V7_VjYsq3D5k1W9a9RLG7854wBRs9TQ0m0PHhLXALJwrG3i-r4nrQOMuUr0d_Dqr5BSMv4ebk&currency=EUR&locale=nl_NL"></script>
@@ -713,6 +912,7 @@ async function loadCatalogus() {
 
 // ── Pricing tables (geladen vanuit admin DB, anders fallback) ──────────────────
 const _DK = <?php echo $_drukkostenJS; ?>;
+const _LT = <?php echo $_levertijdenJS; ?>;
 
 // DTF: bouw DP array uit admin data (verplicht — geen fallback)
 const DP = [];
@@ -766,8 +966,14 @@ function setKlantType(type) {
   S.klantType = type;
   e('kt-particulier').classList.toggle('act', type==='particulier');
   e('kt-bedrijf').classList.toggle('act', type==='bedrijf');
+  e('kt-particulier2')?.classList.toggle('act', type==='particulier');
+  e('kt-bedrijf2')?.classList.toggle('act', type==='bedrijf');
+  // Bedrijfsvelden stap 6 tonen/verbergen
+  const isBedrijf = type==='bedrijf';
+  e('bedrijf-velden6')?.classList.toggle('hidden', !isBedrijf);
   // Herbereken weergave zonder herberekening van prijzen
   updBtwDisplay();
+  chk6();
   // Als stap 6 al gevuld is: herteken BTW-blok
   const step6Active = e('step6') && !e('step6').classList.contains('hidden');
   if(step6Active) fillSum();
@@ -853,7 +1059,7 @@ function gS(n){
     updProg(n);
     if(n===4) setupStep4();
     if(n===5) setupStep5();
-    if(n===6) fillSum();
+    if(n===6){ tryAutoFill(); fillSum(); }
   }
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -1044,7 +1250,7 @@ function buildSwatches(){
 }
 
 function selColor(c){
-  S.clrId=c.id;S.clrName=c.name;S.clrHex=c.hex;
+  S.clrId=c.id;S.clrName=c.name;S.clrHex=c.hex;S.clrImageUrl=c.image_url||null;
   document.querySelectorAll('.sw').forEach(s=>s.classList.remove('sel'));
   const sw=e('sw-'+c.id);if(sw)sw.classList.add('sel');
   e('custom-row').classList.remove('sel');
@@ -1115,7 +1321,15 @@ function selTech(t){
   if(S.configuring==='A') S.techA=t; else S.techB=t;
   ['dtf','zeef','bord'].forEach(x=>e('tc-'+x).classList.toggle('sel',x===t));
   ['ti-dtf','ti-zeef'].forEach(x=>e(x).classList.add('hidden'));
-  if(t!=='bord') e('ti-'+t).classList.remove('hidden');
+  if(t!=='bord') {
+    e('ti-'+t).classList.remove('hidden');
+    // Update levertijden dynamically from admin settings
+    if(t==='dtf' && _LT.dtf) {
+      e('ti-dtf').innerHTML='<strong>DTF:</strong> Geen minimale oplage, full colour. Geschikt voor katoen, polyester en nylon. Levertijd '+_LT.dtf+' werkdagen.';
+    } else if(t==='zeef' && _LT.zeefdruk) {
+      e('ti-zeef').innerHTML='<strong>Zeefdruk:</strong> Maximaal 4 kleuren per ontwerp. Voordeligst bij 25+ stuks. Levertijd '+_LT.zeefdruk+' werkdagen.';
+    }
+  }
   e('btn3').disabled=false;
 }
 
@@ -1285,6 +1499,30 @@ function setupStep5(){
   const isBack=S.pos==='back';
   e('upload-front-lbl').textContent=isBoth?'Logo / ontwerp voorkant':isBack?'Logo / ontwerp achterkant':'Logo / ontwerp';
   e('upload-back-wrap').classList.toggle('hidden',!isBoth);
+
+  // Check winkelwagen items
+  checkWagenBanner();
+}
+
+async function checkWagenBanner(){
+  try {
+    const token = localStorage.getItem('mm_wagen_token');
+    if(!token) {
+      e('wagen-banner').style.display = 'none';
+      return;
+    }
+    const resp = await fetch('bestellen/wagen.php?actie=laden');
+    const data = await resp.json();
+    if(data.ok && data.wagen && data.wagen.regels && data.wagen.regels.length > 0) {
+      e('wagen-banner-count').textContent = data.wagen.regels.length;
+      e('wagen-banner').style.display = 'block';
+    } else {
+      e('wagen-banner').style.display = 'none';
+    }
+  } catch(err) {
+    console.error('checkWagenBanner error:', err);
+    e('wagen-banner').style.display = 'none';
+  }
 }
 
 function handleUpload(side,inp){
@@ -1308,17 +1546,29 @@ function handleUpload(side,inp){
 });
 
 function chk5(){
-  const fields=['fname','lname','email','street','city'].every(id=>e(id).value.trim().length>0);
-  const zip=e('zip').value.trim();
-  const country=e('country').value;
+  // Stap 5 heeft geen verplichte velden meer — upload en notities zijn optioneel
+  // Knop altijd enabled
+}
+
+function chk6(){
+  const isBedrijf = S.klantType === 'bedrijf';
+  const baseFields = ['fname','lname','email','street','city'].every(id=>e(id).value.trim().length>0);
+  const companyOk = !isBedrijf || (e('company').value.trim().length>0);
+  const zip = e('zip').value.trim();
+  const country = e('country').value;
   const zipOk = country!=='NL' ? zip.length>0 : /^\d{4}\s?[A-Z]{2}$/i.test(zip);
   e('zip').style.borderColor = zip.length>0 && !zipOk ? 'var(--acc-warn,#e74c3c)' : '';
-  e('btn5').disabled=!(fields && zipOk);
+  const isEnabled = baseFields && companyOk && zipOk;
+  const isOff = e('offerte-toggle')?.checked;
+  if(e('fallback-pay')) e('fallback-pay').style.opacity = isEnabled ? '1' : '.5';
+  if(e('btn-offerte-submit')) e('btn-offerte-submit').disabled = !isEnabled;
+  // PayPal container zichtbaar maken als geldig
+  if(e('pp-container')) e('pp-container').style.pointerEvents = isEnabled ? 'auto' : 'none';
 }
 
 function toggleOfferte(){
-  const isOff = e('offerte-toggle').checked;
-  e('btn5').textContent = isOff ? 'Offerte aanvragen \u2192' : 'Naar betaling \u2192';
+  const isOff = e('offerte-toggle')?.checked;
+  initPP();
 }
 
 // ── STAP 6: Samenvatting ───────────────────────────────────────────────────────
@@ -1378,11 +1628,55 @@ function fillSum(){
     }
   }
 
-  e('s-naam').textContent=e('fname').value.trim()+' '+e('lname').value.trim();
-  e('s-adres').textContent=e('street').value.trim()+', '+e('zip').value.trim()+' '+e('city').value.trim();
-  e('s-email-sum').textContent=e('email').value.trim();
+  // Opmerkingen tonen als aanwezig
+  const notities = e('notes')?.value.trim();
+  if(notities){
+    e('s-notities').textContent = notities;
+    e('sum-notities-row').style.display = 'flex';
+  } else {
+    e('sum-notities-row').style.display = 'none';
+  }
 
+  // Bedrijfsvelden tonen/verbergen op basis van klanttype
+  const isBedrijf = S.klantType === 'bedrijf';
+  e('bedrijf-velden6')?.classList.toggle('hidden', !isBedrijf);
+
+  // Klanttype toggles synchroniseren
+  e('kt-particulier2')?.classList.toggle('act', !isBedrijf);
+  e('kt-bedrijf2')?.classList.toggle('act', isBedrijf);
+
+  chk6();
   initPP();
+}
+
+// ── Portaal auto-invullen ──────────────────────────────────────────────────────
+async function tryAutoFill(){
+  // Alleen invullen als velden nog leeg zijn
+  if(e('fname').value.trim()) return;
+  try {
+    const r = await fetch('/bestellen/handler.php', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({actie:'klant'})
+    });
+    const d = await r.json();
+    if(!d.ok || !d.klant) return;
+    const k = d.klant;
+    if(k.voornaam)  e('fname').value   = k.voornaam;
+    if(k.achternaam) e('lname').value  = k.achternaam;
+    if(k.email)     e('email').value   = k.email;
+    if(k.telefoon)  e('phone').value   = k.telefoon;
+    if(k.bedrijf)   e('company').value = k.bedrijf;
+    if(k.straat)    e('street').value  = k.straat;
+    if(k.postcode)  e('zip').value     = k.postcode;
+    if(k.stad)      e('city').value    = k.stad;
+    if(k.land && e('country').querySelector('option[value="'+k.land+'"]')){
+      e('country').value = k.land;
+    }
+    if(k.bedrijf){ setKlantType('bedrijf'); }
+    e('portaal-autofill-note').style.display = 'block';
+    chk6();
+  } catch(err){ /* niet ingelogd of fout — stil negeren */ }
 }
 
 // ── PayPal ─────────────────────────────────────────────────────────────────────
@@ -1396,7 +1690,8 @@ function initPP(){
   const c=e('pp-container');c.innerHTML='';
   if(isOff){ e('fallback-pay').style.display='none'; return; }
   if(typeof paypal==='undefined')return;
-  e('fallback-pay').style.display='none';
+  // Test knop blijft zichtbaar voor testing
+  // e('fallback-pay').style.display='none';
   paypal.Buttons({
     style:{layout:'vertical',color:'blue',shape:'rect',label:'pay',height:46},
     createOrder:(d,a)=>a.order.create({
@@ -1414,7 +1709,392 @@ function initPP(){
   }).render('#pp-container');
 }
 
-function simPay(){sendOrderEmail({id:'SIM-'+Date.now()});}
+// ── WINKELWAGEN INTEGRATIE ──────────────────────────────────────────────────
+async function toevoegenAanWagen(){
+  try {
+    console.log('toevoegenAanWagen: START');
+    // Herbereken qty direct uit inputs (betrouwbaarder dan S.qty state)
+    let herberekendQty = 0;
+    const sz = {};
+    document.querySelectorAll('.sz-inp').forEach(i => {
+      const v = Math.max(0, parseInt(i.value) || 0);
+      if(v > 0) { sz[i.dataset.size] = v; herberekendQty += v; }
+    });
+    S.qty = herberekendQty;
+    const isBoth = S.pos === 'both';
+    if(S.qty === 0) { alert('Vul eerst de hoeveelheden in bij stap 3 (maten).'); return; }
+
+    // Build posities array (wagen.php expects {positie, kleuren})
+    const posities = [];
+    if(S.pos === 'front' || S.pos === 'both') posities.push({positie: 'voorkant', kleuren: S.zcA || 1});
+    if(S.pos === 'back' || S.pos === 'both') posities.push({positie: 'achterkant', kleuren: S.zcB || 1});
+
+    // Build technieken per positie (voorkant kan DTF zijn, achterkant kan C70 zijn)
+    const technieken = [];
+    if(S.pos === 'front' || S.pos === 'both') technieken.push({positie: 'voorkant', techniek: S.techA});
+    if(S.pos === 'back' || S.pos === 'both') technieken.push({positie: 'achterkant', techniek: S.techB});
+
+    // Build regel voor wagen.php API
+    const regel = {
+      sku: S.mdl.sku,
+      aantal: S.qty,  // NODIG: totaal aantal stuks
+      techniek: S.techA,  // fallback (nog steeds nodig voor validatie)
+      technieken: technieken,  // per positie
+      kleur_code: S.clrId,
+      kleur_naam: S.clrName,
+      posities: posities,
+      maten: sz,
+      notitie: `${S.mdl.brand || S.mdl.merk || ''} ${S.mdl.name || S.mdl.naam || ''} | ${S.clrName}`
+    };
+
+    console.log('Sending to wagen.php:', regel);
+
+    const wagenResp = await fetch('/bestellen/wagen.php', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ actie: 'toevoegen', regel })
+    });
+
+    const wagenData = await wagenResp.json();
+    console.log('wagenData response:', wagenData);
+
+    if(wagenData.ok) {
+      console.log('toevoegenAanWagen: SUCCESS, regel_id:', wagenData.regel_id);
+      const wagen_token = wagenData.wagen_token;
+      const regel_id = wagenData.regel_id;
+
+      // Upload bestanden indien aanwezig
+      const fileFront = e('file-front').files?.[0];
+      const fileBack = e('file-back').files?.[0];
+
+      if(fileFront) {
+        const fd = new FormData();
+        fd.append('actie', 'upload');
+        fd.append('wagen_token', wagen_token);
+        fd.append('regel_id', regel_id);
+        fd.append('positie', 'voorkant');
+        fd.append('ontwerp', fileFront);
+        try {
+          const upResp = await fetch('/bestellen/wagen.php', {method: 'POST', body: fd});
+          const upData = await upResp.json();
+          console.log('Upload voorkant:', upData);
+        } catch(e) { console.warn('Upload voorkant error:', e); }
+      }
+
+      if(isBoth && fileBack) {
+        const fd = new FormData();
+        fd.append('actie', 'upload');
+        fd.append('wagen_token', wagen_token);
+        fd.append('regel_id', regel_id);
+        fd.append('positie', 'achterkant');
+        fd.append('ontwerp', fileBack);
+        try {
+          const upResp = await fetch('/bestellen/wagen.php', {method: 'POST', body: fd});
+          const upData = await upResp.json();
+          console.log('Upload achterkant:', upData);
+        } catch(e) { console.warn('Upload achterkant error:', e); }
+      }
+
+      // Reset formulier maar NOT de stap
+      S.cat = null; S.mdl = null; S.clrId = null; S.clrName = null; S.clrHex = null;
+      S.pos = null; S.techA = null; S.techB = null; S.qty = 0;
+      document.querySelectorAll('.sz-inp').forEach(i => i.value = 0);
+      e('file-front').value = ''; e('file-back').value = '';
+      e('upload-front').classList.remove('has-file');
+      e('upload-back').classList.remove('has-file');
+      e('upload-front-name').textContent = ''; e('upload-back-name').textContent = '';
+
+      // Ververs cart-paneel en ga terug naar stap 1
+      await verversCartPanel();
+      gS(1);
+    } else {
+      alert('Fout: ' + (wagenData.fout || 'onbekend'));
+    }
+  } catch(err) {
+    console.error('toevoegenAanWagen error:', err);
+    alert('Er is iets misgegaan. Probeer opnieuw.');
+  }
+}
+
+// Sla wagen_token op zodat verwijderen werkt
+let _wagenToken = null;
+
+// Ververs het winkelwagen-paneel rechts
+async function verversCartPanel() {
+  try {
+    const resp = await fetch('/bestellen/wagen.php', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ actie: 'laden' })
+    });
+    const cartData = await resp.json();
+
+    if(!cartData.ok || !cartData.regels || cartData.regels.length === 0) {
+      e('cart-panel-items').innerHTML = '<div style="text-align:center;padding:2rem 1rem;color:var(--ink3);font-size:.82rem;">Winkelwagen is leeg.</div>';
+      e('cart-panel-footer').style.display = 'none';
+      e('cart-panel-count').textContent = '';
+      return;
+    }
+
+    _wagenToken = cartData.wagen_token;
+
+    let html = '';
+    cartData.regels.forEach(regel => {
+      const matenStr = regel.maten ? Object.entries(regel.maten).map(([m,q]) => `${m}×${q}`).join(' ') : '–';
+      const positieStr = regel.posities ? regel.posities.map(p => p.positie || '–').join(', ') : '–';
+      const uploads = regel.uploads || [];
+      const technieken = regel.technieken || [];
+      const aantalStr = regel.aantal ? `${regel.aantal}× ` : '';
+      const prijs = regel.prijs?.prijs_excl_voor || 0;
+
+      // Build uploads display per positie
+      let uploadsHTML = '';
+      if(uploads.length > 0) {
+        uploads.forEach(up => {
+          const posLabel = up.positie === 'achterkant' ? 'Ontwerp achterkant' : 'Ontwerp voorkant';
+          uploadsHTML += `
+          <div style="font-weight:700;color:var(--ink);">${posLabel}</div>
+          <div style="color:var(--success);font-weight:700;">${up.bestandsnaam}</div>`;
+        });
+      }
+
+      // Build technieken display per positie
+      let techniekHTML = '';
+      if(technieken.length > 0) {
+        technieken.forEach(t => {
+          const posLabel = t.positie === 'achterkant' ? 'Techniek achterkant' : 'Techniek voorkant';
+          techniekHTML += `
+          <div style="font-weight:700;color:var(--ink);">${posLabel}</div>
+          <div>${t.techniek || '–'}</div>`;
+        });
+      } else {
+        // Fallback als technieken array leeg is (oude data)
+        techniekHTML = `
+          <div style="font-weight:700;color:var(--ink);">Techniek</div>
+          <div>${regel.techniek || '–'}</div>`;
+      }
+
+      html += `<div style="border:1px solid var(--border);border-radius:8px;padding:.85rem;margin-bottom:.8rem;background:var(--surface);transition:background .2s,box-shadow .2s;cursor:default;" onmouseenter="this.style.backgroundColor='#fafaf8';this.style.boxShadow='0 2px 8px rgba(0,0,0,.08)';" onmouseleave="this.style.backgroundColor='var(--surface)';this.style.boxShadow='none';">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.25rem;margin-bottom:.6rem;">
+          <div style="font-weight:600;font-size:.85rem;color:var(--ink);">${aantalStr}${regel.product_naam || 'Product'}</div>
+          <button onclick="verwijderUitCart('${regel.id}')" title="Verwijderen" style="background:none;border:none;cursor:pointer;color:var(--ink3);font-size:1.1rem;line-height:1;padding:.25rem .35rem;flex-shrink:0;transition:color .2s,transform .2s;border-radius:4px;" onmouseenter="this.style.color='var(--accent)';this.style.transform='scale(1.15)';" onmouseleave="this.style.color='var(--ink3)';this.style.transform='scale(1)';">&times;</button>
+        </div>
+        <div style="display:grid;grid-template-columns:75px 1fr;gap:.35rem .65rem;font-size:.73rem;color:var(--ink3);line-height:1.5;">
+          <div style="font-weight:700;color:var(--ink);">SKU</div>
+          <div>${regel.sku || '–'}</div>
+
+          <div style="font-weight:700;color:var(--ink);">Kleur</div>
+          <div>${regel.kleur_naam || '–'}</div>
+
+          <div style="font-weight:700;color:var(--ink);">Positie</div>
+          <div>${positieStr}</div>
+
+          <div style="font-weight:700;color:var(--ink);">Maten</div>
+          <div>${matenStr}</div>
+
+          ${techniekHTML}
+
+          ${uploadsHTML}
+        </div>
+        <div style="margin-top:.5rem;font-size:.8rem;font-weight:700;color:var(--accent);">€${prijs.toFixed(2)} excl. BTW</div>
+      </div>`;
+    });
+
+    e('cart-panel-items').innerHTML = html;
+    const tot = cartData.regels.length;
+    e('cart-panel-count').textContent = `${tot} ${tot === 1 ? 'item' : 'items'}`;
+
+    const t = cartData.totalen || {};
+    e('cart-panel-excl').textContent  = `€${(t.totaal_excl || 0).toFixed(2)}`;
+    e('cart-panel-btw').textContent   = `€${(t.btw || 0).toFixed(2)}`;
+    e('cart-panel-totaal').textContent = `€${(t.totaal_incl || 0).toFixed(2)}`;
+    e('cart-panel-footer').style.display = 'block';
+
+  } catch(err) {
+    console.error('verversCartPanel error:', err);
+  }
+}
+
+// Verwijder item uit winkelwagen
+async function verwijderUitCart(regelId) {
+  try {
+    const resp = await fetch('/bestellen/wagen.php', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ actie: 'verwijderen', wagen_token: _wagenToken, regel_id: regelId })
+    });
+    const data = await resp.json();
+    if(data.ok) await verversCartPanel();
+  } catch(err) {
+    console.error('verwijderUitCart error:', err);
+  }
+}
+
+// Nieuw product toevoegen — reset en terug naar stap 1
+function nieuweProductToevoegen() {
+  gS(1);
+}
+
+// Legacy stub (niet meer nodig maar voorkomt JS errors op oude referenties)
+function sluitWagenSidebar() {
+}
+
+// ── NOTIFICATIE SYSTEEM ──────────────────────────────────────────────────────
+function showNotif(msg) {
+  let notif = e('notif-toast');
+  if(!notif) {
+    notif = document.createElement('div');
+    notif.id = 'notif-toast';
+    notif.style.cssText = 'position:fixed;top:20px;right:20px;background:#2a9d5c;color:#fff;padding:16px 24px;border-radius:8px;font-size:.9rem;z-index:9999;max-width:300px;box-shadow:0 4px 12px rgba(0,0,0,.15);';
+    document.body.appendChild(notif);
+  }
+  notif.textContent = msg;
+  notif.style.display = 'block';
+  setTimeout(() => notif.style.display = 'none', 3000);
+}
+
+async function simPay(){
+  try {
+    // Zorg dat alle prijsberekeningen actueel zijn
+    calcQ();
+
+    const isBoth=S.pos==='both';
+    const posNm={front:'Voorkant',back:'Achterkant',both:'Beide kanten'};
+    const sz={};
+    document.querySelectorAll('.sz-inp').forEach(i=>{if(parseInt(i.value)>0)sz[i.dataset.size]=i.value;});
+
+    // Upload files als ze beschikbaar zijn
+    let uploadUrlA = null, uploadUrlB = null;
+    const fileA = e('file-front')?.files[0];
+    const fileB = e('file-back')?.files[0];
+
+    if(fileA){
+      console.log('simPay - Uploading file A:', fileA.name);
+      const fd=new FormData();
+      fd.append('action','upload');
+      fd.append('bestand',fileA);
+      fd.append('folder','bestellingen');
+      try{
+        const r=await fetch(HANDLER_URL,{method:'POST',body:fd});
+        const d=await r.json();
+        if(d.success){
+          uploadUrlA=d.url;
+          console.log('simPay - Upload A success:', uploadUrlA);
+        } else {
+          console.warn('Upload A failed:', d);
+        }
+      } catch(err){
+        console.warn('Upload A error:',err);
+      }
+    }
+
+    if(isBoth&&fileB){
+      console.log('simPay - Uploading file B:', fileB.name);
+      const fd=new FormData();
+      fd.append('action','upload');
+      fd.append('bestand',fileB);
+      fd.append('folder','bestellingen');
+      try{
+        const r=await fetch(HANDLER_URL,{method:'POST',body:fd});
+        const d=await r.json();
+        if(d.success){
+          uploadUrlB=d.url;
+          console.log('simPay - Upload B success:', uploadUrlB);
+        } else {
+          console.warn('Upload B failed:', d);
+        }
+      } catch(err){
+        console.warn('Upload B error:',err);
+      }
+    }
+
+    const verzendingEx = parseFloat((S.ship/1.21).toFixed(4));
+    const drukExA = parseFloat((S.upA/1.21).toFixed(4));
+    const drukExB = isBoth ? parseFloat((S.upB/1.21).toFixed(4)) : 0;
+
+    // Volledige payload MET uploads + product afbeelding
+    const productImageUrl = S.clrImageUrl || S.mdl?.image_url || null;
+
+    // Bereken totaal ex BTW correct
+    const regelSubtotaal = (S.prijsEx * S.qty) + ((drukExA + (isBoth?drukExB:0)) * S.qty);
+    const totaalEx = regelSubtotaal + verzendingEx;
+    const totaalIncl = parseFloat(S.tot.toFixed(2));
+    const btwBedrag = Math.round((totaalIncl - totaalEx) * 100) / 100;
+
+    const payload = {
+      action: 'bestelling',
+      order_id: 'SIM-'+Date.now(),
+      naam: e('fname').value.trim()+' '+e('lname').value.trim(),
+      email: e('email').value.trim(),
+      telefoon: e('phone').value.trim()||'',
+      bedrijf: e('company').value.trim()||'',
+      adres: e('street').value.trim()+', '+e('zip').value.trim()+' '+e('city').value.trim()+', '+e('country').value,
+      straat: e('street').value.trim(),
+      postcode: e('zip').value.trim(),
+      stad: e('city').value.trim(),
+      land: e('country').value,
+      opmerkingen: e('notes')?.value.trim()||'',
+      taal: 'nl',
+      regels: [{
+        sku: S.mdl?.sku||'–',
+        naam: S.mdl?.name||'–',
+        merk: S.mdl?.brand||'–',
+        kleur_naam: S.clrName||'–',
+        positie: posNm[S.pos]||'–',
+        is_dual: isBoth,
+        techniek_a: techName(S.techA),
+        techniek_b: isBoth?techName(S.techB):null,
+        maten: sz,
+        aantal: S.qty,
+        prijs_ex: S.prijsEx,
+        druk_ex: drukExA + (isBoth?drukExB:0),
+        regel_ex: regelSubtotaal,
+        korting_pct: S.kortingPct || 0,
+        upload_url_a: uploadUrlA,
+        upload_url_b: uploadUrlB,
+        product_image_url: productImageUrl
+      }],
+      verzending_ex: verzendingEx,
+      totaal_ex: totaalEx,
+      btw: btwBedrag,
+      totaal_incl: totaalIncl
+    };
+
+    console.log('simPay - Final Payload:', JSON.stringify(payload, null, 2));
+
+    const r = await fetch(HANDLER_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+
+    console.log('simPay - Response status:', r.status);
+    const responseText = await r.text();
+    console.log('simPay - Response text:', responseText);
+
+    let d = {};
+    try {
+      d = JSON.parse(responseText);
+    } catch(e) {
+      console.error('Response is geen JSON:', responseText);
+      alert('Server error: Response is geen geldige JSON.\n\nResponse: '+responseText.substring(0, 200));
+      return;
+    }
+
+    if(!d.success){
+      alert('Bestelling mislukt:\n'+(d.error||'Onbekende error'));
+      return;
+    }
+
+    // Succes! Toon success screen
+    console.log('simPay - Bestelling succesvol! ID:', d.bestelling_id);
+    gS('success');
+
+  } catch(err) {
+    console.error('simPay error:', err);
+    alert('Fout:\n'+err.message+'\n\nCheck console (F12) voor details!');
+  }
+}
 
 async function sendOfferte(){
   const btn=e('btn-offerte-submit');
@@ -1438,6 +2118,7 @@ async function sendOfferte(){
     email:e('email').value.trim(),
     telefoon:e('phone').value.trim()||'\u2013',
     bedrijf:e('company').value.trim()||'\u2013',
+    kvk:e('kvk').value.trim()||'\u2013',
     straat:e('street').value.trim(),
     postcode:e('zip').value.trim(),
     stad:e('city').value.trim(),
@@ -1485,7 +2166,9 @@ async function sendOrderEmail(paypalDetails){
     email: e('email').value.trim(),
     telefoon: e('phone').value.trim()||'\u2013',
     bedrijf: e('company').value.trim()||'\u2013',
+    kvk: e('kvk').value.trim()||'\u2013',
     adres: e('street').value.trim()+', '+e('zip').value.trim()+' '+e('city').value.trim()+', '+e('country').value,
+    opmerkingen: e('notes').value.trim()||'\u2013',
     taal: 'nl',
     regels: [{
       sku: S.mdl?.sku||'\u2013',
@@ -1593,6 +2276,7 @@ async function init(){
   buildCatGrid();
   s1Show('cat');
   gS(1);
+  verversCartPanel(); // laad bestaande winkelwagen bij pagina-open
 }
 init();
 </script>
