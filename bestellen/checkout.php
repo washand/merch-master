@@ -395,9 +395,17 @@ function fmt($val) {
             <span>BTW (21%):</span>
             <span id="total-btw">€0,00</span>
           </div>
-          <div class="price-row total">
+          <div class="price-row">
             <span>Totaal incl. BTW:</span>
             <span id="total-incl">€0,00</span>
+          </div>
+          <div class="price-row">
+            <span id="verzend-label">Verzending:</span>
+            <span id="total-verzend">€0,00</span>
+          </div>
+          <div class="price-row total">
+            <span>Totaal incl. verzending:</span>
+            <span id="total-met-verzend">€0,00</span>
           </div>
         </div>
       `;
@@ -435,12 +443,19 @@ function fmt($val) {
       console.log('calcTotals():', { totalEx, btw, totalIncl, shipIncl, shipExcl, finalTotal });
 
       // Update display
-      const exEl = document.getElementById('total-ex');
-      const btwEl = document.getElementById('total-btw');
-      const inclEl = document.getElementById('total-incl');
-      if(exEl) exEl.textContent = formatPrice(totalEx);
-      if(btwEl) btwEl.textContent = formatPrice(btw);
-      if(inclEl) inclEl.textContent = formatPrice(finalTotal);
+      const exEl         = document.getElementById('total-ex');
+      const btwEl        = document.getElementById('total-btw');
+      const inclEl       = document.getElementById('total-incl');
+      const verzendEl    = document.getElementById('total-verzend');
+      const verzendLblEl = document.getElementById('verzend-label');
+      const metVerzendEl = document.getElementById('total-met-verzend');
+
+      if(exEl)         exEl.textContent         = formatPrice(totalEx);
+      if(btwEl)        btwEl.textContent         = formatPrice(btw);
+      if(inclEl)       inclEl.textContent         = formatPrice(totalIncl);
+      if(verzendEl)    verzendEl.textContent      = formatPrice(shipIncl);
+      if(verzendLblEl) verzendLblEl.textContent   = 'Verzending (' + (TOTALEN.verzend_label || '') + '):';
+      if(metVerzendEl) metVerzendEl.textContent   = formatPrice(finalTotal);
 
       return {
         totalEx: totalEx,
