@@ -159,6 +159,10 @@ function handleBestelling(array $d): void {
         }
     }
     $taal = $d['taal'] ?? 'nl';
+    // Genereer order_id VOOR opslaan, zodat mail-functies het hebben
+    if (empty($d['order_id'])) {
+        $d['order_id'] = 'ORD-' . date('YmdHis') . '-' . rand(100, 999);
+    }
     $bestelId = Bestellingen::opslaan($d, $klantId);
     $errors = [];
     try { if(!sendBestelmail($d))      $errors[] = 'Bestelmail mislukt'; }     catch(\Throwable $e) { $errors[] = 'Bestelmail: '.$e->getMessage(); }
@@ -605,7 +609,8 @@ function mt(string $taal, string $key, array $vars = []): string {
 
 function sendBestelmail(array $d): bool {
     $aantalRegels = count($d['regels'] ?? []);
-    $subject = "Nieuwe bestelling #{$d['order_id']} — {$d['naam']} — {$aantalRegels} product(en)";
+    $naam = trim(($d['voornaam'] ?? '') . ' ' . ($d['achternaam'] ?? '')) ?: ($d['naam'] ?? 'Onbekend');
+    $subject = "Nieuwe bestelling #{$d['order_id']} — {$naam} — {$aantalRegels} product(en)";
 
     // Upload-bestanden als bijlage verzamelen
     $bijlagen = [];
