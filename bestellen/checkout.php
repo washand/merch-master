@@ -1,6 +1,5 @@
 <?php
 session_start();
-require_once __DIR__ . '/includes/db-config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/../includes/taal.php';
 
@@ -18,45 +17,9 @@ $opmerkingen = $_SESSION['mm_opmerkingen'] ?? '';
 $klant = $_SESSION['mm_klant'] ?? [];
 $isLoggedIn = !empty($_SESSION['mm_klant_id']);
 
-// Load drukkosten from admin
-$drukkosten = ['dtf' => [], 'zeef' => []];
-try {
-  $hasil = Db::exec("SELECT value FROM mm_instellingen WHERE `key` = 'drukkosten' LIMIT 1");
-  if($hasil && count($hasil) > 0) {
-    $dk = json_decode($hasil[0]['value'], true);
-    if($dk && is_array($dk)){
-      $drukkosten = $dk;
-    }
-  }
-} catch(Exception $e) {}
-
 // Helper function: format price
 function fmt($val) {
   return '€' . number_format((float)$val, 2, ',', '.');
-}
-
-// Helper function: translate
-function t($key) {
-  $trans = [
-    'checkout' => ['nl' => 'Afrekenen', 'en' => 'Checkout', 'de' => 'Kasse'],
-    'order_summary' => ['nl' => 'Jouw bestelling', 'en' => 'Your order', 'de' => 'Deine Bestellung'],
-    'customer_data' => ['nl' => 'Jouw gegevens', 'en' => 'Your details', 'de' => 'Deine Daten'],
-    'firstname' => ['nl' => 'Voornaam', 'en' => 'First name', 'de' => 'Vorname'],
-    'lastname' => ['nl' => 'Achternaam', 'en' => 'Last name', 'de' => 'Nachname'],
-    'email' => ['nl' => 'E-mailadres', 'en' => 'Email address', 'de' => 'E-Mailadresse'],
-    'phone' => ['nl' => 'Telefoon', 'en' => 'Phone', 'de' => 'Telefon'],
-    'street' => ['nl' => 'Straat + huisnummer', 'en' => 'Street + number', 'de' => 'Straße + Nummer'],
-    'zip' => ['nl' => 'Postcode', 'en' => 'Zip code', 'de' => 'Postleitzahl'],
-    'city' => ['nl' => 'Plaats', 'en' => 'City', 'de' => 'Stadt'],
-    'country' => ['nl' => 'Land', 'en' => 'Country', 'de' => 'Land'],
-    'company' => ['nl' => 'Bedrijfsnaam', 'en' => 'Company', 'de' => 'Unternehmen'],
-    'btw_number' => ['nl' => 'BTW-nummer', 'en' => 'VAT number', 'de' => 'MwSt-Nummer'],
-    'kvk' => ['nl' => 'KVK-nummer', 'en' => 'KVK number', 'de' => 'KVK-Nummer'],
-    'notes' => ['nl' => 'Opmerkingen', 'en' => 'Notes', 'de' => 'Hinweise'],
-    'payment_method' => ['nl' => 'Betaalmethode', 'en' => 'Payment method', 'de' => 'Zahlungsart'],
-  ];
-  $lang = $_SESSION['mm_lang'] ?? 'nl';
-  return $trans[$key][$lang] ?? $key;
 }
 
 ?>
