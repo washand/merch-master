@@ -166,11 +166,11 @@ function fmt($val) {
   <?php include '../includes/header.php'; ?>
 
   <main class="checkout-main">
-    <h1><?php echo t('checkout'); ?></h1>
+    <h1>Afrekenen</h1>
 
     <!-- Order Summary -->
     <div class="section">
-      <h2><?php echo t('order_summary'); ?></h2>
+      <h2>Jouw bestelling</h2>
       <?php if(!empty($cart)): ?>
         <?php foreach($cart as $item): ?>
           <div class="summary-item">
@@ -225,52 +225,52 @@ function fmt($val) {
 
     <!-- Customer Data Form -->
     <form id="checkout-form" class="section" method="POST" action="/bestellen/handler.php">
-      <h2><?php echo t('customer_data'); ?></h2>
+      <h2>Jouw gegevens</h2>
 
       <input type="hidden" name="action" value="bestelling">
       <input type="hidden" id="cart-data" name="cart_data" value="">
 
       <div class="form-row">
         <div class="form-group">
-          <label><?php echo t('firstname'); ?> *</label>
-          <input type="text" name="fname" id="fname" required value="<?php echo htmlspecialchars($klant['voornaam'] ?? ''); ?>">
+          <label>Voornaam *</label>
+          <input type="text" name="voornaam" id="voornaam" required value="<?php echo htmlspecialchars($klant['voornaam'] ?? ''); ?>">
         </div>
         <div class="form-group">
-          <label><?php echo t('lastname'); ?> *</label>
-          <input type="text" name="lname" id="lname" required value="<?php echo htmlspecialchars($klant['achternaam'] ?? ''); ?>">
+          <label>Achternaam *</label>
+          <input type="text" name="achternaam" id="achternaam" required value="<?php echo htmlspecialchars($klant['achternaam'] ?? ''); ?>">
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label><?php echo t('email'); ?> *</label>
+          <label>Email *</label>
           <input type="email" name="email" id="email" required value="<?php echo htmlspecialchars($klant['email'] ?? ''); ?>">
         </div>
         <div class="form-group">
-          <label><?php echo t('phone'); ?></label>
-          <input type="tel" name="phone" id="phone" value="<?php echo htmlspecialchars($klant['telefoon'] ?? ''); ?>">
+          <label>Telefoon</label>
+          <input type="tel" name="telefoon" id="telefoon" value="<?php echo htmlspecialchars($klant['telefoon'] ?? ''); ?>">
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label><?php echo t('street'); ?> *</label>
-          <input type="text" name="street" id="street" required value="<?php echo htmlspecialchars($klant['straat'] ?? ''); ?>">
+          <label>Straat en huisnummer *</label>
+          <input type="text" name="straat" id="straat" required value="<?php echo htmlspecialchars($klant['straat'] ?? ''); ?>">
         </div>
         <div class="form-group">
-          <label><?php echo t('zip'); ?> *</label>
-          <input type="text" name="zip" id="zip" required value="<?php echo htmlspecialchars($klant['postcode'] ?? ''); ?>">
+          <label>Postcode *</label>
+          <input type="text" name="postcode" id="postcode" required value="<?php echo htmlspecialchars($klant['postcode'] ?? ''); ?>">
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label><?php echo t('city'); ?> *</label>
-          <input type="text" name="city" id="city" required value="<?php echo htmlspecialchars($klant['stad'] ?? ''); ?>">
+          <label>Plaats *</label>
+          <input type="text" name="stad" id="stad" required value="<?php echo htmlspecialchars($klant['stad'] ?? ''); ?>">
         </div>
         <div class="form-group">
-          <label><?php echo t('country'); ?></label>
-          <select name="country" id="country">
+          <label>Land</label>
+          <select name="land" id="land">
             <option value="NL" <?php echo ($klant['land'] ?? 'NL') === 'NL' ? 'selected' : ''; ?>>Nederland</option>
             <option value="BE" <?php echo ($klant['land'] ?? '') === 'BE' ? 'selected' : ''; ?>>België</option>
             <option value="DE" <?php echo ($klant['land'] ?? '') === 'DE' ? 'selected' : ''; ?>>Duitsland</option>
@@ -282,24 +282,24 @@ function fmt($val) {
       <!-- Optional business fields -->
       <div class="form-row">
         <div class="form-group">
-          <label><?php echo t('company'); ?> (optioneel)</label>
-          <input type="text" name="company" id="company" value="<?php echo htmlspecialchars($klant['bedrijf'] ?? ''); ?>">
+          <label>Bedrijfsnaam (optioneel)</label>
+          <input type="text" name="bedrijf" id="bedrijf" value="<?php echo htmlspecialchars($klant['bedrijf'] ?? ''); ?>">
         </div>
         <div class="form-group">
-          <label><?php echo t('btw_number'); ?> (optioneel)</label>
-          <input type="text" name="btw_num" id="btw_num" value="<?php echo htmlspecialchars($klant['btw_nummer'] ?? ''); ?>">
+          <label>BTW-nummer (optioneel)</label>
+          <input type="text" name="btw_nummer" id="btw_nummer" value="<?php echo htmlspecialchars($klant['btw_nummer'] ?? ''); ?>">
         </div>
       </div>
 
       <div class="form-group">
-        <label><?php echo t('kvk'); ?> (optioneel)</label>
+        <label>KvK-nummer (optioneel)</label>
         <input type="text" name="kvk" id="kvk" value="<?php echo htmlspecialchars($klant['kvk'] ?? ''); ?>">
       </div>
     </form>
 
     <!-- Payment Section -->
     <div class="section">
-      <h2><?php echo t('payment_method'); ?></h2>
+      <h2>Betaalmethode</h2>
 
       <!-- PayPal Container -->
       <div id="pp-container"></div>
@@ -325,6 +325,11 @@ function fmt($val) {
     const WAGEN_TOKEN = '<?php echo htmlspecialchars($wagen_token); ?>';
     const KLANT_TYPE = '<?php echo $klantType; ?>';
 
+    // Format price with € and Dutch decimal
+    function formatPrice(val) {
+      return '€' + Number(val).toFixed(2).replace('.', ',');
+    }
+
     // Load cart from wagen.php
     async function loadCart() {
       try {
@@ -340,7 +345,6 @@ function fmt($val) {
           calcTotals();
         } else {
           console.error('Failed to load cart:', data);
-          document.body.innerHTML = '<p>Fout bij laden cart. <a href="/bestellen.php">Terug</a></p>';
         }
       } catch(err) {
         console.error('Cart load error:', err);
@@ -349,46 +353,80 @@ function fmt($val) {
 
     // Update summary display
     function updateSummary() {
-      const summaryDiv = document.querySelector('.summary-item');
-      if(!summaryDiv) return;
+      // Find the section containing order summary
+      const summarySection = document.querySelector('.section');
+      if(!summarySection) return;
 
-      let html = '';
+      // Build items HTML
+      let itemsHtml = '';
       CART.forEach((item, idx) => {
-        html += `<div class="summary-item">
+        const itemName = item.notitie ? item.notitie.substring(0, 60) : (item.mdl ? `${item.mdl.brand} ${item.mdl.name}` : item.sku);
+        itemsHtml += `<div class="summary-item">
           <div class="summary-row">
-            <span class="label"><strong>${item.notitie || item.sku}</strong></span>
-            <span class="value">${item.aantal} stuks</span>
+            <span class="label"><strong>${itemName}</strong></span>
+            <span class="value">${item.aantal || item.qty || 1} stuks</span>
           </div>
+          ${item.kleur ? `<div class="summary-row"><span class="label">${item.kleur}</span></div>` : ''}
         </div>`;
       });
-      document.querySelector('.section').innerHTML = '<h2><?php echo t("order_summary"); ?></h2>' + html + '<div class="price-section" id="prices"></div>';
+
+      // Rebuild the entire order summary section
+      const priceHtml = `
+        <div class="price-section">
+          <div class="price-row">
+            <span>Subtotaal (ex BTW):</span>
+            <span id="total-ex">€0,00</span>
+          </div>
+          <div class="price-row">
+            <span>BTW (21%):</span>
+            <span id="total-btw">€0,00</span>
+          </div>
+          <div class="price-row total">
+            <span>Totaal incl. BTW:</span>
+            <span id="total-incl">€0,00</span>
+          </div>
+        </div>
+      `;
+
+      summarySection.innerHTML = '<h2>Jouw bestelling</h2>' + itemsHtml + priceHtml;
     }
 
     // Calculate and display totals
     function calcTotals() {
       let totalEx = 0;
+      let totalQty = 0;
 
       CART.forEach(item => {
-        // Simplified: assume prices stored in item
-        // Real calculation would come from wagen.php
-        totalEx += (item.prijs_ex || 0) * (item.aantal || 0);
+        // Get pricing from nested prijs object (from wagen.php)
+        const prijs_obj = item.prijs || {};
+        const prijs_excl = prijs_obj.prijs_excl || 0; // price per unit ex tax
+        const druk_excl = prijs_obj.druk_excl || 0;  // print costs ex tax
+        const aantal = item.aantal || 1;
+
+        // Total per item (textile + print) * quantity
+        const itemTotalEx = (prijs_excl + druk_excl) * aantal;
+        totalEx += itemTotalEx;
+        totalQty += aantal;
       });
 
-      // Add shipping
-      let qty = 0;
-      CART.forEach(item => qty += item.aantal || 0);
-      const ship = qty >= 12 ? 13.95 : 6.95;
+      // Calculate shipping based on total quantity
+      const ship = totalQty >= 12 ? 13.95 : 6.95;
       const shipEx = ship / 1.21;
 
       totalEx += shipEx;
       const btw = totalEx * 0.21 / 1.21;
       const totalIncl = totalEx + btw;
 
-      document.getElementById('total-ex').textContent = '€' + totalEx.toFixed(2).replace('.', ',');
-      document.getElementById('total-btw').textContent = '€' + btw.toFixed(2).replace('.', ',');
-      document.getElementById('total-incl').textContent = '€' + totalIncl.toFixed(2).replace('.', ',');
+      document.getElementById('total-ex').textContent = formatPrice(totalEx);
+      document.getElementById('total-btw').textContent = formatPrice(btw);
+      document.getElementById('total-incl').textContent = formatPrice(totalIncl);
 
-      return { totalEx: Math.round(totalEx * 100) / 100, btw, totalIncl: Math.round(totalIncl * 100) / 100, ship };
+      return {
+        totalEx: Math.round(totalEx * 100) / 100,
+        btw: Math.round(btw * 100) / 100,
+        totalIncl: Math.round(totalIncl * 100) / 100,
+        ship
+      };
     }
 
     // Initialize PayPal
@@ -426,12 +464,39 @@ function fmt($val) {
 
     // Submit payment (called from PayPal or test button)
     async function submitPayment(paypalDetails) {
-      const formData = new FormData(document.getElementById('checkout-form'));
+      // Get form data
+      const form = document.getElementById('checkout-form');
+      const formData = new FormData(form);
 
-      // Add cart data
-      formData.append('cart_json', JSON.stringify(CART));
+      // Calculate totals
+      const totals = calcTotals();
+
+      // Extract cart regels for handler validation
+      const regels = CART.map(item => {
+        // Get item pricing from wagen.php response (nested in 'prijs' object)
+        const prijs_obj = item.prijs || {};
+        const prijs_ex = prijs_obj.prijs_excl || 0;
+        const druk_ex = prijs_obj.druk_excl || 0;
+        const korting_pct = prijs_obj.volumekorting_pct || 0;
+        const aantal = item.aantal || 1;
+
+        return {
+          sku: item.sku,
+          prijs_ex: Number(prijs_ex).toFixed(2),
+          druk_ex: Number(druk_ex).toFixed(2),
+          aantal: aantal,
+          korting_pct: Number(korting_pct).toFixed(2)
+        };
+      });
+
+      // Add handler-required fields
+      formData.set('regels', JSON.stringify(regels));
+      formData.set('verzending_ex', (totals.ship / 1.21).toFixed(2));
+      formData.set('totaal_incl', totals.totalIncl.toFixed(2));
+      formData.set('taal', 'nl');
+
       if(paypalDetails) {
-        formData.append('paypal_id', paypalDetails.id);
+        formData.set('paypal_id', paypalDetails.id);
       }
 
       try {

@@ -745,7 +745,7 @@ $_levertijdenJS = json_encode([
       <div style="font-size:.82rem;font-weight:600;color:var(--ink);">Totaal incl. BTW</div>
       <div id="cart-panel-totaal" style="font-size:1.05rem;font-weight:800;color:var(--accent);"></div>
     </div>
-    <button class="btn btn-p" onclick="window.location.href='/bestellen/checkout.php';" style="width:100%;font-size:.84rem;">Betalen &#8594;</button>
+    <button class="btn btn-p" onclick="goToCheckout();" style="width:100%;font-size:.84rem;">Betalen &#8594;</button>
   </div>
 </div>
 
@@ -1724,6 +1724,16 @@ async function sendBordAanvraag(){
   e('ok-title').textContent='Aanvraag ontvangen!';
   e('ok-msg').innerHTML='Bedankt voor je borduurwens. We nemen binnen 1\u20132 werkdagen contact op via <strong>'+e('bemail').value.trim()+'</strong>.<br><br>Vragen? WhatsApp: <a href="https://wa.me/31617255170" style="color:var(--accent)">+31 6 17 25 51 70</a>';
   gS('success');
+}
+
+// ── Checkout Navigation ─────────────────────────────────────────────────────────
+function goToCheckout(){
+  if(!_wagenToken){
+    alert('Winkelwagen is leeg. Voeg eerst producten toe.');
+    return;
+  }
+  // Pass wagen_token in URL for checkout.php to load the cart
+  window.location.href = '/bestellen/checkout.php?wagen_token=' + encodeURIComponent(_wagenToken);
 }
 
 // ── Reset ──────────────────────────────────────────────────────────────────────
