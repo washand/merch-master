@@ -155,11 +155,11 @@ function handleBestelling(array $d): void {
         return;
     }
     
-    // Verzendkosten validatie: 0, 6.95/1.21 of 13.95/1.21 (ex BTW)
-    $ship_toegestaan = [0, round(6.95/1.21, 4), round(13.95/1.21, 4)];
+    // Verzendkosten validatie: 0, 6.95/1.21 of 13.95/1.21 (ex BTW, rounded to 2 decimals)
+    $ship_toegestaan = [0, round(6.95/1.21, 2), round(13.95/1.21, 2)];
     $ship_ok = false;
     foreach ($ship_toegestaan as $s) {
-        if (abs($verzending_ex - $s) < 0.02) { $ship_ok = true; break; }
+        if (abs($verzending_ex - $s) < 0.01) { $ship_ok = true; break; }
     }
     if (!$ship_ok) {
         jsonResponse([

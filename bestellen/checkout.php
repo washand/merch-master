@@ -247,7 +247,14 @@ function fmt($val) {
         </div>
         <div class="form-group">
           <label>Telefoon</label>
-          <input type="tel" name="telefoon" id="telefoon" value="<?php echo htmlspecialchars($klant['telefoon'] ?? ''); ?>">
+          <div style="display: flex; gap: 0.5rem;">
+            <select name="telefoon_landcode" id="telefoon_landcode" style="flex: 0 0 auto; max-width: 90px;">
+              <option value="+31" <?php echo ($klant['telefoon_landcode'] ?? '+31') === '+31' ? 'selected' : ''; ?>>🇳🇱 +31</option>
+              <option value="+32" <?php echo ($klant['telefoon_landcode'] ?? '') === '+32' ? 'selected' : ''; ?>>🇧🇪 +32</option>
+              <option value="+49" <?php echo ($klant['telefoon_landcode'] ?? '') === '+49' ? 'selected' : ''; ?>>🇩🇪 +49</option>
+            </select>
+            <input type="tel" name="telefoon" id="telefoon" placeholder="6 12345678" value="<?php echo htmlspecialchars(preg_replace('/^\+\d+/', '', $klant['telefoon'] ?? '')); ?>" style="flex: 1;">
+          </div>
         </div>
       </div>
 
@@ -403,18 +410,18 @@ function fmt($val) {
       const btw = TOTALEN.btw || 0;
       const totalIncl = TOTALEN.totaal_incl || 0;
 
-      // Shipping: use server value or calculate
-      let ship = 0;
-      if(TOTALEN.verzend_achteraf) {
-        ship = 0; // Will be charged after
-      } else {
-        ship = TOTALEN.verzend_excl ? TOTALEN.verzend_excl * 1.21 : 0;
+      // Shipping: use verzend_incl directly (NOT verzend_excl * 1.21)
+      let shipIncl = 0;
+      let shipExcl = 0;
+      if(!TOTALEN.verzend_achteraf) {
+        shipIncl = TOTALEN.verzend_incl || 0;  // Use incl value directly
+        shipExcl = TOTALEN.verzend_excl || 0;  // For handler validation
       }
 
       // Add shipping to totals if not achteraf
       let totalWithShip = totalIncl;
-      if(!TOTALEN.verzend_achteraf && TOTALEN.verzend_excl) {
-        totalWithShip = TOTALEN.totaal_met_verzend || (totalIncl + ship);
+      if(!TOTALEN.verzend_achteraf && shipIncl > 0) {
+        totalWithShip = TOTALEN.totaal_met_verzend || (totalIncl + shipIncl);
       }
 
       document.getElementById('total-ex').textContent = formatPrice(totalEx);
@@ -425,7 +432,7 @@ function fmt($val) {
         totalEx: totalEx,
         btw: btw,
         totalIncl: totalWithShip,
-        ship: TOTALEN.verzend_excl || 0
+        ship: shipExcl
       };
     }
 
@@ -478,6 +485,16 @@ function fmt($val) {
       // Get form data
       const form = document.getElementById('checkout-form');
       const formData = new FormData(form);
+
+      // Combine telefoon_landcode + telefoon
+      const landcode = document.getElementById('telefoon_landcode').value || '+31';
+      const telefoon_raw = document.getElementById('telefoon').value || '';
+      if(telefoon_raw) {
+        // Remove any + or spaces at start, prepend landcode
+        const telefoon_clean = telefoon_raw.replace(/^[\+\s]+/, '');
+        formData.set('telefoon', landcode + telefoon_clean);
+      }
+      formData.delete('telefoon_landcode');  // Don't send landcode separately
 
       // Calculate totals
       const totals = calcTotals();

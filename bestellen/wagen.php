@@ -364,17 +364,31 @@ try { switch ($actie) {
         $aantal = array_sum($maten);
 
         $regels = laadWagenRegels($wagen_token);
+        // Bouw technieken array op (per positie)
+        $technieken_raw = $regel['technieken'] ?? [];
+        $technieken = [];
+        foreach ($technieken_raw as $t) {
+            $pos = $t['positie'] ?? '';
+            $tek = $t['techniek'] ?? '';
+            if (in_array($pos, ['voorkant','achterkant','linkerborst','rechterborst']) &&
+                in_array($tek, ['dtf','zeefdruk','zeef','borduren'])) {
+                $technieken[] = ['positie' => $pos, 'techniek' => $tek];
+            }
+        }
+
         $nieuwe_regel = [
             'id'         => bin2hex(random_bytes(8)),
             'sku'        => preg_replace('/[^a-zA-Z0-9\-_]/', '', $regel['sku']),
-            'techniek'   => $regel['techniek'],
+            'techniek'   => $regel['techniek'],   // fallback (voor validatie)
+            'technieken' => $technieken,           // per positie
             'kleur_code' => substr($regel['kleur_code'] ?? '', 0, 50),
             'kleur_naam' => substr($regel['kleur_naam'] ?? '', 0, 80),
             'posities'   => array_slice($regel['posities'] ?? [['positie'=>'voorkant','kleuren'=>1]], 0, 4),
             'maten'      => $maten,
             'aantal'     => $aantal,
             'notitie'    => substr($regel['notitie'] ?? '', 0, 300),
-            'upload_token' => null, // wordt later ingevuld via upload actie
+            'upload_token' => null,
+            'uploads'    => [],
         ];
 
         $regels[] = $nieuwe_regel;
@@ -396,9 +410,10 @@ try { switch ($actie) {
     }
 
     case 'upload': {
-        // Multipart upload — wagen_token + regel_id via $_POST
+        // Multipart upload — wagen_token + regel_id + positie via $_POST
         $wt = preg_replace('/[^a-f0-9]/', '', $_POST['wagen_token'] ?? '');
         $ri = preg_replace('/[^a-f0-9]/', '', $_POST['regel_id']    ?? '');
+        $positie = $_POST['positie'] ?? 'voorkant';
         if (strlen($wt) !== 32) fout('Geen geldig wagen_token');
         if (empty($ri))         fout('Geen regel_id');
 
@@ -413,9 +428,16 @@ try { switch ($actie) {
         $result = verwerkUpload($wt, $ri);
         if (!$result['ok']) fout($result['fout']);
 
-        // Koppel upload token aan regel
-        $regels[$regel_idx]['upload_token'] = $result['upload_token'];
-        $regels[$regel_idx]['upload_naam']  = $result['bestandsnaam'];
+        // Voeg upload toe aan uploads array (ondersteunt meerdere uploads per regel)
+        if (!isset($regels[$regel_idx]['uploads'])) {
+            $regels[$regel_idx]['uploads'] = [];
+        }
+        $regels[$regel_idx]['uploads'][] = [
+            'positie' => $positie,
+            'upload_token' => $result['upload_token'],
+            'bestandsnaam' => $result['bestandsnaam']
+        ];
+
         slaWagenOp($wt, $regels, $sessie_id);
 
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
@@ -509,9 +531,12 @@ try { switch ($actie) {
         $totaal_incl = round($totaal_excl * 1.21, 2);
         $btw         = round($totaal_incl - $totaal_excl, 2);
 
-        if ($order_totaal_stuks <= 5)      { $verzend=6.95;  $vl='Klein pakket'; $va=false; }
-        elseif ($order_totaal_stuks <= 14) { $verzend=13.95; $vl='Groot pakket'; $va=false; }
-        else                               { $verzend=0.0;   $vl='Achteraf';     $va=true; }
+        if ($order_totaal_stuks <= 5)      { $verzend_incl=6.95;  $vl='Klein pakket'; $va=false; }
+        elseif ($order_totaal_stuks <= 14) { $verzend_incl=13.95; $vl='Groot pakket'; $va=false; }
+        else                               { $verzend_incl=0.0;   $vl='Achteraf';     $va=true; }
+
+        // Calculate verzend_excl for handler validation (2 decimals for DB/payments)
+        $verzend_excl = $va ? 0 : round($verzend_incl / 1.21, 2);
 
         echo json_encode([
             'ok'          => true,
@@ -526,10 +551,11 @@ try { switch ($actie) {
                 'totaal_excl'        => $totaal_excl,
                 'totaal_incl'        => $totaal_incl,
                 'btw'                => $btw,
-                'verzend_excl'       => $va ? null : $verzend,
+                'verzend_excl'       => $va ? null : $verzend_excl,
+                'verzend_incl'       => $va ? null : $verzend_incl,
                 'verzend_label'      => $vl,
                 'verzend_achteraf'   => $va,
-                'totaal_met_verzend' => $va ? null : round($totaal_incl + $verzend, 2),
+                'totaal_met_verzend' => $va ? null : round($totaal_incl + $verzend_incl, 2),
             ],
         ], JSON_UNESCAPED_UNICODE);
         break;
