@@ -531,9 +531,9 @@ try { switch ($actie) {
         $totaal_incl = round($totaal_excl * 1.21, 2);
         $btw         = round($totaal_incl - $totaal_excl, 2);
 
+        // Verzending — ALTIJD betaald, geen gratis verzending
         if ($order_totaal_stuks <= 5)      { $verzend_incl=6.95;  $vl='Klein pakket'; $va=false; }
-        elseif ($order_totaal_stuks <= 14) { $verzend_incl=13.95; $vl='Groot pakket'; $va=false; }
-        else                               { $verzend_incl=0.0;   $vl='Achteraf';     $va=true; }
+        else                               { $verzend_incl=13.95; $vl='Groot pakket'; $va=false; }
 
         // Calculate verzend_excl for handler validation (2 decimals for DB/payments)
         $verzend_excl = $va ? 0 : round($verzend_incl / 1.21, 2);

@@ -47,8 +47,15 @@ De Ralawise API is **uitsluitend** voor data lezen (inventory, afbeeldingen, sto
 - **DTF & Zeefdruk:** laden uit admin DB (`mm_instellingen` key `drukkosten`) — geen fallback hardcoded
 - **Staffelkorting textiel** (alleen DTF/zeefdruk, geen offerte):
   - 50–99 stuks: 5% | 100–199 stuks: 10% | 200+ stuks: 20%
-- **Verzending:** €6,95 (1–11 stuks) / €13,95 (12+)
+- **Verzending:** €6,95 (1–5 stuks) / €13,95 (6–14 stuks) / **ALTIJD BETALEN**, geen gratis verzending voor grote orders
 - **Rush toeslag:** 40%
+
+### ⚠️ VERZENDING — KRITIEK
+- **MERCH MASTER WILT NOOIT GRATIS VERZENDING**
+- Verzending is ALTIJD betaald (€6,95 of €13,95)
+- `verzend_achteraf` mag NIET gebruikt worden voor gratis verzending
+- Bij 15+ stuks: verzending blijft €13,95 (of opnieuw bepalen met klant)
+- wagen.php regel 536 zet `verzend_incl=0` voor 15+ stuks → DIT IS FOUT
 
 ### BTW-weergave (particulier / bedrijf toggle)
 - Toggle zichtbaar vanaf stap 4
