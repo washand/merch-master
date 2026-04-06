@@ -259,82 +259,101 @@ const wagen_token = '<?php echo htmlspecialchars($wagen_token); ?>';
 
 async function loadCart() {
   try {
+    console.log('loadCart: fetching with token:', wagen_token);
     const resp = await fetch('./wagen.php', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({actie: 'laden', wagen_token: wagen_token})
     });
     const data = await resp.json();
+    console.log('loadCart: response:', data);
     if (data.ok && data.regels) {
       renderCart(data.regels, data.totalen);
+    } else {
+      console.error('loadCart: response not ok or missing regels', data);
+      document.getElementById('order-items').innerHTML = '<div style="color:var(--ink3);font-size:.85rem;">Fout bij laden wagen</div>';
     }
   } catch (e) {
     console.error('Cart load error:', e);
+    document.getElementById('order-items').innerHTML = '<div style="color:red;font-size:.85rem;">Error: ' + e.message + '</div>';
   }
 }
 
 function renderCart(regels, totalen) {
-  if (!totalen) {
-    document.getElementById('order-items').innerHTML = '<div style="color:var(--ink3);font-size:.85rem;">Wagen is leeg</div>';
-    document.getElementById('order-totals').innerHTML = '';
-    return;
-  }
+  try {
+    console.log('renderCart called with:', {regels, totalen});
 
-  // Items
-  let html = '';
-  regels.forEach(r => {
-    // Build position label from posities array
-    const posLabels = {
-      'voorkant': 'Voorkant',
-      'achterkant': 'Achterkant',
-      'linkerborst': 'Linkerborst',
-      'rechterborst': 'Rechterborst'
-    };
-    const posLabel = (r.posities || []).map(p => posLabels[p.positie] || p.positie).join(' + ') || 'Voorkant';
-    const totalPrice = r.prijs?.prijs_excl ? r.aantal * r.prijs.prijs_excl : 0;
+    if (!totalen) {
+      document.getElementById('order-items').innerHTML = '<div style="color:var(--ink3);font-size:.85rem;">Wagen is leeg</div>';
+      document.getElementById('order-totals').innerHTML = '';
+      return;
+    }
 
-    html += `<div class="si">
-      <div class="simg">👕</div>
-      <div class="sinfo">
-        <div class="sname">${r.product_naam}</div>
-        <div class="sdet">${r.kleur_naam} · ${r.aantal}× · ${posLabel}</div>
-      </div>
-      <div class="sprice">${fmt(totalPrice)}</div>
-    </div>`;
-  });
-  document.getElementById('order-items').innerHTML = html;
+    // Items
+    let html = '';
+    regels.forEach(r => {
+      try {
+        // Build position label from posities array
+        const posLabels = {
+          'voorkant': 'Voorkant',
+          'achterkant': 'Achterkant',
+          'linkerborst': 'Linkerborst',
+          'rechterborst': 'Rechterborst'
+        };
+        const posLabel = (r.posities || []).map(p => posLabels[p.positie] || p.positie).join(' + ') || 'Voorkant';
+        const totalPrice = (r.prijs && r.prijs.prijs_excl) ? r.aantal * r.prijs.prijs_excl : 0;
 
-  // Totals
-  const verzending = totalen.verzend_incl || 0;
-  const totalMet = totalen.totaal_incl + verzending;
-  let totals = `
-    <div class="pr"><span>Subtotaal (ex BTW)</span><span>${fmt(totalen.subtotaal_excl)}</span></div>
-    <div class="pr"><span>BTW 21%</span><span>${fmt(totalen.btw)}</span></div>
-    <div class="pr"><span>Totaal incl. BTW</span><span>${fmt(totalen.totaal_incl)}</span></div>
-    <div class="pr"><span>Verzending (${totalen.verzend_label})</span><span>+ ${fmt(verzending)}</span></div>
-    <div class="pr div tot"><span>Totaal incl. verzending</span><span>${fmt(totalMet)}</span></div>
-  `;
-  document.getElementById('order-totals').innerHTML = totals;
-
-  // Set cart data
-  document.getElementById('cart-data').value = JSON.stringify(regels);
-
-  // PayPal
-  if (window.paypal) {
-    paypal.Buttons({
-      createOrder(data, actions) {
-        return actions.order.create({
-          purchase_units: [{
-            amount: { value: totalMet.toFixed(2) }
-          }]
-        });
-      },
-      onApprove(data, actions) {
-        return actions.order.capture().then(() => {
-          document.getElementById('checkout-form').submit();
-        });
+        html += `<div class="si">
+          <div class="simg">👕</div>
+          <div class="sinfo">
+            <div class="sname">${r.product_naam || 'Product'}</div>
+            <div class="sdet">${r.kleur_naam || 'Kleur'} · ${r.aantal}× · ${posLabel}</div>
+          </div>
+          <div class="sprice">${fmt(totalPrice)}</div>
+        </div>`;
+      } catch(e) {
+        console.error('Error rendering regel:', r, e);
       }
-    }).render('#pp-container');
+    });
+    document.getElementById('order-items').innerHTML = html;
+
+    // Totals
+    const verzending = totalen.verzend_incl || 0;
+    const totalMet = totalen.totaal_incl + verzending;
+    let totals = `
+      <div class="pr"><span>Subtotaal (ex BTW)</span><span>${fmt(totalen.subtotaal_excl)}</span></div>
+      <div class="pr"><span>BTW 21%</span><span>${fmt(totalen.btw)}</span></div>
+      <div class="pr"><span>Totaal incl. BTW</span><span>${fmt(totalen.totaal_incl)}</span></div>
+      <div class="pr"><span>Verzending (${totalen.verzend_label})</span><span>+ ${fmt(verzending)}</span></div>
+      <div class="pr div tot"><span>Totaal incl. verzending</span><span>${fmt(totalMet)}</span></div>
+    `;
+    document.getElementById('order-totals').innerHTML = totals;
+
+    // Set cart data
+    document.getElementById('cart-data').value = JSON.stringify(regels);
+
+    // PayPal
+    console.log('Initializing PayPal, window.paypal:', !!window.paypal);
+    if (window.paypal) {
+      paypal.Buttons({
+        createOrder(data, actions) {
+          return actions.order.create({
+            purchase_units: [{
+              amount: { value: totalMet.toFixed(2) }
+            }]
+          });
+        },
+        onApprove(data, actions) {
+          return actions.order.capture().then(() => {
+            document.getElementById('checkout-form').submit();
+          });
+        }
+      }).render('#pp-container');
+      console.log('PayPal buttons rendered');
+    }
+  } catch(e) {
+    console.error('renderCart error:', e);
+    document.getElementById('order-items').innerHTML = '<div style="color:red;font-size:.85rem;">Render error: ' + e.message + '</div>';
   }
 }
 
