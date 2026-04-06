@@ -221,16 +221,10 @@ input.filled{background:#fff;}
           </div>
 
           <div id="pp-container"></div>
-          <button class="btn btn-p" id="test-btn" style="margin-top:1rem;background:#6c5ce7;">
+          <button class="btn btn-p" id="test-btn" style="margin-top:1rem;background:#6c5ce7;display:none;">
             💳 Test Payment
           </button>
         </form>
-        <div class="cf">
-          <button type="submit" form="checkout-form" class="btn btn-p">
-            Doorgaan naar betaling
-            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
-          </button>
-        </div>
       </div>
     </div>
 
@@ -358,6 +352,12 @@ function renderCart(regels, totalen) {
     console.error('renderCart error:', e);
     document.getElementById('order-items').innerHTML = '<div style="color:red;font-size:.85rem;">Render error: ' + e.message + '</div>';
   }
+}
+
+// Format price (€ with Dutch decimals)
+function fmt(val) {
+  const num = parseFloat(val) || 0;
+  return '€' + num.toFixed(2).replace('.', ',');
 }
 
 // Init selects
