@@ -611,8 +611,11 @@ document.getElementById('test-btn').addEventListener('click', async (e) => {
 
     if (result.success) {
       // Redirect to success page with order ID
-      window.location.href = '/bestellen.php?success=' + (result.bestelling_id || 'test');
+      const successUrl = '/bestellen.php?success=' + (result.bestelling_id || 'test');
+      console.log('Success! Redirecting to:', successUrl);
+      window.location.href = successUrl;
     } else {
+      console.error('Order failed:', result.error);
       alert('Fout: ' + (result.error || 'Onbekende fout'));
     }
   } catch (err) {
