@@ -259,7 +259,7 @@ const wagen_token = '<?php echo htmlspecialchars($wagen_token); ?>';
 
 async function loadCart() {
   try {
-    const resp = await fetch('/wagen.php?action=laden&token=' + wagen_token);
+    const resp = await fetch('./wagen.php?action=laden&token=' + wagen_token);
     const data = await resp.json();
     if (data.ok && data.regels) {
       renderCart(data.regels, data.totalen);
