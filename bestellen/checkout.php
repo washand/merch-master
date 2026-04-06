@@ -422,26 +422,131 @@ function fmt(val) {
   return '€' + num.toFixed(2).replace('.', ',');
 }
 
-// Init selects
+// Landen met codes en vlaggen
+const LANDEN = [
+  {iso:'NL',dial:'+31',name:'Nederland'},
+  {iso:'BE',dial:'+32',name:'België'},
+  {iso:'DE',dial:'+49',name:'Duitsland'},
+  {iso:'FR',dial:'+33',name:'Frankrijk'},
+  {iso:'AT',dial:'+43',name:'Oostenrijk'},
+  {iso:'CH',dial:'+41',name:'Zwitserland'},
+  {iso:'PL',dial:'+48',name:'Polen'},
+  {iso:'CZ',dial:'+420',name:'Tsjechië'},
+  {iso:'SE',dial:'+46',name:'Zweden'},
+  {iso:'NO',dial:'+47',name:'Noorwegen'},
+  {iso:'DK',dial:'+45',name:'Denemarken'},
+  {iso:'FI',dial:'+358',name:'Finland'},
+  {iso:'IT',dial:'+39',name:'Italië'},
+  {iso:'ES',dial:'+34',name:'Spanje'},
+  {iso:'PT',dial:'+351',name:'Portugal'},
+  {iso:'GR',dial:'+30',name:'Griekenland'},
+  {iso:'HU',dial:'+36',name:'Hongarije'},
+  {iso:'RO',dial:'+40',name:'Roemenië'},
+  {iso:'BG',dial:'+359',name:'Bulgarije'},
+  {iso:'HR',dial:'+385',name:'Kroatië'},
+  {iso:'IE',dial:'+353',name:'Ierland'},
+  {iso:'GB',dial:'+44',name:'Groot-Brittannië'},
+  {iso:'UA',dial:'+380',name:'Oekraïne'},
+  {iso:'RU',dial:'+7',name:'Rusland'},
+  {iso:'TR',dial:'+90',name:'Turkije'},
+  {iso:'US',dial:'+1',name:'Verenigde Staten'},
+  {iso:'CA',dial:'+1',name:'Canada'}
+];
+
+// Vlaggen-set (Europese landen + VS + Canada)
+const MET_VLAG = new Set(['NL','BE','DE','FR','AT','CH','PL','CZ','SE','NO','DK','FI','IT','ES','PT','GR','HU','RO','BG','HR','IE','GB','UA','RU','TR','US','CA']);
+
+// Telefoon landcode dropdown
+const dialOptions = LANDEN.map(l => ({ value: l.dial, iso: l.iso, name: l.name }));
 new TomSelect('#dial_ts', {
-  options: [
-    {text: '🇳🇱 +31', value: '+31'},
-    {text: '🇧🇪 +32', value: '+32'},
-    {text: '🇩🇪 +49', value: '+49'},
-    {text: '🇫🇷 +33', value: '+33'}
-  ],
-  items: ['+31']
+  options: dialOptions,
+  valueField: 'value',
+  labelField: 'name',
+  searchField: ['name', 'value'],
+  items: ['+31'],
+  maxOptions: 300,
+  render: {
+    option: (d) => {
+      const flag = MET_VLAG.has(d.iso) ? [...d.iso].map(c => String.fromCodePoint(c.charCodeAt(0)+127397)).join('') + ' ' : '';
+      return `<div>${flag}<strong>${d.value}</strong> ${d.name}</div>`;
+    },
+    item: (d) => {
+      const flag = MET_VLAG.has(d.iso) ? [...d.iso].map(c => String.fromCodePoint(c.charCodeAt(0)+127397)).join('') + ' ' : '';
+      return `<div>${flag}${d.value}</div>`;
+    }
+  },
+  onChange: (val) => {
+    document.getElementById('telefoon_landcode').value = val || '+31';
+  }
 });
 
+// Land dropdown
+const landOptions = LANDEN.map(l => ({ value: l.iso, name: l.name }));
 new TomSelect('#land', {
-  options: [
-    {text: '🇳🇱 Nederland', value: 'NL'},
-    {text: '🇧🇪 België', value: 'BE'},
-    {text: '🇩🇪 Duitsland', value: 'DE'},
-    {text: '🇫🇷 Frankrijk', value: 'FR'}
-  ],
-  items: ['NL']
+  options: landOptions,
+  valueField: 'value',
+  labelField: 'name',
+  searchField: ['name'],
+  items: ['NL'],
+  maxOptions: 300,
+  render: {
+    option: (d) => {
+      const flag = MET_VLAG.has(d.value) ? [...d.value].map(c => String.fromCodePoint(c.charCodeAt(0)+127397)).join('') + ' ' : '';
+      return `<div>${flag}${d.name}</div>`;
+    },
+    item: (d) => {
+      const flag = MET_VLAG.has(d.value) ? [...d.value].map(c => String.fromCodePoint(c.charCodeAt(0)+127397)).join('') : '';
+      return `<div>${flag}${d.name}</div>`;
+    }
+  }
 });
+
+// ── Postcode validatie (Nederlands format) ───────────────────────────────
+const postcodeEl = document.getElementById('postcode');
+const landEl = document.getElementById('land');
+const NL_POSTCODE_RE = /^([1-9][0-9]{3})\s?([A-Za-z]{2})$/;
+
+function isNederland() {
+  const landTS = landEl.tomselect;
+  const val = landTS ? landTS.getValue() : landEl.value;
+  return val === 'NL';
+}
+
+postcodeEl.addEventListener('blur', () => {
+  if (!isNederland()) return;
+  const match = postcodeEl.value.trim().match(NL_POSTCODE_RE);
+  if (match) {
+    postcodeEl.value = match[1] + ' ' + match[2].toUpperCase();
+  }
+});
+
+// ── Form validatie ───────────────────────────────────────────────────────
+function validateForm() {
+  const voornaam = document.getElementById('voornaam').value.trim();
+  const achternaam = document.getElementById('achternaam').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const straat = document.getElementById('straat').value.trim();
+  const postcode = document.getElementById('postcode').value.trim();
+  const stad = document.getElementById('stad').value.trim();
+
+  // Check required velden
+  if (!voornaam) { alert('Vul je voornaam in'); return false; }
+  if (!achternaam) { alert('Vul je achternaam in'); return false; }
+  if (!email) { alert('Vul je e-mailadres in'); return false; }
+  if (!straat) { alert('Vul straat en huisnummer in'); return false; }
+  if (!postcode) { alert('Vul je postcode in'); return false; }
+  if (!stad) { alert('Vul je plaatsnaam in'); return false; }
+
+  // Postcode validatie als Nederland
+  if (isNederland()) {
+    if (!NL_POSTCODE_RE.test(postcode)) {
+      alert('Vul een geldige Nederlandse postcode in (bijv. 1234 AB)');
+      return false;
+    }
+  }
+
+  return true;
+}
 
 // Load PayPal SDK with onload callback
 const script = document.createElement('script');
@@ -469,6 +574,11 @@ setTimeout(() => {
 document.getElementById('test-btn').addEventListener('click', (e) => {
   e.preventDefault();
   console.log('Test button clicked');
+
+  // Validate form first
+  if (!validateForm()) {
+    return;
+  }
 
   // Populate totals before submit
   if (window.TOTALEN) {
