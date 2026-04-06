@@ -345,10 +345,11 @@ function renderCart(regels, totalen) {
           <div class="sinfo">
             <div class="sname" style="font-size:.95rem;font-weight:600;color:var(--ink);">${r.aantal}× ${r.product_naam || 'Product'}</div>
             <div class="sdet" style="margin-top:.45rem;font-size:.75rem;color:var(--ink3);line-height:1.6;">
+              <div style="margin-bottom:.2rem;"><strong>SKU:</strong> ${r.sku || '–'}</div>
               <div style="margin-bottom:.2rem;"><strong>Kleur:</strong> ${r.kleur_naam || '–'}</div>
+              ${matenLabel ? `<div style="margin-bottom:.2rem;"><strong>Maten:</strong> ${matenLabel}</div>` : ''}
               <div style="margin-bottom:.2rem;"><strong>Techniek:</strong><br>${techDetails}</div>
               <div style="margin-bottom:.2rem;"><strong>Positie:</strong> ${posLabel}</div>
-              ${matenLabel ? `<div style="margin-bottom:.2rem;"><strong>Maten:</strong> ${matenLabel}</div>` : ''}
             </div>
           </div>
           <div class="sprice" style="white-space:nowrap;text-align:right;">${fmt(totalPrice)}</div>
