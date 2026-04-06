@@ -348,8 +348,8 @@ function renderCart(regels, totalen) {
               <div style="margin-bottom:.2rem;"><strong>SKU:</strong> ${r.sku || '–'}</div>
               <div style="margin-bottom:.2rem;"><strong>Kleur:</strong> ${r.kleur_naam || '–'}</div>
               ${matenLabel ? `<div style="margin-bottom:.2rem;"><strong>Maten:</strong> ${matenLabel}</div>` : ''}
-              <div style="margin-bottom:.2rem;"><strong>Techniek:</strong><br>${techDetails}</div>
               <div style="margin-bottom:.2rem;"><strong>Positie:</strong> ${posLabel}</div>
+              <div style="margin-bottom:.2rem;"><strong>Techniek:</strong><br>${techDetails}</div>
             </div>
           </div>
           <div class="sprice" style="white-space:nowrap;text-align:right;">${fmt(totalPrice)}</div>
@@ -378,21 +378,33 @@ function renderCart(regels, totalen) {
     // PayPal
     console.log('Initializing PayPal, window.paypal:', !!window.paypal);
     if (window.paypal) {
-      paypal.Buttons({
-        createOrder(data, actions) {
-          return actions.order.create({
-            purchase_units: [{
-              amount: { value: totalMet.toFixed(2) }
-            }]
-          });
-        },
-        onApprove(data, actions) {
-          return actions.order.capture().then(() => {
-            document.getElementById('checkout-form').submit();
-          });
-        }
-      }).render('#pp-container');
-      console.log('PayPal buttons rendered');
+      try {
+        paypal.Buttons({
+          createOrder(data, actions) {
+            return actions.order.create({
+              purchase_units: [{
+                amount: { value: totalMet.toFixed(2) }
+              }]
+            });
+          },
+          onApprove(data, actions) {
+            return actions.order.capture().then(() => {
+              document.getElementById('checkout-form').submit();
+            });
+          },
+          onError: (err) => {
+            console.error('PayPal error:', err);
+            document.getElementById('test-btn').style.display = 'block';
+          }
+        }).render('#pp-container');
+        console.log('PayPal buttons rendered');
+      } catch (err) {
+        console.error('PayPal render error:', err);
+        document.getElementById('test-btn').style.display = 'block';
+      }
+    } else {
+      console.warn('PayPal SDK not available, showing test button');
+      document.getElementById('test-btn').style.display = 'block';
     }
   } catch(e) {
     console.error('renderCart error:', e);
@@ -427,10 +439,27 @@ new TomSelect('#land', {
   items: ['NL']
 });
 
-// Load PayPal
+// Load PayPal SDK with onload callback
 const script = document.createElement('script');
 script.src = 'https://www.paypal.com/sdk/js?client-id=ASLap52V7_VjYsq3D5k1W9a9RLG7854wBRs9TQ0m0PHhLXALJwrG3i-r4nrQOMuUr0d_Dqr5BSMv4ebk';
+script.onload = () => {
+  console.log('PayPal SDK loaded, calling loadCart');
+  loadCart();
+};
+script.onerror = () => {
+  console.warn('PayPal SDK failed to load, showing test button and calling loadCart');
+  document.getElementById('test-btn').style.display = 'block';
+  loadCart();
+};
 document.head.appendChild(script);
+
+// Fallback: call loadCart after 3 seconds if PayPal hasn't loaded
+setTimeout(() => {
+  if (!document.getElementById('pp-container').innerHTML) {
+    console.warn('PayPal buttons not rendered after 3s, showing test button');
+    document.getElementById('test-btn').style.display = 'block';
+  }
+}, 3000);
 
 // Test button handler
 document.getElementById('test-btn').addEventListener('click', (e) => {
@@ -438,8 +467,6 @@ document.getElementById('test-btn').addEventListener('click', (e) => {
   console.log('Test button clicked');
   document.getElementById('checkout-form').submit();
 });
-
-loadCart();
 </script>
 </body>
 </html>
