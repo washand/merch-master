@@ -1372,21 +1372,21 @@ function calcQ(){
     const isBorst = S.pos==='left' || S.pos==='right' || S.pos==='left-back' || S.pos==='right-back';
     const dpMatrix = isBorst ? DPborst : DP;
     const t=dpMatrix.find(x=>q>=x.min&&q<=x.max);
-    if(!t){e('quote-box').style.display='none';return;}upA=t.u;
+    if(!t){e('quote-box').style.display='none';return;}upA=t.u/1.21; // excl. BTW
   } else if(tA==='zeef'){
     if(!S.zcA){w.textContent='Kies eerst het aantal kleuren voor de '+posLabel+'.';w.classList.remove('hidden');e('quote-box').style.display='none';e('btn4').disabled=true;return;}
     if(q<25){w.textContent='Zeefdruk ('+posLabel+') vereist minimaal 25 stuks.';w.classList.remove('hidden');e('quote-box').style.display='none';e('btn4').disabled=true;return;}
-    const t=ZP.find(x=>q>=x.min&&q<=x.max);upA=t?t.c[S.zcA-1]:0.82;
+    const t=ZP.find(x=>q>=x.min&&q<=x.max);upA=(t?t.c[S.zcA-1]:0.82)/1.21; // excl. BTW
   }
 
   if(isBoth){
     const tB=S.techB;
     if(tB==='dtf'){
-      const t=DP.find(x=>q>=x.min&&q<=x.max);if(!t){e('quote-box').style.display='none';return;}upB=t.u;
+      const t=DP.find(x=>q>=x.min&&q<=x.max);if(!t){e('quote-box').style.display='none';return;}upB=t.u/1.21; // excl. BTW
     } else if(tB==='zeef'){
       if(!S.zcB){w.textContent='Kies eerst het aantal kleuren voor de achterkant.';w.classList.remove('hidden');e('quote-box').style.display='none';e('btn4').disabled=true;return;}
       if(q<25){w.textContent='Zeefdruk (achterkant) vereist minimaal 25 stuks.';w.classList.remove('hidden');e('quote-box').style.display='none';e('btn4').disabled=true;return;}
-      const t=ZP.find(x=>q>=x.min&&q<=x.max);upB=t?t.c[S.zcB-1]:0.82;
+      const t=ZP.find(x=>q>=x.min&&q<=x.max);upB=(t?t.c[S.zcB-1]:0.82)/1.21; // excl. BTW
     }
   }
 
