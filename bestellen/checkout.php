@@ -108,7 +108,7 @@ input.filled{background:#fff;}
 
 .ts-wrapper .ts-control{border:1px solid var(--brd);border-radius:var(--r);padding:.5rem .75rem;font-size:.85rem;background:#fafaf9;}
 .ts-wrapper.focus .ts-control{border-color:var(--ac);box-shadow:0 0 0 3px rgba(232,76,30,.1);background:#fff;}
-.ts-dropdown{font-size:.85rem;border-color:var(--brd);border-radius:var(--r);}
+.ts-dropdown{font-size:.85rem;border-color:var(--brd);border-radius:var(--r);z-index:1000;}
 .ts-dropdown .option.selected{background:var(--ac);color:#fff;}
 .ts-dropdown .option:hover{background:var(--bg);}
 
