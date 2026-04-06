@@ -447,14 +447,13 @@ const LANDEN = [
   {iso:'IE',dial:'+353',name:'Ierland'},
   {iso:'GB',dial:'+44',name:'Groot-Brittannië'},
   {iso:'UA',dial:'+380',name:'Oekraïne'},
-  {iso:'RU',dial:'+7',name:'Rusland'},
   {iso:'TR',dial:'+90',name:'Turkije'},
   {iso:'US',dial:'+1',name:'Verenigde Staten'},
   {iso:'CA',dial:'+1',name:'Canada'}
 ];
 
 // Vlaggen-set (Europese landen + VS + Canada)
-const MET_VLAG = new Set(['NL','BE','DE','FR','AT','CH','PL','CZ','SE','NO','DK','FI','IT','ES','PT','GR','HU','RO','BG','HR','IE','GB','UA','RU','TR','US','CA']);
+const MET_VLAG = new Set(['NL','BE','DE','FR','AT','CH','PL','CZ','SE','NO','DK','FI','IT','ES','PT','GR','HU','RO','BG','HR','IE','GB','UA','TR','US','CA']);
 
 // Telefoon landcode dropdown
 const dialOptions = LANDEN.map(l => ({ value: l.dial, iso: l.iso, name: l.name }));
