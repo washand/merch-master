@@ -290,6 +290,10 @@ function renderCart(regels, totalen) {
       return;
     }
 
+    // Store totals globally for form submission
+    window.TOTALEN = totalen;
+    console.log('window.TOTALEN set:', window.TOTALEN);
+
     // Items
     let html = '';
     regels.forEach(r => {
