@@ -456,6 +456,28 @@ $_levertijdenJS = json_encode([
       <div class="pos-desc">Voor- &eacute;n achterkant bedrukt. Per kant eigen techniek en ontwerp.</div>
       <div class="pos-note">= 2&times; bedrukking</div>
     </div>
+    <div class="opt" id="pos-left" onclick="selPos('left')">
+      <div class="chk"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+      <div class="pos-name">Linkerborst</div>
+      <div class="pos-desc">Bedrukking op de linkerborst van het textiel</div>
+    </div>
+    <div class="opt" id="pos-right" onclick="selPos('right')">
+      <div class="chk"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+      <div class="pos-name">Rechterborst</div>
+      <div class="pos-desc">Bedrukking op de rechterborst van het textiel</div>
+    </div>
+    <div class="opt" id="pos-left-back" onclick="selPos('left-back')">
+      <div class="chk"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+      <div class="pos-name">Linkerborst + Achterkant</div>
+      <div class="pos-desc">Linkerborst en achterkant bedrukt. Per kant eigen techniek en ontwerp.</div>
+      <div class="pos-note">= 2&times; bedrukking</div>
+    </div>
+    <div class="opt" id="pos-right-back" onclick="selPos('right-back')">
+      <div class="chk"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+      <div class="pos-name">Rechterborst + Achterkant</div>
+      <div class="pos-desc">Rechterborst en achterkant bedrukt. Per kant eigen techniek en ontwerp.</div>
+      <div class="pos-note">= 2&times; bedrukking</div>
+    </div>
   </div>
   <div class="btn-row">
     <button class="btn btn-s" onclick="gS(1)">&#8592; Terug</button>
@@ -582,6 +604,36 @@ $_levertijdenJS = json_encode([
     <div class="sub-lbl" style="margin-top:.5rem">Aantal drukkleuren achterkant</div>
     <div class="field" style="margin-bottom:.85rem">
       <select id="zc-back-sel" onchange="selZC('back',parseInt(this.value))">
+        <option value="1">1 kleur</option>
+        <option value="2">2 kleuren</option>
+        <option value="3">3 kleuren</option>
+        <option value="4">4 kleuren</option>
+      </select>
+    </div>
+  </div>
+  <div id="zeef-left-col" class="hidden">
+    <div class="kant-hdr" style="margin-top:.5rem">
+      <div class="kant-dot"></div><div class="kant-lbl">Linkerborst &mdash; zeefdruk kleuren</div>
+    </div>
+    <div class="sub-lbl" style="margin-top:.5rem">Aantal drukkleuren linkerborst</div>
+    <div class="field" style="margin-bottom:.85rem">
+      <select id="zc-left-sel" onchange="selZC('left',parseInt(this.value))">
+        <option value="">Kies het aantal kleuren</option>
+        <option value="1">1 kleur</option>
+        <option value="2">2 kleuren</option>
+        <option value="3">3 kleuren</option>
+        <option value="4">4 kleuren</option>
+      </select>
+    </div>
+  </div>
+  <div id="zeef-right-col" class="hidden">
+    <div class="kant-hdr" style="margin-top:.5rem">
+      <div class="kant-dot"></div><div class="kant-lbl">Rechterborst &mdash; zeefdruk kleuren</div>
+    </div>
+    <div class="sub-lbl" style="margin-top:.5rem">Aantal drukkleuren rechterborst</div>
+    <div class="field" style="margin-bottom:.85rem">
+      <select id="zc-right-sel" onchange="selZC('right',parseInt(this.value))">
+        <option value="">Kies het aantal kleuren</option>
         <option value="1">1 kleur</option>
         <option value="2">2 kleuren</option>
         <option value="3">3 kleuren</option>
@@ -817,7 +869,7 @@ async function loadCatalogus() {
 const _DK = <?php echo $_drukkostenJS; ?>;
 const _LT = <?php echo $_levertijdenJS; ?>;
 
-// DTF: bouw DP array uit admin data (verplicht — geen fallback)
+// DTF: bouw DP array uit admin data (voorkant/achterkant — verplicht — geen fallback)
 const DP = [];
 if (_DK && _DK.dtf && _DK.dtf.matrix) {
   // Admin formaat: {oplagen: ["1-9","10-50","50+"], matrix: {"1-9":9.00,...}}
@@ -833,6 +885,23 @@ if (_DK && _DK.dtf && _DK.dtf.matrix) {
   DP.sort((a,b) => a.min - b.min);
   for (let i = 0; i < DP.length - 1; i++) DP[i].max = DP[i+1].min - 1;
   if (DP.length) DP[DP.length-1].max = 99999;
+}
+
+// DTF borst: bouw DPborst array uit admin data (linkerborst/rechterborst — verplicht — geen fallback)
+const DPborst = [];
+if (_DK && _DK.dtf_borst && _DK.dtf_borst.matrix) {
+  const _oplagen = _DK.dtf_borst.oplagen || [];
+  const _matrix  = _DK.dtf_borst.matrix  || {};
+  _oplagen.forEach((opl) => {
+    const parts = String(opl).split('-');
+    const mn = parseInt(parts[0]) || 1;
+    const mx = (parts[1] !== undefined) ? parseInt(parts[1]) : 99999;
+    const u  = parseFloat(_matrix[opl]) || 0;
+    DPborst.push({min: mn, max: mx, u: u});
+  });
+  DPborst.sort((a,b) => a.min - b.min);
+  for (let i = 0; i < DPborst.length - 1; i++) DPborst[i].max = DPborst[i+1].min - 1;
+  if (DPborst.length) DPborst[DPborst.length-1].max = 99999;
 }
 
 // Zeefdruk: bouw ZP array uit admin data (verplicht — geen fallback)
@@ -869,8 +938,29 @@ function setKlantType(type) {
   S.klantType = type;
   e('kt-particulier').classList.toggle('act', type==='particulier');
   e('kt-bedrijf').classList.toggle('act', type==='bedrijf');
-  // Note: bedrijf/particulier toggle is only in stap 4
-  // Checkout will use this value when processing order
+
+  // Update price display based on klantType
+  const exclRow = e('q-excl-row');
+  const btwRow = e('q-btw-row');
+  const inclRow = e('q-incl-row');
+
+  if(type === 'bedrijf') {
+    // Bedrijf: excl. BTW is prominent (blue hero), incl. BTW is footnote
+    exclRow.className = 'sum-excl-hero';
+    exclRow.innerHTML = '<span class="lbl">Totaal excl. BTW<small>Uw prijs als bedrijf</small></span><span class="prc" id="q-total-excl">' + (e('q-total-excl').textContent || '–') + '</span>';
+    btwRow.className = 'sum-total-footnote';
+    btwRow.innerHTML = '<span class="lbl">BTW 21%</span><span class="prc" id="q-btw">' + (e('q-btw').textContent || '–') + '</span>';
+    inclRow.className = 'sum-total-footnote';
+    inclRow.innerHTML = '<span class="lbl">Totaal incl. BTW</span><span class="prc" id="q-total">' + (e('q-total').textContent || '–') + '</span>';
+  } else {
+    // Particulier: incl. BTW is prominent (orange), excl. BTW is normal
+    exclRow.className = 'sum-total-sub';
+    exclRow.innerHTML = '<span class="k">Subtotaal excl. BTW</span><span class="v" id="q-total-excl">' + (e('q-total-excl').textContent || '–') + '</span>';
+    btwRow.className = 'sum-total-sub';
+    btwRow.innerHTML = '<span class="k">BTW 21%</span><span class="v" id="q-btw">' + (e('q-btw').textContent || '–') + '</span>';
+    inclRow.className = 'sum-total';
+    inclRow.innerHTML = '<span class="lbl">Totaal incl. BTW</span><span class="prc" id="q-total">' + (e('q-total').textContent || '–') + '</span>';
+  }
 }
 
 
@@ -893,6 +983,7 @@ const S = {
 const fmt = n => '\u20AC'+n.toFixed(2).replace('.',',');
 function e(id){return document.getElementById(id);}
 function allSteps(){return ['step1','step2','step3','step4','step5','step-bord','success'];}
+function formatPosLabel(pos){const map={'voorkant':'Voorkant','achterkant':'Achterkant','linkerborst':'Linkerborst','rechterborst':'Rechterborst'};return map[pos]||pos;}
 
 // ── Navigation ─────────────────────────────────────────────────────────────────
 function gS(n){
@@ -1141,16 +1232,29 @@ function showChosenBar(hex,name){
 // ── STAP 2: Positie ────────────────────────────────────────────────────────────
 function selPos(p){
   S.pos=p;S.techA=null;S.techB=null;S.configuring='A';
-  ['front','back','both'].forEach(x=>e('pos-'+x).classList.toggle('sel',x===p));
+  ['front','back','both','left','right','left-back','right-back'].forEach(x=>e('pos-'+x).classList.toggle('sel',x===p));
   e('btn2').disabled=false;
 }
 
 // ── STAP 3: Techniek ───────────────────────────────────────────────────────────
 function setupStep3ForKant(kant){
   S.configuring=kant;
-  const isBoth=S.pos==='both';
-  const kantName=kant==='A'?(S.pos==='back'?'Achterkant':'Voorkant'):'Achterkant';
-  const alreadyA=S.techA?'Voorkant: '+techName(S.techA):'';
+  const isBoth=S.pos==='both'||S.pos==='left-back'||S.pos==='right-back';
+  let kantName;
+  if(kant==='A'){
+    if(S.pos==='back') kantName='Achterkant';
+    else if(S.pos==='left'||S.pos==='left-back') kantName='Linkerborst';
+    else if(S.pos==='right'||S.pos==='right-back') kantName='Rechterborst';
+    else kantName='Voorkant';
+  } else {
+    kantName='Achterkant';
+  }
+  let kantAName='';
+  if(S.pos==='back') kantAName='Achterkant';
+  else if(S.pos==='left'||S.pos==='left-back') kantAName='Linkerborst';
+  else if(S.pos==='right'||S.pos==='right-back') kantAName='Rechterborst';
+  else kantAName='Voorkant';
+  const alreadyA=S.techA?kantAName+': '+techName(S.techA):'';
 
   e('kant-ind').classList.toggle('hidden',!isBoth);
   if(isBoth){
@@ -1186,7 +1290,8 @@ function techName(t){return t==='dtf'?'DTF druk':t==='zeef'?'Zeefdruk':'\u2013';
 function afterTech(){
   const tech = S.configuring==='A' ? S.techA : S.techB;
   if(tech==='bord'){ gS('bord'); return; }
-  if(S.pos==='both'&&S.configuring==='A'){
+  const isBoth=S.pos==='both'||S.pos==='left-back'||S.pos==='right-back';
+  if(isBoth&&S.configuring==='A'){
     setupStep3ForKant('B');
   } else {
     gS(4);
@@ -1194,7 +1299,8 @@ function afterTech(){
 }
 
 function goBackFromStep4(){
-  if(S.pos==='both'){
+  const isBoth=S.pos==='both'||S.pos==='left-back'||S.pos==='right-back';
+  if(isBoth){
     S.configuring='B';
     setupStep3ForKant('B');
     gS(3);
@@ -1211,12 +1317,17 @@ function enterStep3(){
 
 // ── STAP 4: Maten ──────────────────────────────────────────────────────────────
 function setupStep4(){
-  const isBoth=S.pos==='both';
-  const showFrontZeef=(S.techA==='zeef');
-  const showBackZeef=isBoth&&(S.techB==='zeef');
+  const isLeft=S.pos==='left',isRight=S.pos==='right';
+  const isBoth=S.pos==='both'||S.pos==='left-back'||S.pos==='right-back';
+  const showFrontZeef=(S.techA==='zeef')&&(S.pos==='front'||S.pos==='both');
+  const showBackZeef=(S.techA==='zeef')&&(S.pos==='back'||S.pos==='both'||S.pos==='left-back'||S.pos==='right-back')||(S.techB==='zeef')&&(S.pos==='both'||S.pos==='left-back'||S.pos==='right-back');
+  const showLeftZeef=(S.techA==='zeef')&&(S.pos==='left'||S.pos==='left-back');
+  const showRightZeef=(S.techA==='zeef')&&(S.pos==='right'||S.pos==='right-back');
 
   e('zeef-front-col').classList.toggle('hidden',!showFrontZeef);
   e('zeef-back-col').classList.toggle('hidden',!showBackZeef);
+  e('zeef-left-col').classList.toggle('hidden',!showLeftZeef);
+  e('zeef-right-col').classList.toggle('hidden',!showRightZeef);
   e('zeef-front-khdr').classList.toggle('hidden',!isBoth);
 
   buildSzTable();
@@ -1251,15 +1362,20 @@ function calcQ(){
   const q=S.qty;const w=e('qty-warn');w.classList.add('hidden');
   if(q===0){e('quote-box').style.display='none';e('btn4').disabled=true;return;}
 
-  const isBoth=S.pos==='both';
+  const isLeft=S.pos==='left',isRight=S.pos==='right';
+  const isBoth=S.pos==='both'||S.pos==='left-back'||S.pos==='right-back';
   let upA=0,upB=0;
 
   const tA=S.techA;
+  const posLabel=isLeft?'linkerborst':isRight?'rechterborst':'voorkant';
   if(tA==='dtf'){
-    const t=DP.find(x=>q>=x.min&&q<=x.max);
+    const isBorst = S.pos==='left' || S.pos==='right' || S.pos==='left-back' || S.pos==='right-back';
+    const dpMatrix = isBorst ? DPborst : DP;
+    const t=dpMatrix.find(x=>q>=x.min&&q<=x.max);
     if(!t){e('quote-box').style.display='none';return;}upA=t.u;
   } else if(tA==='zeef'){
-    if(q<25){w.textContent='Zeefdruk (voorkant) vereist minimaal 25 stuks.';w.classList.remove('hidden');e('quote-box').style.display='none';e('btn4').disabled=true;return;}
+    if(!S.zcA){w.textContent='Kies eerst het aantal kleuren voor de '+posLabel+'.';w.classList.remove('hidden');e('quote-box').style.display='none';e('btn4').disabled=true;return;}
+    if(q<25){w.textContent='Zeefdruk ('+posLabel+') vereist minimaal 25 stuks.';w.classList.remove('hidden');e('quote-box').style.display='none';e('btn4').disabled=true;return;}
     const t=ZP.find(x=>q>=x.min&&q<=x.max);upA=t?t.c[S.zcA-1]:0.82;
   }
 
@@ -1268,6 +1384,7 @@ function calcQ(){
     if(tB==='dtf'){
       const t=DP.find(x=>q>=x.min&&q<=x.max);if(!t){e('quote-box').style.display='none';return;}upB=t.u;
     } else if(tB==='zeef'){
+      if(!S.zcB){w.textContent='Kies eerst het aantal kleuren voor de achterkant.';w.classList.remove('hidden');e('quote-box').style.display='none';e('btn4').disabled=true;return;}
       if(q<25){w.textContent='Zeefdruk (achterkant) vereist minimaal 25 stuks.';w.classList.remove('hidden');e('quote-box').style.display='none';e('btn4').disabled=true;return;}
       const t=ZP.find(x=>q>=x.min&&q<=x.max);upB=t?t.c[S.zcB-1]:0.82;
     }
@@ -1285,7 +1402,7 @@ function calcQ(){
   S.upA=upA;S.upB=upB;S.ship=ship;S.tot=tot;S.textielTot=textielTot;S.textielInclBtw=textielInclBtw;
   S.kortingPct=kortingPct;S.textielInclBtwOrigineel=textielInclBtwOrigineel;
 
-  const posNm={front:'Voorkant',back:'Achterkant',both:'Beide kanten'};
+  const posNm={front:'Voorkant',back:'Achterkant',both:'Beide kanten',left:'Linkerborst',right:'Rechterborst','left-back':'Linkerborst + Achterkant','right-back':'Rechterborst + Achterkant'};
 
   // Textiel & kleur tonen als beschikbaar
   if(S.mdl){
@@ -1311,15 +1428,20 @@ function calcQ(){
   e('q-pos').textContent=posNm[S.pos]||'–';
   e('q-tech-a').textContent=techName(S.techA);
   e('q-up-a').textContent=fmt(upA)+' per stuk';
-  e('q-sep-a').textContent=isBoth?'Voorkant':'Bedrukking';
+  let posALabel='Bedrukking';
+  if(S.pos==='left'||S.pos==='left-back') posALabel='Linkerborst';
+  else if(S.pos==='right'||S.pos==='right-back') posALabel='Rechterborst';
+  else if(isBoth) posALabel='Voorkant';
+  e('q-sep-a').textContent=posALabel;
   // Bedrukking totaal voorkant
   e('q-druk-a-lbl').textContent='Bedrukking ('+q+'\u00d7 '+fmt(upA)+')';
   e('q-druk-a').textContent=fmt(drukA);
 
-  // Achterkant
+  // Achterkant (alleen voor combinatie posities: both, left-back, right-back)
   const sepB=e('q-sep-b'),tbRow=e('q-tech-b-row'),ubRow=e('q-up-b-row'),dbRow=e('q-druk-b-row');
   if(isBoth){
     sepB.classList.remove('hidden');tbRow.classList.remove('hidden');ubRow.classList.remove('hidden');dbRow.classList.remove('hidden');
+    sepB.textContent='Achterkant';
     e('q-tech-b').textContent=techName(S.techB);
     e('q-up-b').textContent=fmt(upB)+' per stuk';
     e('q-druk-b-lbl').textContent='Bedrukking ('+q+'\u00d7 '+fmt(upB)+')';
@@ -1331,9 +1453,30 @@ function calcQ(){
   // BTW uitsplitsing
   const totExcl=parseFloat((tot/1.21).toFixed(2));
   const btwBedrag=parseFloat((tot-totExcl).toFixed(2));
-  e('q-total-excl').textContent=fmt(totExcl);
-  e('q-btw').textContent=fmt(btwBedrag);
-  e('q-total').textContent=fmt(tot);
+
+  // Update totals display with correct classes based on klantType
+  const exclRow = e('q-excl-row');
+  const btwRow = e('q-btw-row');
+  const inclRow = e('q-incl-row');
+
+  if(S.klantType === 'bedrijf') {
+    // Bedrijf: excl. BTW is prominent (blue hero), incl. BTW is footnote
+    exclRow.className = 'sum-excl-hero';
+    exclRow.innerHTML = '<span class="lbl">Totaal excl. BTW<small>Uw prijs als bedrijf</small></span><span class="prc">' + fmt(totExcl) + '</span>';
+    btwRow.className = 'sum-total-footnote';
+    btwRow.innerHTML = '<span class="lbl">BTW 21%</span><span class="prc">' + fmt(btwBedrag) + '</span>';
+    inclRow.className = 'sum-total-footnote';
+    inclRow.innerHTML = '<span class="lbl">Totaal incl. BTW</span><span class="prc">' + fmt(tot) + '</span>';
+  } else {
+    // Particulier: incl. BTW is prominent (orange), excl. BTW is normal
+    exclRow.className = 'sum-total-sub';
+    exclRow.innerHTML = '<span class="k">Subtotaal excl. BTW</span><span class="v">' + fmt(totExcl) + '</span>';
+    btwRow.className = 'sum-total-sub';
+    btwRow.innerHTML = '<span class="k">BTW 21%</span><span class="v">' + fmt(btwBedrag) + '</span>';
+    inclRow.className = 'sum-total';
+    inclRow.innerHTML = '<span class="lbl">Totaal incl. BTW</span><span class="prc">' + fmt(tot) + '</span>';
+  }
+
   // Toggle zichtbaar maken
   e('klant-toggle-wrap').style.display='flex';
   e('quote-box').style.display='block';
@@ -1422,18 +1565,27 @@ async function toevoegenAanWagen(){
       if(v > 0) { sz[i.dataset.size] = v; herberekendQty += v; }
     });
     S.qty = herberekendQty;
-    const isBoth = S.pos === 'both';
     if(S.qty === 0) { alert('Vul eerst de hoeveelheden in bij stap 3 (maten).'); return; }
 
     // Build posities array (wagen.php expects {positie, kleuren})
     const posities = [];
     if(S.pos === 'front' || S.pos === 'both') posities.push({positie: 'voorkant', kleuren: S.zcA || 1});
     if(S.pos === 'back' || S.pos === 'both') posities.push({positie: 'achterkant', kleuren: S.zcB || 1});
+    if(S.pos === 'left') posities.push({positie: 'linkerborst', kleuren: S.zcA || 1});
+    if(S.pos === 'right') posities.push({positie: 'rechterborst', kleuren: S.zcA || 1});
+    if(S.pos === 'left-back') posities.push({positie: 'linkerborst', kleuren: S.zcA || 1});
+    if(S.pos === 'right-back') posities.push({positie: 'rechterborst', kleuren: S.zcA || 1});
+    if(S.pos === 'left-back' || S.pos === 'right-back') posities.push({positie: 'achterkant', kleuren: S.zcB || 1});
 
-    // Build technieken per positie (voorkant kan DTF zijn, achterkant kan C70 zijn)
+    // Build technieken per positie (voorkant kan DTF zijn, achterkant kan zeef zijn)
     const technieken = [];
     if(S.pos === 'front' || S.pos === 'both') technieken.push({positie: 'voorkant', techniek: S.techA});
     if(S.pos === 'back' || S.pos === 'both') technieken.push({positie: 'achterkant', techniek: S.techB});
+    if(S.pos === 'left') technieken.push({positie: 'linkerborst', techniek: S.techA});
+    if(S.pos === 'right') technieken.push({positie: 'rechterborst', techniek: S.techA});
+    if(S.pos === 'left-back') technieken.push({positie: 'linkerborst', techniek: S.techA});
+    if(S.pos === 'right-back') technieken.push({positie: 'rechterborst', techniek: S.techA});
+    if(S.pos === 'left-back' || S.pos === 'right-back') technieken.push({positie: 'achterkant', techniek: S.techB});
 
     // Build regel voor wagen.php API (safe access)
     const regel = {
@@ -1482,7 +1634,7 @@ async function toevoegenAanWagen(){
         } catch(e) { console.warn('Upload voorkant error:', e); }
       }
 
-      if(isBoth && fileBack) {
+      if((S.pos === 'both' || S.pos === 'left-back' || S.pos === 'right-back') && fileBack) {
         const fd = new FormData();
         fd.append('actie', 'upload');
         fd.append('wagen_token', wagen_token);
