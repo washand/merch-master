@@ -938,29 +938,8 @@ function setKlantType(type) {
   S.klantType = type;
   e('kt-particulier').classList.toggle('act', type==='particulier');
   e('kt-bedrijf').classList.toggle('act', type==='bedrijf');
-
-  // Update price display based on klantType
-  const exclRow = e('q-excl-row');
-  const btwRow = e('q-btw-row');
-  const inclRow = e('q-incl-row');
-
-  if(type === 'bedrijf') {
-    // Bedrijf: excl. BTW is prominent (blue hero), incl. BTW is footnote
-    exclRow.className = 'sum-excl-hero';
-    exclRow.innerHTML = '<span class="lbl">Totaal excl. BTW<small>Uw prijs als bedrijf</small></span><span class="prc" id="q-total-excl">' + (e('q-total-excl').textContent || '–') + '</span>';
-    btwRow.className = 'sum-total-footnote';
-    btwRow.innerHTML = '<span class="lbl">BTW 21%</span><span class="prc" id="q-btw">' + (e('q-btw').textContent || '–') + '</span>';
-    inclRow.className = 'sum-total-footnote';
-    inclRow.innerHTML = '<span class="lbl">Totaal incl. BTW</span><span class="prc" id="q-total">' + (e('q-total').textContent || '–') + '</span>';
-  } else {
-    // Particulier: incl. BTW is prominent (orange), excl. BTW is normal
-    exclRow.className = 'sum-total-sub';
-    exclRow.innerHTML = '<span class="k">Subtotaal excl. BTW</span><span class="v" id="q-total-excl">' + (e('q-total-excl').textContent || '–') + '</span>';
-    btwRow.className = 'sum-total-sub';
-    btwRow.innerHTML = '<span class="k">BTW 21%</span><span class="v" id="q-btw">' + (e('q-btw').textContent || '–') + '</span>';
-    inclRow.className = 'sum-total';
-    inclRow.innerHTML = '<span class="lbl">Totaal incl. BTW</span><span class="prc" id="q-total">' + (e('q-total').textContent || '–') + '</span>';
-  }
+  // Herbereken offerte met nieuwe klanttype (zodat prijsblok correct wordt bijgewerkt)
+  if(S.qty > 0) calcQ();
 }
 
 
@@ -1372,35 +1351,39 @@ function calcQ(){
     const isBorst = S.pos==='left' || S.pos==='right' || S.pos==='left-back' || S.pos==='right-back';
     const dpMatrix = isBorst ? DPborst : DP;
     const t=dpMatrix.find(x=>q>=x.min&&q<=x.max);
-    if(!t){e('quote-box').style.display='none';return;}upA=t.u/1.21; // excl. BTW
+    if(!t){e('quote-box').style.display='none';return;}upA=t.u; // excl. BTW (admin waarden zijn excl. BTW)
   } else if(tA==='zeef'){
     if(!S.zcA){w.textContent='Kies eerst het aantal kleuren voor de '+posLabel+'.';w.classList.remove('hidden');e('quote-box').style.display='none';e('btn4').disabled=true;return;}
     if(q<25){w.textContent='Zeefdruk ('+posLabel+') vereist minimaal 25 stuks.';w.classList.remove('hidden');e('quote-box').style.display='none';e('btn4').disabled=true;return;}
-    const t=ZP.find(x=>q>=x.min&&q<=x.max);upA=(t?t.c[S.zcA-1]:0.82)/1.21; // excl. BTW
+    const t=ZP.find(x=>q>=x.min&&q<=x.max);upA=t?t.c[S.zcA-1]:0.82; // excl. BTW
   }
 
   if(isBoth){
     const tB=S.techB;
     if(tB==='dtf'){
-      const t=DP.find(x=>q>=x.min&&q<=x.max);if(!t){e('quote-box').style.display='none';return;}upB=t.u/1.21; // excl. BTW
+      const t=DP.find(x=>q>=x.min&&q<=x.max);if(!t){e('quote-box').style.display='none';return;}upB=t.u; // excl. BTW
     } else if(tB==='zeef'){
       if(!S.zcB){w.textContent='Kies eerst het aantal kleuren voor de achterkant.';w.classList.remove('hidden');e('quote-box').style.display='none';e('btn4').disabled=true;return;}
       if(q<25){w.textContent='Zeefdruk (achterkant) vereist minimaal 25 stuks.';w.classList.remove('hidden');e('quote-box').style.display='none';e('btn4').disabled=true;return;}
-      const t=ZP.find(x=>q>=x.min&&q<=x.max);upB=(t?t.c[S.zcB-1]:0.82)/1.21; // excl. BTW
+      const t=ZP.find(x=>q>=x.min&&q<=x.max);upB=t?t.c[S.zcB-1]:0.82; // excl. BTW
     }
   }
 
   const ship=q>=12?13.95:6.95;
   const drukA=upA*q;
   const drukB=isBoth?upB*q:0;
+  // Textiel excl. BTW — calcPrijsEx geeft al excl. BTW terug
   S.prijsEx=calcPrijsEx(S.mdl);
   const kortingPct=(['dtf','zeef'].includes(S.techA))?getTextielKorting(q):0;
-  const textielInclBtwOrigineel=parseFloat((S.prijsEx*1.21).toFixed(2));
-  const textielInclBtw=parseFloat((textielInclBtwOrigineel*(1-kortingPct)).toFixed(2));
-  const textielTot=parseFloat((textielInclBtw*q).toFixed(2));
-  const tot=textielTot+drukA+drukB+ship;
-  S.upA=upA;S.upB=upB;S.ship=ship;S.tot=tot;S.textielTot=textielTot;S.textielInclBtw=textielInclBtw;
-  S.kortingPct=kortingPct;S.textielInclBtwOrigineel=textielInclBtwOrigineel;
+  const textielExclPerStuk=parseFloat((S.prijsEx*(1-kortingPct)).toFixed(4));
+  const textielTot=parseFloat((textielExclPerStuk*q).toFixed(2)); // totaal textiel excl. BTW
+  // Subtotaal excl. BTW = textiel + bedrukking + verzending
+  const subtotaalExcl=parseFloat((textielTot+drukA+drukB+ship).toFixed(2));
+  const btwBedrag=parseFloat((subtotaalExcl*0.21).toFixed(2));
+  const tot=parseFloat((subtotaalExcl+btwBedrag).toFixed(2)); // totaal incl. BTW
+  S.upA=upA;S.upB=upB;S.ship=ship;S.tot=tot;S.textielTot=textielTot;
+  S.textielExclPerStuk=textielExclPerStuk;S.textielExclOrigineel=S.prijsEx;
+  S.kortingPct=kortingPct;S.subtotaalExcl=subtotaalExcl;
 
   const posNm={front:'Voorkant',back:'Achterkant',both:'Beide kanten',left:'Linkerborst',right:'Rechterborst','left-back':'Linkerborst + Achterkant','right-back':'Rechterborst + Achterkant'};
 
@@ -1408,12 +1391,12 @@ function calcQ(){
   if(S.mdl){
     e('q-textiel-nm').textContent=S.mdl.brand+' '+S.mdl.name;
     e('qr-textiel').style.display='flex';
-    e('q-textiel-lbl').textContent='Textiel ('+q+'\u00d7 '+fmt(S.textielInclBtw)+')';
+    e('q-textiel-lbl').textContent='Textiel ('+q+'\u00d7 '+fmt(S.textielExclPerStuk)+')';
     e('q-textiel-prijs').textContent=fmt(S.textielTot);
     e('q-textiel-row').style.display='flex';
   }
   if(kortingPct>0){
-    const bespaard=parseFloat(((S.textielInclBtwOrigineel-S.textielInclBtw)*q).toFixed(2));
+    const bespaard=parseFloat(((S.textielExclOrigineel-S.textielExclPerStuk)*q).toFixed(2));
     e('q-korting-pct').textContent='\u2212'+(kortingPct*100)+'% (\u2212'+fmt(bespaard)+')';
     e('qr-korting').style.display='flex';
   } else {
@@ -1450,9 +1433,7 @@ function calcQ(){
     sepB.classList.add('hidden');tbRow.classList.add('hidden');ubRow.classList.add('hidden');dbRow.classList.add('hidden');
   }
   e('q-ship').textContent=fmt(ship);
-  // BTW uitsplitsing
-  const totExcl=parseFloat((tot/1.21).toFixed(2));
-  const btwBedrag=parseFloat((tot-totExcl).toFixed(2));
+  // BTW uitsplitsing — subtotaalExcl en btwBedrag al berekend hierboven
 
   // Update totals display with correct classes based on klantType
   const exclRow = e('q-excl-row');
@@ -1462,7 +1443,7 @@ function calcQ(){
   if(S.klantType === 'bedrijf') {
     // Bedrijf: excl. BTW is prominent (blue hero), incl. BTW is footnote
     exclRow.className = 'sum-excl-hero';
-    exclRow.innerHTML = '<span class="lbl">Totaal excl. BTW<small>Uw prijs als bedrijf</small></span><span class="prc">' + fmt(totExcl) + '</span>';
+    exclRow.innerHTML = '<span class="lbl">Totaal excl. BTW<small>Uw prijs als bedrijf</small></span><span class="prc">' + fmt(subtotaalExcl) + '</span>';
     btwRow.className = 'sum-total-footnote';
     btwRow.innerHTML = '<span class="lbl">BTW 21%</span><span class="prc">' + fmt(btwBedrag) + '</span>';
     inclRow.className = 'sum-total-footnote';
@@ -1470,7 +1451,7 @@ function calcQ(){
   } else {
     // Particulier: incl. BTW is prominent (orange), excl. BTW is normal
     exclRow.className = 'sum-total-sub';
-    exclRow.innerHTML = '<span class="k">Subtotaal excl. BTW</span><span class="v">' + fmt(totExcl) + '</span>';
+    exclRow.innerHTML = '<span class="k">Subtotaal excl. BTW</span><span class="v">' + fmt(subtotaalExcl) + '</span>';
     btwRow.className = 'sum-total-sub';
     btwRow.innerHTML = '<span class="k">BTW 21%</span><span class="v">' + fmt(btwBedrag) + '</span>';
     inclRow.className = 'sum-total';
