@@ -574,7 +574,7 @@ setTimeout(() => {
 }, 3000);
 
 // Test button handler
-document.getElementById('test-btn').addEventListener('click', (e) => {
+document.getElementById('test-btn').addEventListener('click', async (e) => {
   e.preventDefault();
   console.log('Test button clicked');
 
@@ -598,7 +598,27 @@ document.getElementById('test-btn').addEventListener('click', (e) => {
     });
   }
 
-  document.getElementById('checkout-form').submit();
+  // Submit form via fetch to handle response
+  try {
+    const formData = new FormData(document.getElementById('checkout-form'));
+    const response = await fetch('/bestellen/handler.php', {
+      method: 'POST',
+      body: formData
+    });
+
+    const result = await response.json();
+    console.log('Handler response:', result);
+
+    if (result.success) {
+      // Redirect to success page with order ID
+      window.location.href = '/bestellen.php?success=' + (result.bestelling_id || 'test');
+    } else {
+      alert('Fout: ' + (result.error || 'Onbekende fout'));
+    }
+  } catch (err) {
+    console.error('Form submission error:', err);
+    alert('Fout bij verzenden: ' + err.message);
+  }
 });
 </script>
 </body>
