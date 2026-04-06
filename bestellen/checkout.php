@@ -300,15 +300,22 @@ function renderCart(regels, totalen) {
         const posLabel = (r.posities || []).map(p => posLabels[p.positie] || p.positie).join(' + ') || 'Voorkant';
         const totalPrice = (r.prijs && r.prijs.prijs_excl) ? r.aantal * r.prijs.prijs_excl : 0;
 
-        // Build techniek label (singular or multiple)
-        let tekLabel = 'DTF';
+        // Build techniek label per positie
+        const posMap = {'voorkant': 'Voorkant', 'achterkant': 'Achterkant', 'linkerborst': 'Linkerborst', 'rechterborst': 'Rechterborst'};
+        const techMap = {'dtf': 'DTF', 'zeefdruk': 'Zeefdruk', 'zeef': 'Zeefdruk', 'borduren': 'Borduren'};
+        let techDetails = '';
+
         if (r.technieken && r.technieken.length > 0) {
-          const techMap = {'dtf': 'DTF', 'zeefdruk': 'Zeefdruk', 'zeef': 'Zeefdruk', 'borduren': 'Borduren'};
-          const uniekTechs = [...new Set(r.technieken.map(t => techMap[t.techniek] || t.techniek))];
-          tekLabel = uniekTechs.join(' + ');
+          const techByPos = {};
+          r.technieken.forEach(t => {
+            const pos = t.positie || 'voorkant';
+            const tech = techMap[t.techniek] || t.techniek;
+            techByPos[pos] = tech;
+          });
+          const techLines = Object.entries(techByPos).map(([pos, tech]) => `${posMap[pos] || pos}: ${tech}`);
+          techDetails = techLines.join('<br>');
         } else if (r.techniek) {
-          const techMap = {'dtf': 'DTF', 'zeefdruk': 'Zeefdruk', 'zeef': 'Zeefdruk', 'borduren': 'Borduren'};
-          tekLabel = techMap[r.techniek] || r.techniek;
+          techDetails = techMap[r.techniek] || r.techniek;
         }
 
         // Build maten display
@@ -339,7 +346,7 @@ function renderCart(regels, totalen) {
             <div class="sname" style="font-size:.95rem;font-weight:600;color:var(--ink);">${r.aantal}× ${r.product_naam || 'Product'}</div>
             <div class="sdet" style="margin-top:.45rem;font-size:.75rem;color:var(--ink3);line-height:1.6;">
               <div style="margin-bottom:.2rem;"><strong>Kleur:</strong> ${r.kleur_naam || '–'}</div>
-              <div style="margin-bottom:.2rem;"><strong>Techniek:</strong> ${tekLabel}</div>
+              <div style="margin-bottom:.2rem;"><strong>Techniek:</strong><br>${techDetails}</div>
               <div style="margin-bottom:.2rem;"><strong>Positie:</strong> ${posLabel}</div>
               ${matenLabel ? `<div style="margin-bottom:.2rem;"><strong>Maten:</strong> ${matenLabel}</div>` : ''}
             </div>
@@ -359,7 +366,7 @@ function renderCart(regels, totalen) {
       <div class="pr"><span>Subtotaal (ex BTW)</span><span>${fmt(totalen.subtotaal_excl)}</span></div>
       <div class="pr"><span>BTW 21%</span><span>${fmt(totalen.btw)}</span></div>
       <div class="pr"><span>Totaal incl. BTW</span><span>${fmt(totalen.totaal_incl)}</span></div>
-      <div class="pr"><span>Verzending (${totalen.verzend_label})</span><span>+ ${fmt(verzending)}</span></div>
+      <div class="pr"><span>Verzending</span><span>+ ${fmt(verzending)}</span></div>
       <div class="pr div tot"><span>Totaal incl. verzending</span><span>${fmt(totalMet)}</span></div>
     `;
     document.getElementById('order-totals').innerHTML = totals;
