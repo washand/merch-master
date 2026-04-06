@@ -221,6 +221,9 @@ input.filled{background:#fff;}
           </div>
 
           <div id="pp-container"></div>
+          <button class="btn btn-p" id="test-btn" style="margin-top:1rem;background:#6c5ce7;">
+            💳 Test Payment
+          </button>
         </form>
         <div class="cf">
           <button type="submit" form="checkout-form" class="btn btn-p">
@@ -382,6 +385,13 @@ new TomSelect('#land', {
 const script = document.createElement('script');
 script.src = 'https://www.paypal.com/sdk/js?client-id=ASLap52V7_VjYsq3D5k1W9a9RLG7854wBRs9TQ0m0PHhLXALJwrG3i-r4nrQOMuUr0d_Dqr5BSMv4ebk';
 document.head.appendChild(script);
+
+// Test button handler
+document.getElementById('test-btn').addEventListener('click', (e) => {
+  e.preventDefault();
+  console.log('Test button clicked');
+  document.getElementById('checkout-form').submit();
+});
 
 loadCart();
 </script>
