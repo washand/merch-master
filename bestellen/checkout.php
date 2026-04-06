@@ -259,7 +259,11 @@ const wagen_token = '<?php echo htmlspecialchars($wagen_token); ?>';
 
 async function loadCart() {
   try {
-    const resp = await fetch('./wagen.php?action=laden&token=' + wagen_token);
+    const resp = await fetch('./wagen.php', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({actie: 'laden', wagen_token: wagen_token})
+    });
     const data = await resp.json();
     if (data.ok && data.regels) {
       renderCart(data.regels, data.totalen);
@@ -270,28 +274,45 @@ async function loadCart() {
 }
 
 function renderCart(regels, totalen) {
+  if (!totalen) {
+    document.getElementById('order-items').innerHTML = '<div style="color:var(--ink3);font-size:.85rem;">Wagen is leeg</div>';
+    document.getElementById('order-totals').innerHTML = '';
+    return;
+  }
+
   // Items
   let html = '';
   regels.forEach(r => {
-    const posMap = {'front':'Voorkant', 'back':'Achterkant', 'both':'Beide kanten', 'left':'Linkerborst', 'right':'Rechterborst', 'left-back':'Linkerborst + Achterkant', 'right-back':'Rechterborst + Achterkant'};
+    // Build position label from posities array
+    const posLabels = {
+      'voorkant': 'Voorkant',
+      'achterkant': 'Achterkant',
+      'linkerborst': 'Linkerborst',
+      'rechterborst': 'Rechterborst'
+    };
+    const posLabel = (r.posities || []).map(p => posLabels[p.positie] || p.positie).join(' + ') || 'Voorkant';
+    const totalPrice = r.prijs?.prijs_excl ? r.aantal * r.prijs.prijs_excl : 0;
+
     html += `<div class="si">
       <div class="simg">👕</div>
       <div class="sinfo">
-        <div class="sname">${r.mdl.brand} ${r.mdl.name}</div>
-        <div class="sdet">${r.clrName} · ${r.qty}× · ${posMap[r.pos] || r.pos}</div>
+        <div class="sname">${r.product_naam}</div>
+        <div class="sdet">${r.kleur_naam} · ${r.aantal}× · ${posLabel}</div>
       </div>
-      <div class="sprice">${fmt(r.qty * r.prijs_ex)}</div>
+      <div class="sprice">${fmt(totalPrice)}</div>
     </div>`;
   });
   document.getElementById('order-items').innerHTML = html;
 
   // Totals
+  const verzending = totalen.verzend_incl || 0;
+  const totalMet = totalen.totaal_incl + verzending;
   let totals = `
-    <div class="pr"><span>Subtotaal (ex BTW)</span><span>${fmt(totalen.totaal_ex)}</span></div>
+    <div class="pr"><span>Subtotaal (ex BTW)</span><span>${fmt(totalen.subtotaal_excl)}</span></div>
     <div class="pr"><span>BTW 21%</span><span>${fmt(totalen.btw)}</span></div>
     <div class="pr"><span>Totaal incl. BTW</span><span>${fmt(totalen.totaal_incl)}</span></div>
-    <div class="pr"><span>Verzending</span><span>+ ${fmt(totalen.verzending)}</span></div>
-    <div class="pr div tot"><span>Totaal incl. verzending</span><span>${fmt(totalen.totaal_incl + totalen.verzending)}</span></div>
+    <div class="pr"><span>Verzending (${totalen.verzend_label})</span><span>+ ${fmt(verzending)}</span></div>
+    <div class="pr div tot"><span>Totaal incl. verzending</span><span>${fmt(totalMet)}</span></div>
   `;
   document.getElementById('order-totals').innerHTML = totals;
 
@@ -304,7 +325,7 @@ function renderCart(regels, totalen) {
       createOrder(data, actions) {
         return actions.order.create({
           purchase_units: [{
-            amount: { value: (totalen.totaal_incl + totalen.verzending).toFixed(2) }
+            amount: { value: totalMet.toFixed(2) }
           }]
         });
       },
