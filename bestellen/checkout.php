@@ -86,13 +86,13 @@ input.filled{background:#fff;}
 .btn-o:hover{background:var(--bg);}
 
 /* ─── SUMMARY ITEMS ─── */
-.si{display:flex;gap:.7rem;padding:.7rem 0;border-bottom:1px solid var(--brd2);}
+.si{display:flex;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--brd2);}
 .si:last-child{border-bottom:none;}
-.simg{width:50px;height:50px;border-radius:4px;background:var(--bg);border:1px solid var(--brd);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
+.simg{width:80px;height:100px;border-radius:6px;background:var(--bg);border:1px solid var(--brd);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.8rem;}
 .sinfo{flex:1;}
-.sname{font-size:.82rem;font-weight:500;}
-.sdet{font-size:.73rem;color:var(--ink3);margin-top:.15rem;}
-.sprice{font-size:.85rem;font-weight:600;white-space:nowrap;}
+.sname{font-size:.9rem;font-weight:600;color:var(--ink);}
+.sdet{font-size:.75rem;color:var(--ink3);margin-top:.3rem;line-height:1.5;}
+.sprice{font-size:.9rem;font-weight:700;color:var(--ac);white-space:nowrap;text-align:right;min-width:60px;}
 
 /* ─── PRICE TABLE ─── */
 .pt .pr{display:flex;justify-content:space-between;padding:.3rem 0;font-size:.85rem;color:var(--ink2);}
@@ -300,13 +300,51 @@ function renderCart(regels, totalen) {
         const posLabel = (r.posities || []).map(p => posLabels[p.positie] || p.positie).join(' + ') || 'Voorkant';
         const totalPrice = (r.prijs && r.prijs.prijs_excl) ? r.aantal * r.prijs.prijs_excl : 0;
 
+        // Build techniek label (singular or multiple)
+        let tekLabel = 'DTF';
+        if (r.technieken && r.technieken.length > 0) {
+          const techMap = {'dtf': 'DTF', 'zeefdruk': 'Zeefdruk', 'zeef': 'Zeefdruk', 'borduren': 'Borduren'};
+          const uniekTechs = [...new Set(r.technieken.map(t => techMap[t.techniek] || t.techniek))];
+          tekLabel = uniekTechs.join(' + ');
+        } else if (r.techniek) {
+          const techMap = {'dtf': 'DTF', 'zeefdruk': 'Zeefdruk', 'zeef': 'Zeefdruk', 'borduren': 'Borduren'};
+          tekLabel = techMap[r.techniek] || r.techniek;
+        }
+
+        // Build maten display
+        let matenLabel = '';
+        if (r.maten && Object.keys(r.maten).length > 0) {
+          const matenMap = {
+            'xs': 'XS', 's': 'S', 'm': 'M', 'l': 'L', 'xl': 'XL', 'xxl': 'XXL', 'xxxl': '3XL',
+            '0': 'XS', '1': 'S', '2': 'M', '3': 'L', '4': 'XL', '5': 'XXL', '6': '3XL'
+          };
+          const matenArray = [];
+          Object.entries(r.maten).forEach(([size, qty]) => {
+            if (qty > 0) {
+              const sizeName = matenMap[size] || size;
+              matenArray.push(`${qty}× ${sizeName}`);
+            }
+          });
+          if (matenArray.length > 0) {
+            matenLabel = matenArray.join(', ');
+          }
+        }
+
+        // Product image (fallback if kleur_image_url is missing)
+        const imgSrc = r.kleur_image_url || '/bestellen/img/placeholder.png';
+
         html += `<div class="si">
-          <div class="simg">👕</div>
+          <div class="simg" style="background-size:cover;background-position:center;background-image:url('${imgSrc}');"></div>
           <div class="sinfo">
-            <div class="sname">${r.product_naam || 'Product'}</div>
-            <div class="sdet">${r.kleur_naam || 'Kleur'} · ${r.aantal}× · ${posLabel}</div>
+            <div class="sname" style="font-size:.95rem;font-weight:600;color:var(--ink);">${r.aantal}× ${r.product_naam || 'Product'}</div>
+            <div class="sdet" style="margin-top:.45rem;font-size:.75rem;color:var(--ink3);line-height:1.6;">
+              <div style="margin-bottom:.2rem;"><strong>Kleur:</strong> ${r.kleur_naam || '–'}</div>
+              <div style="margin-bottom:.2rem;"><strong>Techniek:</strong> ${tekLabel}</div>
+              <div style="margin-bottom:.2rem;"><strong>Positie:</strong> ${posLabel}</div>
+              ${matenLabel ? `<div style="margin-bottom:.2rem;"><strong>Maten:</strong> ${matenLabel}</div>` : ''}
+            </div>
           </div>
-          <div class="sprice">${fmt(totalPrice)}</div>
+          <div class="sprice" style="white-space:nowrap;text-align:right;">${fmt(totalPrice)}</div>
         </div>`;
       } catch(e) {
         console.error('Error rendering regel:', r, e);
