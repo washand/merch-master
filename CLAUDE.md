@@ -288,6 +288,41 @@ Stap 6 uit bestellen.php verwijderd. Nieuwe standalone bestellen/checkout.php pa
   - Position validation for DTF pricing matrix selection (dtf vs dtf_borst)
   - Two-technique support: checks S.configuring flag for combination positions
 
+### 🟢 Afgerond — Checkout Form Validation & Order Summary Improvements
+**Features:**
+- [x] Order summary displays product image (thumbnail), SKU, color, sizes, techniques per position
+- [x] Position names displayed correctly (Voorkant, Achterkant, Linkerborst, etc.)
+- [x] Form validation: required field checking, telephone country code dropdown (EU + US + Canada)
+- [x] Dutch postcode format validation (`1234 AB`) with auto-formatting on blur
+- [x] PayPal button rendering fixed (async SDK loading + onload callback)
+- [x] Test Payment button for order submission testing
+- [x] Standalone success/thank you page (`bestellen/success.php`) — displays order ID, email, checkmark icon
+- [x] No emojis in checkout/success pages (per CLAUDE.md design rules)
+- [x] Form submission validates totals, creates order via handler.php, redirects to success page
+
+**Implementation Details:**
+- **checkout.php:**
+  - `renderCart()` function displays order items with: product image, SKU, color, sizes (formatted), techniques per position, position labels
+  - `window.TOTALEN` global stores totals for form submission
+  - Hidden form fields: `totaal_incl`, `verzending_incl` (populated on Test Payment click)
+  - `validateForm()` checks: required fields, telephone code selection, postcode format
+  - Dutch postcode regex: `/^([1-9][0-9]{3})\s?([A-Za-z]{2})$/`
+  - TomSelect dropdowns: `dial_ts` (telephone codes), `land` (countries)
+  - Telephone codes: EU countries (flags emoji) + US (🇺🇸) + Canada (🇨🇦), Russia removed
+  - Form submission via fetch to `/bestellen/handler.php` with JSON response handling
+  - Redirect on success: `/bestellen/success.php?id=<bestelling_id>&email=<email>`
+- **success.php:**
+  - Standalone page (no site header/footer)
+  - Displays: checkmark SVG icon, order confirmation message, order ID, email, back-to-home button
+  - WhatsApp contact link in sidebar
+  - Receives URL parameters: `?id=<order_id>&email=<email_address>`
+
+### Fase 2: UX Verbeteringen (Backlog)
+- [ ] **Na kleur kiezen niet automatisch doorgaan** — Nu gaat tool na kleurselect automatisch naar stap 4. Moet "Volgende" knop worden
+- [ ] **Kleuren zeefdruk → dropdown** — In plaats van automatisch 1 kleur selecteren, dropdown voor meerdere selectie
+- [ ] **Naar betaling / offerte toggle** — "Naar betaling" knop mag ook offerte zijn voor bedrijven die niet direct betalen
+- [ ] **Prijzen textiel + bedrukking duidelijker** — Prijs textiel en bedrukking apart tonen, niet alleen totaal
+
 ### Kritiek
 - [ ] **SQL migratie uitvoeren op live server** — `bestellen/db_migratie_kortingscodes.sql` via phpMyAdmin
 - [ ] Test kortingscode flow end-to-end op live (aanmaken in admin → gebruiken in checkout → gebruikt=1 in DB)
