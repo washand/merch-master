@@ -125,7 +125,7 @@ $email = $_GET['email'] ?? $_SESSION['mm_klant_email'] ?? '';
     <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
   </div>
 
-  <h1>Bestelling ontvangen! 🎉</h1>
+  <h1>Bestelling ontvangen!</h1>
 
   <div class="message">
     Bedankt voor je bestelling bij <strong>Merch Master</strong>!<br>

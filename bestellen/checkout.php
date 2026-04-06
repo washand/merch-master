@@ -222,7 +222,7 @@ input.filled{background:#fff;}
 
           <div id="pp-container"></div>
           <button class="btn btn-p" id="test-btn" style="margin-top:1rem;background:#6c5ce7;">
-            💳 Test Payment
+            Test Payment
           </button>
 
           <!-- Hidden fields for totals -->
