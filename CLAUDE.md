@@ -39,8 +39,9 @@ De Ralawise API is **uitsluitend** voor data lezen (inventory, afbeeldingen, sto
 
 ## Besteltool (`bestellen.php`) — Architectuur
 
-### 6-stappen wizard
-1. Categorie → 2. Product → 3. Kleur & Maat → 4. Techniek → 5. Ontwerp/Upload → 6. Betaling
+### 5-stappen wizard
+1. Categorie → 2. Product → 3. Kleur & Maat → 4. Techniek → 5. Ontwerp/Upload
+**Opmerking:** Stap 6 (Betaling) verplaatst naar standalone `bestellen/checkout.php`
 
 ### Prijsberekening
 - **Textiel:** `inkoop × margin (budget 1.50 / standaard 1.65 / premium 1.80) / 1.21` = excl. BTW → ×1.21 voor klantprijs
@@ -71,15 +72,36 @@ De Ralawise API is **uitsluitend** voor data lezen (inventory, afbeeldingen, sto
   prijsEx, textielTot, textielInclBtw, textielInclBtwOrigineel,
   kortingPct }
 ```
+**pos values:** `'front'` | `'back'` | `'both'` | `'left'` | `'right'` | `'left-back'` | `'right-back'`
 
 ### Drukkosten laden (server-side PHP inject)
 `bestellen.php` laadt bij openen drukkosten uit DB en injecteert als `const _DK = {...}` in JS.
 Volgorde: `mm_instellingen` → `instellingen` → lege array (geen fallback hardcode).
 
-### Printposities
-- Front / Back / Left Breast / Right Breast
-- Left & Right Breast alleen combineerbaar met Back, NOOIT met Front
-- Validatie op 3 niveaus: UI live → on save → server PHP
+### Printposities (7 opties)
+**Solo posities:**
+- `'front'` — **Voorkant** — zowel DTF als Zeefdruk
+- `'back'` — **Achterkant** — zowel DTF als Zeefdruk
+- `'left'` — **Linkerborst** — DTF: €4,50 | Zeefdruk: gratis
+- `'right'` — **Rechterborst** — DTF: €4,50 | Zeefdruk: gratis
+
+**Combinaties (twee-techniek):**
+- `'both'` — **Beide kanten** (Voorkant + Achterkant)
+- `'left-back'` — **Linkerborst + Achterkant** — kan verschillende technieken gebruiken per positie
+- `'right-back'` — **Rechterborst + Achterkant** — kan verschillende technieken gebruiken per positie
+
+**Constraints & Pricing:**
+- Linkerborst & Rechterborst kunnen NOOIT met Voorkant gecombineerd worden
+- Linkerborst & Rechterborst kunnen NIET met elkaar gecombineerd worden
+- DTF extra kosten: €4,50 per borst-positie (admin-settable, `drukkosten.dtf_borst`)
+- Zeefdruk op borst: **gratis** (gebruikt Voorkant zeefdruk pricing matrix, geen extra cost)
+- Elk positie in combinatie kan eigen techniek hebben (bijv. linkerborst=DTF + achterkant=zeefdruk)
+- Zeefdruk color dropdowns tonen ALLEEN voor borst-posities (id="zc-left-sel", id="zc-right-sel")
+
+**Validatie op 3 niveaus:**
+1. UI live — `selPos()` toggles position classes, `calcQ()` valideert combinaties
+2. On save — `toevoegenAanWagen()` bouwt posities array met validatie
+3. Server PHP — `wagen.php` validates rules op backend
 
 ---
 
@@ -104,6 +126,7 @@ Volgorde: `mm_instellingen` → `instellingen` → lege array (geen fallback har
 - Drukkosten matrix DTF + zeefdruk (`admin-drukkosten` / `admin-drukkosten-opslaan`)
 - Levertijden (`admin-levertijden`)
 - Offertebeheer
+- **Kortingscodes** (`kortingscodes`) — aanmaken, activeren/deactiveren, verwijderen
 - Auth: session-based (`$_SESSION['mm_admin']`)
 - Settings opgeslagen in `mm_instellingen` tabel (key/value JSON)
 
@@ -114,8 +137,9 @@ Volgorde: `mm_instellingen` → `instellingen` → lege array (geen fallback har
 | `catalogus_kleuren` | Kleuren per SKU (naam, hex, code, image_url) |
 | `mm_instellingen` | Admin settings (sleutel/waarde JSON) — drukkosten, marges, levertijden |
 | `instellingen` | Oud settings systeem (fallback) |
-| `bestellingen` | Orders |
+| `bestellingen` | Orders — incl. `korting_code` + `korting_pct` kolommen |
 | `klanten` | Klantgegevens |
+| `mm_kortingscodes` | Kortingscodes — code, pct, actief, gebruikt, vervaldatum |
 
 ---
 
@@ -126,14 +150,18 @@ merch-master/
 ├── .env.example
 ├── bestellen.php                 (5-stappen wizard — hoofdbestand)
 ├── bestellen/
-│   ├── checkout.php              (Afrekenen — order review + betaling)
+│   ├── checkout.php              (Afrekenen — Proto A design standalone pagina)
+│   ├── proto-a.html              (Proto A design template — basis voor checkout.php styling)
 │   ├── catalogus.php             (API — producten + kleuren)
 │   ├── ralawise_sync.php         (cron — sync images/stock)
+│   ├── db_migratie_kortingscodes.sql  (eenmalig uitvoeren op live DB)
 │   ├── admin/
 │   │   ├── handler.php           (admin API endpoints)
 │   │   └── index.php             (admin dashboard)
 │   └── includes/
-│       └── db-config.php
+│       ├── db.php                (DB wrapper)
+│       ├── db-config.php
+│       └── bestellingen.php      (Bestellingen class — opslaan, regels, uploads)
 ├── includes/
 │   ├── vertalingen.json
 │   └── header.php / footer.php
@@ -167,21 +195,47 @@ merch-master/
 - [x] stap 6 initialiseert volledig: `tryAutoFill()` + `fillSum()`
 - [x] `/winkelwagen.php` verdwijnt — alle checkout flow nu in `bestellen.php`
 
-### 🔴 In uitvoering — Cart Panel Redesign (Modern CSS)
-Cart panel styling moderniseren met minimalistisch design (meer whitespace, clean borders), behoud Merch Master oranje (#e84c1e). Plan: zie `C:\Users\leonn\.claude\plans\foamy-doodling-piglet.md`
+### 🟢 Afgerond — Kortingscodes feature
+- [x] `mm_kortingscodes` tabel aangemaakt (SQL migratie in `bestellen/db_migratie_kortingscodes.sql`)
+- [x] `korting_code` + `korting_pct` kolommen toegevoegd aan `bestellingen` tabel
+- [x] `Bestellingen::opslaan()` slaat kortingscode + percentage op
+- [x] handler.php: `korting-valideer`, `admin-kortingscodes`, `admin-korting-aanmaken`, `admin-korting-toggle`, `admin-korting-verwijder`
+- [x] Admin UI: kortingscodes sectie in admin/index.php — tabel, aanmaken modal, toggle, verwijder
+- [x] checkout.php: kortingscode invoerveld met AJAX validatie, `KORTING` state, korting-rij in prijsoverzicht
+- [x] Kortingscode gemarkeerd als `gebruikt=1` bij plaatsen bestelling
+- [x] Kortingberekening: over `totaal_excl`, BTW (21%) herberekend, daarna verzending opgeteld
 
-**Wat er moet gebeuren:**
-- [ ] Fase 1: CSS architecture — increase whitespace, simplify borders (1px), add hover states, softer shadows
-- [ ] Fase 2: Cart panel HTML styling — increase padding, better item spacing
-- [ ] Fase 3: Cart item hover effects — light background, shadow lift
-- [ ] Fase 4: Button styling enhancements — smooth transitions, scale effects
-- [ ] Testing: Hover states, item removal, payment button, mobile responsive
+**⚠️ TODO: SQL migratie nog uitvoeren op live server** (`bestellen/db_migratie_kortingscodes.sql` via phpMyAdmin)
 
-**Constraints:**
-- Behoud bestaande functionaliteit (delete items, add to cart, totals)
-- Merch Master accent (#e84c1e) behouden
-- Geen Tailwind (PHP/HTML, geen webpack setup) — enhance existing CSS instead
-- Mobile responsive layout maintained
+### 🟢 Afgerond — Checkout Proto A redesign
+- [x] checkout.php volledig hergebouwd naar Proto A design
+- [x] Standalone pagina — geen site header/footer (minder afleiding, hogere conversie)
+- [x] Two-column grid: form links (1fr), order summary sidebar rechts (360px)
+- [x] Card-based componenten: `.card` / `.ch` / `.cb` / `.cf`
+- [x] CSS design tokens: `--ac:#e84c1e`, `--ink`, `--bg:#f5f3f0`, `--sur:#fff`, etc.
+- [x] Google Fonts Inter geladen
+- [x] `updateSummary()` herbouwt `#order-summary` volledig via JS (`.si`, `.pt`, `.pr`, `.korting-wrap`)
+- [x] Trust icons (SSL, retour, veilig betalen) in sidebar
+- [x] Steps indicator in header
+
+### 🟢 Afgerond — Linkerborst & Rechterborst positions (incl. Zeefdruk colors dropdown)
+**Features (now part of 7-position implementation):**
+- [x] Linkerborst & Rechterborst als solo selecteerbare posities in stap 2
+- [x] Validatie: kunnen niet met voorkant of elkaar gecombineerd worden
+- [x] Kunnen alleen gecombineerd worden met achterkant (left-back, right-back)
+- [x] DTF pricing: €4,50 per positie (admin-settable, `drukkosten.dtf_borst` matrix)
+- [x] Zeefdruk: gratis (uses voorkant pricing, geen separate costs)
+- [x] Twee-techniek support: borst+achterkant kunnen beide eigen techniek hebben
+- [x] Zeefdruk color dropdown (1-4 kleuren selectie) voor beide breast posities
+- [x] Admin panel split DTF matrix: "Voorkant/Achterkant" vs "Linkerborst/Rechterborst"
+- [x] wagen.php: berekenRegelPrijs() checks positie type om correct DTF matrix te gebruiken
+
+*(See "🟢 Afgerond — 7-Position Implementation" section for complete details on all position types)*
+
+### 🟢 Afgerond — Success/Thank You page & Cart Confirmation
+- [x] checkout.php: Success screen toont order details na betaling (geen redirect naar bestellen.php)
+- [x] bestellen.php stap 5: Full-screen "Product toegevoegd aan wagen" confirmation met checkmark
+- [x] Confirmation buttons: groene "Betalen" + oranje "Meer producten toevoegen"
 
 ### 🟢 Afgerond — Checkout herstructurering → standalone checkout.php
 Stap 6 uit bestellen.php verwijderd. Nieuwe standalone bestellen/checkout.php pagina met winkelwagen-review + klantgegevens + betaling.
@@ -207,8 +261,37 @@ Stap 6 uit bestellen.php verwijderd. Nieuwe standalone bestellen/checkout.php pa
 - Cart loaded via wagen.php 'laden' action — dynamic pricing always fresh
 - Form field names match handler expectations (voornaam, achternaam, etc)
 
+### 🟢 Afgerond — 7-Position Implementation & Position Display Fix
+**Features:**
+- [x] All 7 position options selectable in stap 2: front, back, both, left, right, left-back, right-back
+- [x] Position names displayed correctly in cart, checkout, quote box, and email confirmations
+- [x] Zeefdruk color dropdowns conditional on position type (borst-posities only)
+- [x] DTF €4,50 pricing for breast positions (admin-settable via `drukkosten.dtf_borst`)
+- [x] Zeefdruk pricing: gratis for breast positions (uses front pricing matrix)
+- [x] Two-technique support: combination positions can have different techs per position
+- [x] End-to-end testing: all 7 position types, all combos, pricing validation
+
+**Implementation Details:**
+- **Helper function:** `formatPosLabel(pos)` — Maps position codes to user-friendly Dutch labels
+- **bestellen.php:**
+  - posNm object: `{front:'Voorkant', back:'Achterkant', both:'Beide kanten', left:'Linkerborst', right:'Rechterborst', 'left-back':'Linkerborst + Achterkant', 'right-back':'Rechterborst + Achterkant'}`
+  - calcQ() logic: `isBoth = S.pos==='both'||S.pos==='left-back'||S.pos==='right-back'`; `isLeft = S.pos==='left'||S.pos==='left-back'`; `isRight = S.pos==='right'||S.pos==='right-back'`
+  - setupStep4() zeefdruk visibility: show dropdowns only for left/right positions with zeefdruk selected
+  - Quote box display: posALabel correctly labeled for all 7 position types
+- **checkout.php:**
+  - positieMap constant: Maps all 7 position values to display names
+  - Position labels in sidebar "Jouw bestelling" section
+- **mail.php:**
+  - formatRegels() function enhanced with position column
+  - Positions displayed as user-friendly labels in email tables
+- **wagen.php:**
+  - Position validation for DTF pricing matrix selection (dtf vs dtf_borst)
+  - Two-technique support: checks S.configuring flag for combination positions
+
 ### Kritiek
-- [ ] Test bevestigingsmails op live server
+- [ ] **SQL migratie uitvoeren op live server** — `bestellen/db_migratie_kortingscodes.sql` via phpMyAdmin
+- [ ] Test kortingscode flow end-to-end op live (aanmaken in admin → gebruiken in checkout → gebruikt=1 in DB)
+- [ ] Test bevestigingsmails op live server (incl. position names)
 - [x] PayPal live client-id (nu ingesteld: `ASLap52V7_VjYsq3D5k1W9a9RLG7854wBRs9TQ0m0PHhLXALJwrG3i-r4nrQOMuUr0d_Dqr5BSMv4ebk`)
 
 ### Belangrijk
