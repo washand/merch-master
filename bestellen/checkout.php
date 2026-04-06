@@ -610,8 +610,9 @@ document.getElementById('test-btn').addEventListener('click', async (e) => {
     console.log('Handler response:', result);
 
     if (result.success) {
-      // Redirect to success page with order ID
-      const successUrl = '/bestellen.php?success=' + (result.bestelling_id || 'test');
+      // Redirect to success page with order ID and email
+      const email = document.getElementById('email').value;
+      const successUrl = '/bestellen/success.php?id=' + encodeURIComponent(result.bestelling_id || 'test') + '&email=' + encodeURIComponent(email);
       console.log('Success! Redirecting to:', successUrl);
       window.location.href = successUrl;
     } else {
