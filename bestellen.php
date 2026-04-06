@@ -669,10 +669,13 @@ $_levertijdenJS = json_encode([
     <div class="sum-row hidden" id="q-up-b-row"><span class="k">Prijs per stuk</span><span class="v" id="q-up-b">&ndash;</span></div>
     <div class="sum-row hidden" id="q-druk-b-row"><span class="k" id="q-druk-b-lbl">Bedrukking</span><span class="v" id="q-druk-b">&ndash;</span></div>
     <div class="sum-row" id="q-textiel-row" style="display:none"><span class="k" id="q-textiel-lbl">Textiel</span><span class="v" id="q-textiel-prijs">&ndash;</span></div>
-    <div class="sum-row"><span class="k">Verzending</span><span class="v" id="q-ship">&ndash;</span></div>
-    <!-- Totaal blok — klasse wisselt per klanttype via JS -->
+    <!-- BTW-blok: excl → BTW → incl (producten, zonder verzending) -->
     <div id="q-excl-row" class="sum-total-sub"><span class="k">Subtotaal excl. BTW</span><span class="v" id="q-total-excl">&ndash;</span></div>
     <div id="q-btw-row" class="sum-total-sub"><span class="k">BTW 21%</span><span class="v" id="q-btw">&ndash;</span></div>
+    <div id="q-sub-incl-row" class="sum-total-sub"><span class="k">Subtotaal incl. BTW</span><span class="v" id="q-sub-incl">&ndash;</span></div>
+    <!-- Verzending (vaste post, incl. BTW) -->
+    <div class="sum-row"><span class="k">Verzending</span><span class="v" id="q-ship">&ndash;</span></div>
+    <!-- Eindtotaal — klasse wisselt per klanttype via JS -->
     <div id="q-incl-row" class="sum-total"><span class="lbl">Totaal incl. BTW</span><span class="prc" id="q-total">&ndash;</span></div>
   </div>
 
@@ -790,8 +793,10 @@ $_levertijdenJS = json_encode([
   </div>
   <div id="cart-panel-footer" style="display:none;padding:1rem 1.1rem;border-top:1px solid var(--border);flex-shrink:0;">
     <div style="font-size:.77rem;color:var(--ink3);margin-bottom:.5rem;">
-      <div style="display:flex;justify-content:space-between;padding:.15rem 0;"><span>Excl. BTW</span><span id="cart-panel-excl" style="font-weight:600;"></span></div>
+      <div style="display:flex;justify-content:space-between;padding:.15rem 0;"><span>Subtotaal excl. BTW</span><span id="cart-panel-excl" style="font-weight:600;"></span></div>
       <div style="display:flex;justify-content:space-between;padding:.15rem 0;"><span>BTW 21%</span><span id="cart-panel-btw" style="font-weight:600;"></span></div>
+      <div style="display:flex;justify-content:space-between;padding:.15rem 0;"><span>Subtotaal incl. BTW</span><span id="cart-panel-subincl" style="font-weight:600;"></span></div>
+      <div style="display:flex;justify-content:space-between;padding:.15rem 0;"><span>Verzending</span><span id="cart-panel-verzend" style="font-weight:600;"></span></div>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;padding-top:.4rem;border-top:1px solid var(--border);">
       <div style="font-size:.82rem;font-weight:600;color:var(--ink);">Totaal incl. BTW</div>
@@ -1369,7 +1374,7 @@ function calcQ(){
     }
   }
 
-  const ship=q>=12?13.95:6.95;
+  const ship=q>=12?13.95:6.95; // verzending incl. BTW (vaste klantprijs)
   const drukA=upA*q;
   const drukB=isBoth?upB*q:0;
   // Textiel excl. BTW — calcPrijsEx geeft al excl. BTW terug
@@ -1377,13 +1382,14 @@ function calcQ(){
   const kortingPct=(['dtf','zeef'].includes(S.techA))?getTextielKorting(q):0;
   const textielExclPerStuk=parseFloat((S.prijsEx*(1-kortingPct)).toFixed(4));
   const textielTot=parseFloat((textielExclPerStuk*q).toFixed(2)); // totaal textiel excl. BTW
-  // Subtotaal excl. BTW = textiel + bedrukking + verzending
-  const subtotaalExcl=parseFloat((textielTot+drukA+drukB+ship).toFixed(2));
+  // Subtotaal excl. BTW = textiel + bedrukking (ZONDER verzending)
+  const subtotaalExcl=parseFloat((textielTot+drukA+drukB).toFixed(2));
   const btwBedrag=parseFloat((subtotaalExcl*0.21).toFixed(2));
-  const tot=parseFloat((subtotaalExcl+btwBedrag).toFixed(2)); // totaal incl. BTW
-  S.upA=upA;S.upB=upB;S.ship=ship;S.tot=tot;S.textielTot=textielTot;
+  const subtotaalIncl=parseFloat((subtotaalExcl+btwBedrag).toFixed(2)); // producten incl. BTW
+  const eindtotaal=parseFloat((subtotaalIncl+ship).toFixed(2));          // incl. verzending
+  S.upA=upA;S.upB=upB;S.ship=ship;S.tot=eindtotaal;S.textielTot=textielTot;
   S.textielExclPerStuk=textielExclPerStuk;S.textielExclOrigineel=S.prijsEx;
-  S.kortingPct=kortingPct;S.subtotaalExcl=subtotaalExcl;
+  S.kortingPct=kortingPct;S.subtotaalExcl=subtotaalExcl;S.subtotaalIncl=subtotaalIncl;
 
   const posNm={front:'Voorkant',back:'Achterkant',both:'Beide kanten',left:'Linkerborst',right:'Rechterborst','left-back':'Linkerborst + Achterkant','right-back':'Rechterborst + Achterkant'};
 
@@ -1432,30 +1438,36 @@ function calcQ(){
   } else {
     sepB.classList.add('hidden');tbRow.classList.add('hidden');ubRow.classList.add('hidden');dbRow.classList.add('hidden');
   }
-  e('q-ship').textContent=fmt(ship);
-  // BTW uitsplitsing — subtotaalExcl en btwBedrag al berekend hierboven
+  // Vul verzending en subtotaal incl. BTW
+  e('q-ship').textContent = fmt(ship);
+  e('q-sub-incl').textContent = fmt(subtotaalIncl);
 
-  // Update totals display with correct classes based on klantType
+  // Totaalblok — klasse wisselt per klanttype
   const exclRow = e('q-excl-row');
   const btwRow = e('q-btw-row');
+  const subInclRow = e('q-sub-incl-row');
   const inclRow = e('q-incl-row');
 
   if(S.klantType === 'bedrijf') {
-    // Bedrijf: excl. BTW is prominent (blue hero), incl. BTW is footnote
+    // Bedrijf: subtotaal excl. BTW is prominent (blauw), rest footnotes
     exclRow.className = 'sum-excl-hero';
-    exclRow.innerHTML = '<span class="lbl">Totaal excl. BTW<small>Uw prijs als bedrijf</small></span><span class="prc">' + fmt(subtotaalExcl) + '</span>';
+    exclRow.innerHTML = '<span class="lbl">Subtotaal excl. BTW<small>Uw prijs als bedrijf</small></span><span class="prc">' + fmt(subtotaalExcl) + '</span>';
     btwRow.className = 'sum-total-footnote';
     btwRow.innerHTML = '<span class="lbl">BTW 21%</span><span class="prc">' + fmt(btwBedrag) + '</span>';
+    subInclRow.className = 'sum-total-footnote';
+    subInclRow.innerHTML = '<span class="lbl">Subtotaal incl. BTW</span><span class="prc">' + fmt(subtotaalIncl) + '</span>';
     inclRow.className = 'sum-total-footnote';
-    inclRow.innerHTML = '<span class="lbl">Totaal incl. BTW</span><span class="prc">' + fmt(tot) + '</span>';
+    inclRow.innerHTML = '<span class="lbl">Totaal incl. BTW</span><span class="prc">' + fmt(eindtotaal) + '</span>';
   } else {
-    // Particulier: incl. BTW is prominent (orange), excl. BTW is normal
+    // Particulier: eindtotaal incl. BTW is prominent (oranje)
     exclRow.className = 'sum-total-sub';
     exclRow.innerHTML = '<span class="k">Subtotaal excl. BTW</span><span class="v">' + fmt(subtotaalExcl) + '</span>';
     btwRow.className = 'sum-total-sub';
     btwRow.innerHTML = '<span class="k">BTW 21%</span><span class="v">' + fmt(btwBedrag) + '</span>';
+    subInclRow.className = 'sum-total-sub';
+    subInclRow.innerHTML = '<span class="k">Subtotaal incl. BTW</span><span class="v">' + fmt(subtotaalIncl) + '</span>';
     inclRow.className = 'sum-total';
-    inclRow.innerHTML = '<span class="lbl">Totaal incl. BTW</span><span class="prc">' + fmt(tot) + '</span>';
+    inclRow.innerHTML = '<span class="lbl">Totaal incl. BTW</span><span class="prc">' + fmt(eindtotaal) + '</span>';
   }
 
   // Toggle zichtbaar maken
@@ -1679,7 +1691,7 @@ async function verversCartPanel() {
       const uploads = regel.uploads || [];
       const technieken = regel.technieken || [];
       const aantalStr = regel.aantal ? `${regel.aantal}× ` : '';
-      const prijs = regel.prijs?.prijs_excl_voor || 0;
+      const prijs = regel.prijs?.totaal_excl || 0;
 
       // Build uploads display per positie
       let uploadsHTML = '';
@@ -1730,7 +1742,7 @@ async function verversCartPanel() {
 
           ${uploadsHTML}
         </div>
-        <div style="margin-top:.5rem;font-size:.8rem;font-weight:700;color:var(--accent);">€${prijs.toFixed(2)} excl. BTW</div>
+        <div style="margin-top:.5rem;font-size:.8rem;font-weight:700;color:var(--accent);">€${prijs.toFixed(2).replace('.',',')} excl. BTW</div>
       </div>`;
     });
 
@@ -1739,9 +1751,12 @@ async function verversCartPanel() {
     e('cart-panel-count').textContent = `${tot} ${tot === 1 ? 'item' : 'items'}`;
 
     const t = cartData.totalen || {};
-    e('cart-panel-excl').textContent  = `€${(t.totaal_excl || 0).toFixed(2)}`;
-    e('cart-panel-btw').textContent   = `€${(t.btw || 0).toFixed(2)}`;
-    e('cart-panel-totaal').textContent = `€${(t.totaal_incl || 0).toFixed(2)}`;
+    const fmtE = v => '€' + (v || 0).toFixed(2).replace('.', ',');
+    e('cart-panel-excl').textContent    = fmtE(t.totaal_excl);
+    e('cart-panel-btw').textContent     = fmtE(t.btw);
+    e('cart-panel-subincl').textContent = fmtE(t.totaal_incl);
+    e('cart-panel-verzend').textContent = fmtE(t.verzend_incl);
+    e('cart-panel-totaal').textContent  = fmtE(t.totaal_met_verzend);
     e('cart-panel-footer').style.display = 'block';
 
   } catch(err) {
