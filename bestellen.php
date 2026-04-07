@@ -28,6 +28,28 @@ try {
     if ($dk) $_drukkostenJS = json_encode($dk, JSON_UNESCAPED_UNICODE);
 } catch (Exception $e) { /* gebruik JS fallback */ }
 
+// ── Marges uit database laden ─────────────────────────────────────────────────
+$_margesJS = 'null';
+try {
+    require_once __DIR__ . '/bestellen/includes/db-config.php';
+    $mg = null;
+    try {
+        $st = getDB()->prepare("SELECT waarde FROM mm_instellingen WHERE sleutel = 'marges'");
+        $st->execute();
+        $row = $st->fetch();
+        if ($row) $mg = json_decode($row['waarde'], true);
+    } catch (Exception $e) {}
+    if (!$mg) {
+        try {
+            $st = getDB()->prepare("SELECT waarde FROM instellingen WHERE sleutel = 'marges'");
+            $st->execute();
+            $row = $st->fetch();
+            if ($row) $mg = json_decode($row['waarde'], true);
+        } catch (Exception $e) {}
+    }
+    if ($mg) $_margesJS = json_encode($mg, JSON_UNESCAPED_UNICODE);
+} catch (Exception $e) {}
+
 // ── Levertijden uit database laden ───────────────────────────────────────────
 $lt_dtf = '5-8';
 $lt_zeef = '6-10';
@@ -873,6 +895,7 @@ async function loadCatalogus() {
 // ── Pricing tables (geladen vanuit admin DB, anders fallback) ──────────────────
 const _DK = <?php echo $_drukkostenJS; ?>;
 const _LT = <?php echo $_levertijdenJS; ?>;
+const _MG = <?php echo $_margesJS; ?>;
 
 // DTF: bouw DP array uit admin data (voorkant/achterkant — verplicht — geen fallback)
 const DP = [];
@@ -923,7 +946,12 @@ if (_DK && _DK.zeef && _DK.zeef.matrix) {
   });
 }
 
-const MARKUP = {budget:1.50, standaard:1.65, premium:1.80};
+// Marges uit admin DB — fallback naar vaste waarden als DB niet beschikbaar
+const MARKUP = {
+  budget:    (_MG && _MG.textiel_budget    != null) ? parseFloat(_MG.textiel_budget)    : 1.50,
+  standaard: (_MG && _MG.textiel_standaard != null) ? parseFloat(_MG.textiel_standaard) : 1.65,
+  premium:   (_MG && _MG.textiel_premium   != null) ? parseFloat(_MG.textiel_premium)   : 1.80,
+};
 
 function calcPrijsEx(mdl) {
   if (!mdl || !mdl.inkoop) return 2.50;
