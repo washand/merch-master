@@ -928,7 +928,7 @@ const MARKUP = {budget:1.50, standaard:1.65, premium:1.80};
 function calcPrijsEx(mdl) {
   if (!mdl || !mdl.inkoop) return 2.50;
   const factor = MARKUP[mdl.tier] || MARKUP.standaard;
-  return parseFloat((mdl.inkoop * factor / 1.21).toFixed(4));
+  return parseFloat((mdl.inkoop * factor).toFixed(4)); // excl. BTW: inkoop × factor, BTW apart
 }
 
 function getTextielKorting(qty) {
