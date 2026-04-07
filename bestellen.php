@@ -360,23 +360,13 @@ $_levertijdenJS = json_encode([
   <div class="trail" id="s1-trail"></div>
 
   <!-- Staffelkorting info -->
-  <div class="info-note" style="background:#f0fdf4;border:2px solid #22c55e;border-left:none;margin-bottom:1.25rem;padding:1.5rem 1.25rem;">
-    <div style="text-align:center;margin-bottom:1rem;">
-      <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:#166534;letter-spacing:-.5px;">Staffelkorting textiel</div>
-      <div style="font-size:.78rem;color:#15803d;margin-top:.35rem;">Hoe meer stuks, hoe groter uw voordeel</div>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;text-align:center;">
-      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
-        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">50 – 99</div>
-        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">5% korting</div>
-      </div>
-      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
-        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">100 – 199</div>
-        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">10% korting</div>
-      </div>
-      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
-        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">200+</div>
-        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">20% korting</div>
+  <div class="info-note" style="background:#f0fdf4;border:1px solid #86efac;border-left:none;margin-bottom:.75rem;padding:.4rem .75rem;">
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+      <div style="font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700;color:#166534;white-space:nowrap;">Staffelkorting textiel</div>
+      <div style="display:flex;gap:.5rem;flex:1;flex-wrap:wrap;">
+        <div style="padding:.2rem .5rem;background:rgba(34,197,94,.08);border-radius:4px;font-size:.7rem;color:#166534;white-space:nowrap;"><strong>50–99</strong> &mdash; 5%</div>
+        <div style="padding:.2rem .5rem;background:rgba(34,197,94,.08);border-radius:4px;font-size:.7rem;color:#166534;white-space:nowrap;"><strong>100–199</strong> &mdash; 10%</div>
+        <div style="padding:.2rem .5rem;background:rgba(34,197,94,.08);border-radius:4px;font-size:.7rem;color:#166534;white-space:nowrap;"><strong>200+</strong> &mdash; 20%</div>
       </div>
     </div>
   </div>
@@ -440,23 +430,13 @@ $_levertijdenJS = json_encode([
   <div class="s-ttl">Kies een drukpositie</div>
 
   <!-- Staffelkorting info -->
-  <div class="info-note" style="background:#f0fdf4;border:2px solid #22c55e;border-left:none;margin-bottom:1.25rem;padding:1.5rem 1.25rem;">
-    <div style="text-align:center;margin-bottom:1rem;">
-      <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:#166534;letter-spacing:-.5px;">Staffelkorting textiel</div>
-      <div style="font-size:.78rem;color:#15803d;margin-top:.35rem;">Hoe meer stuks, hoe groter uw voordeel</div>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;text-align:center;">
-      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
-        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">50 – 99</div>
-        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">5% korting</div>
-      </div>
-      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
-        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">100 – 199</div>
-        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">10% korting</div>
-      </div>
-      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
-        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">200+</div>
-        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">20% korting</div>
+  <div class="info-note" style="background:#f0fdf4;border:1px solid #86efac;border-left:none;margin-bottom:.75rem;padding:.4rem .75rem;">
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+      <div style="font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700;color:#166534;white-space:nowrap;">Staffelkorting textiel</div>
+      <div style="display:flex;gap:.5rem;flex:1;flex-wrap:wrap;">
+        <div style="padding:.2rem .5rem;background:rgba(34,197,94,.08);border-radius:4px;font-size:.7rem;color:#166534;white-space:nowrap;"><strong>50–99</strong> &mdash; 5%</div>
+        <div style="padding:.2rem .5rem;background:rgba(34,197,94,.08);border-radius:4px;font-size:.7rem;color:#166534;white-space:nowrap;"><strong>100–199</strong> &mdash; 10%</div>
+        <div style="padding:.2rem .5rem;background:rgba(34,197,94,.08);border-radius:4px;font-size:.7rem;color:#166534;white-space:nowrap;"><strong>200+</strong> &mdash; 20%</div>
       </div>
     </div>
   </div>
@@ -513,23 +493,13 @@ $_levertijdenJS = json_encode([
   <div class="s-ttl" id="s3-ttl">Kies een druktechniek</div>
 
   <!-- Staffelkorting info -->
-  <div class="info-note" style="background:#f0fdf4;border:2px solid #22c55e;border-left:none;margin-bottom:1.25rem;padding:1.5rem 1.25rem;">
-    <div style="text-align:center;margin-bottom:1rem;">
-      <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:#166534;letter-spacing:-.5px;">Staffelkorting textiel</div>
-      <div style="font-size:.78rem;color:#15803d;margin-top:.35rem;">Hoe meer stuks, hoe groter uw voordeel</div>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;text-align:center;">
-      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
-        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">50 – 99</div>
-        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">5% korting</div>
-      </div>
-      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
-        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">100 – 199</div>
-        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">10% korting</div>
-      </div>
-      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
-        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">200+</div>
-        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">20% korting</div>
+  <div class="info-note" style="background:#f0fdf4;border:1px solid #86efac;border-left:none;margin-bottom:.75rem;padding:.4rem .75rem;">
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+      <div style="font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700;color:#166534;white-space:nowrap;">Staffelkorting textiel</div>
+      <div style="display:flex;gap:.5rem;flex:1;flex-wrap:wrap;">
+        <div style="padding:.2rem .5rem;background:rgba(34,197,94,.08);border-radius:4px;font-size:.7rem;color:#166534;white-space:nowrap;"><strong>50–99</strong> &mdash; 5%</div>
+        <div style="padding:.2rem .5rem;background:rgba(34,197,94,.08);border-radius:4px;font-size:.7rem;color:#166534;white-space:nowrap;"><strong>100–199</strong> &mdash; 10%</div>
+        <div style="padding:.2rem .5rem;background:rgba(34,197,94,.08);border-radius:4px;font-size:.7rem;color:#166534;white-space:nowrap;"><strong>200+</strong> &mdash; 20%</div>
       </div>
     </div>
   </div>
@@ -583,23 +553,13 @@ $_levertijdenJS = json_encode([
   <div class="s-ttl">Maten &amp; aantallen</div>
 
   <!-- Staffelkorting info -->
-  <div class="info-note" style="background:#f0fdf4;border:2px solid #22c55e;border-left:none;margin-bottom:1.25rem;padding:1.5rem 1.25rem;">
-    <div style="text-align:center;margin-bottom:1rem;">
-      <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:#166534;letter-spacing:-.5px;">Staffelkorting textiel</div>
-      <div style="font-size:.78rem;color:#15803d;margin-top:.35rem;">Hoe meer stuks, hoe groter uw voordeel</div>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;text-align:center;">
-      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
-        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">50 – 99</div>
-        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">5% korting</div>
-      </div>
-      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
-        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">100 – 199</div>
-        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">10% korting</div>
-      </div>
-      <div style="padding:.85rem;background:rgba(34,197,94,.08);border-radius:8px;">
-        <div style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:#166534;">200+</div>
-        <div style="font-size:.75rem;color:#15803d;margin-top:.25rem;">20% korting</div>
+  <div class="info-note" style="background:#f0fdf4;border:1px solid #86efac;border-left:none;margin-bottom:.75rem;padding:.4rem .75rem;">
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+      <div style="font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700;color:#166534;white-space:nowrap;">Staffelkorting textiel</div>
+      <div style="display:flex;gap:.5rem;flex:1;flex-wrap:wrap;">
+        <div style="padding:.2rem .5rem;background:rgba(34,197,94,.08);border-radius:4px;font-size:.7rem;color:#166534;white-space:nowrap;"><strong>50–99</strong> &mdash; 5%</div>
+        <div style="padding:.2rem .5rem;background:rgba(34,197,94,.08);border-radius:4px;font-size:.7rem;color:#166534;white-space:nowrap;"><strong>100–199</strong> &mdash; 10%</div>
+        <div style="padding:.2rem .5rem;background:rgba(34,197,94,.08);border-radius:4px;font-size:.7rem;color:#166534;white-space:nowrap;"><strong>200+</strong> &mdash; 20%</div>
       </div>
     </div>
   </div>
