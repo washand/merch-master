@@ -694,7 +694,6 @@ $_levertijdenJS = json_encode([
     <!-- BTW-blok: excl → BTW → incl (producten, zonder verzending) -->
     <div id="q-excl-row" class="sum-total-sub"><span class="k">Subtotaal excl. BTW</span><span class="v" id="q-total-excl">&ndash;</span></div>
     <div id="q-btw-row" class="sum-total-sub"><span class="k">BTW 21%</span><span class="v" id="q-btw">&ndash;</span></div>
-    <div id="q-sub-incl-row" class="sum-total-sub"><span class="k">Subtotaal incl. BTW</span><span class="v" id="q-sub-incl">&ndash;</span></div>
     <!-- Verzending (vaste post, incl. BTW) -->
     <div class="sum-row"><span class="k">Verzending</span><span class="v" id="q-ship">&ndash;</span></div>
     <!-- Eindtotaal — klasse wisselt per klanttype via JS -->
@@ -817,7 +816,6 @@ $_levertijdenJS = json_encode([
     <div style="font-size:.77rem;color:var(--ink3);margin-bottom:.5rem;">
       <div style="display:flex;justify-content:space-between;padding:.15rem 0;"><span>Subtotaal excl. BTW</span><span id="cart-panel-excl" style="font-weight:600;"></span></div>
       <div style="display:flex;justify-content:space-between;padding:.15rem 0;"><span>BTW 21%</span><span id="cart-panel-btw" style="font-weight:600;"></span></div>
-      <div style="display:flex;justify-content:space-between;padding:.15rem 0;"><span>Subtotaal incl. BTW</span><span id="cart-panel-subincl" style="font-weight:600;"></span></div>
       <div style="display:flex;justify-content:space-between;padding:.15rem 0;"><span>Verzending</span><span id="cart-panel-verzend" style="font-weight:600;"></span></div>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;padding-top:.4rem;border-top:1px solid var(--border);">
@@ -1466,14 +1464,12 @@ function calcQ(){
   } else {
     sepB.classList.add('hidden');tbRow.classList.add('hidden');ubRow.classList.add('hidden');dbRow.classList.add('hidden');
   }
-  // Vul verzending en subtotaal incl. BTW
+  // Vul verzending
   e('q-ship').textContent = fmt(ship);
-  e('q-sub-incl').textContent = fmt(subtotaalIncl);
 
   // Totaalblok — klasse wisselt per klanttype
   const exclRow = e('q-excl-row');
   const btwRow = e('q-btw-row');
-  const subInclRow = e('q-sub-incl-row');
   const inclRow = e('q-incl-row');
 
   if(S.klantType === 'bedrijf') {
@@ -1482,8 +1478,6 @@ function calcQ(){
     exclRow.innerHTML = '<span class="lbl">Subtotaal excl. BTW<small>Uw prijs als bedrijf</small></span><span class="prc">' + fmt(subtotaalExcl) + '</span>';
     btwRow.className = 'sum-total-footnote';
     btwRow.innerHTML = '<span class="lbl">BTW 21%</span><span class="prc">' + fmt(btwBedrag) + '</span>';
-    subInclRow.className = 'sum-total-footnote';
-    subInclRow.innerHTML = '<span class="lbl">Subtotaal incl. BTW</span><span class="prc">' + fmt(subtotaalIncl) + '</span>';
     inclRow.className = 'sum-total-footnote';
     inclRow.innerHTML = '<span class="lbl">Totaal incl. BTW</span><span class="prc">' + fmt(eindtotaal) + '</span>';
   } else {
@@ -1492,8 +1486,6 @@ function calcQ(){
     exclRow.innerHTML = '<span class="k">Subtotaal excl. BTW</span><span class="v">' + fmt(subtotaalExcl) + '</span>';
     btwRow.className = 'sum-total-sub';
     btwRow.innerHTML = '<span class="k">BTW 21%</span><span class="v">' + fmt(btwBedrag) + '</span>';
-    subInclRow.className = 'sum-total-sub';
-    subInclRow.innerHTML = '<span class="k">Subtotaal incl. BTW</span><span class="v">' + fmt(subtotaalIncl) + '</span>';
     inclRow.className = 'sum-total';
     inclRow.innerHTML = '<span class="lbl">Totaal incl. BTW</span><span class="prc">' + fmt(eindtotaal) + '</span>';
   }
@@ -1782,7 +1774,6 @@ async function verversCartPanel() {
     const fmtE = v => '€' + (v || 0).toFixed(2).replace('.', ',');
     e('cart-panel-excl').textContent    = fmtE(t.totaal_excl);
     e('cart-panel-btw').textContent     = fmtE(t.btw);
-    e('cart-panel-subincl').textContent = fmtE(t.totaal_incl);
     e('cart-panel-verzend').textContent = fmtE(t.verzend_incl);
     e('cart-panel-totaal').textContent  = fmtE(t.totaal_met_verzend);
     e('cart-panel-footer').style.display = 'block';
